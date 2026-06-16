@@ -4,24 +4,24 @@
 
 @layer base {
   :root {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 173.4 80.4% 40%; /* Teal accent */
-    --primary-foreground: 210 40% 98%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --background: 222.2 47.4% 11.2%; /* Midnight Navy #0F172A */
+    --foreground: 0 0% 100%; /* White */
+    --card: 222 47% 13%; /* Slightly lighter navy */
+    --card-foreground: 0 0% 100%;
+    --popover: 222.2 47.4% 11.2%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 173.4 80.4% 40%; /* Teal #14B8A6 */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 198.4 93.2% 59.6%; /* Sky Blue #38BDF8 */
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 217.2 32.6% 25%;
+    --muted-foreground: 215 20.2% 75.1%;
+    --accent: 198.4 93.2% 59.6%; /* Sky Blue */
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
+    --border: 217.2 32.6% 25%;
+    --input: 217.2 32.6% 25%;
     --ring: 173.4 80.4% 40%;
     --radius: 0.75rem;
   }
@@ -41,5 +41,32 @@
   @apply bg-white/5 backdrop-blur-md border border-white/10;
 }
 .glass-card {
-  @apply bg-[#1E293B]/80 backdrop-blur-xl border border-white/10 shadow-xl;
+  @apply bg-[#0F172A]/80 backdrop-blur-2xl border border-white/10 shadow-2xl;
+}
+
+/* Custom Text Gradients */
+.text-gradient {
+  @apply text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary;
+}
+
+/* Shimmer Effect */
+.shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent);
+  transform: skewX(-20deg);
+  animation: shimmer 3s infinite;
+}
+@keyframes shimmer {
+  100% {
+    left: 200%;
+  }
 }
