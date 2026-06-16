@@ -33,7 +33,14 @@ export function AiDemo() {
       ref={containerRef} 
       className="py-32 relative bg-[#04060E] overflow-hidden border-t border-white/5"
       style={{
-        background: "radial-gradient(circle at center, rgba(30, 41, 59, 0.25) 0%, rgba(4, 6, 14, 1) 70%)"
+        background: `
+          radial-gradient(at 0% 0%, rgba(253, 224, 71, 0.35) 0px, transparent 50%),
+          radial-gradient(at 100% 0%, rgba(239, 68, 68, 0.35) 0px, transparent 50%),
+          radial-gradient(at 50% 50%, rgba(236, 72, 153, 0.25) 0px, transparent 50%),
+          radial-gradient(at 0% 100%, rgba(59, 130, 246, 0.35) 0px, transparent 50%),
+          radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.35) 0px, transparent 50%),
+          #04060E
+        `
       }}
     >
       <div className="max-w-[1200px] mx-auto px-4 md:px-8">

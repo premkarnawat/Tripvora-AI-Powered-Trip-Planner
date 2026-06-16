@@ -49,6 +49,9 @@ export function StoryScroll() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
 
+  const yRaw = useMotionValue(0);
+  const y = useSpring(yRaw, { stiffness: 90, damping: 22, mass: 0.6 });
+
   useEffect(() => {
     // Handle mobile layout state
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -82,24 +85,37 @@ export function StoryScroll() {
       if (el) observer.observe(el);
     });
 
+    // Manual scroll listener to calculate container-bound progress
+    // and set translation offset smoothly.
+    const handleScroll = () => {
+      if (!gridRef.current) return;
+      const rect = gridRef.current.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      
+      const totalDist = rect.height - viewportHeight;
+      if (totalDist <= 0) return;
+      
+      const scrolled = -rect.top;
+      const progress = Math.max(0, Math.min(1, scrolled / totalDist));
+      
+      const targetY = isMobile
+        ? (progress - 0.5) * 50
+        : (progress - 0.5) * 240;
+        
+      yRaw.set(targetY);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleScroll, { passive: true });
+    handleScroll();
+
     return () => {
       observer.disconnect();
       window.removeEventListener("resize", handleResize);
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleScroll);
     };
-  }, []);
-
-  // Framer Motion continuous scroll parallax for the card wrapper
-  const { scrollYProgress } = useScroll({
-    target: gridRef,
-    offset: ["start start", "end end"]
-  });
-
-  const yRawDesktop = useTransform(scrollYProgress, [0, 1], [-120, 120]);
-  const yRawMobile = useTransform(scrollYProgress, [0, 1], [-30, 30]);
-  const yRaw = isMobile ? yRawMobile : yRawDesktop;
-  
-  // Apply a smooth spring transition to eliminate scroll stutter
-  const y = useSpring(yRaw, { stiffness: 90, damping: 22, mass: 0.6 });
+  }, [isMobile]);
 
   return (
     <section ref={containerRef} className="relative bg-[#04060E] w-full min-h-screen text-white">

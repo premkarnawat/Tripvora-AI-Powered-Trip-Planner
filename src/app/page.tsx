@@ -17,7 +17,7 @@ export default function Home() {
   const y = useTransform(scrollYProgress, [0, 1], [0, -100]);
 
   return (
-    <main className="bg-[#04060E] min-h-screen overflow-x-hidden">
+    <div className="bg-[#04060E] min-h-screen overflow-clip">
       <CinematicHero />
       <StoryScroll />
       <AiDemo />
@@ -50,7 +50,7 @@ export default function Home() {
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
           >
-            <Button size="lg" className="h-16 px-10 rounded-lg bg-primary hover:bg-primary/95 text-white font-bold text-lg shadow-[0_4px_30px_rgba(20,184,166,0.2)] transition-all duration-300 hover:scale-[1.01] border-none font-sora">
+            <Button size="lg" className="h-16 px-10 rounded-lg bg-primary hover:bg-primary/95 text-white font-bold text-lg shadow-[0_4px_30px_rgba(20,184,166,0.25)] transition-all duration-300 hover:scale-[1.01] border-none font-sora">
               Generate My First Trip
             </Button>
           </motion.div>
@@ -58,6 +58,6 @@ export default function Home() {
       </section>
 
       <Footer />
-    </main>
+    </div>
   );
 }
