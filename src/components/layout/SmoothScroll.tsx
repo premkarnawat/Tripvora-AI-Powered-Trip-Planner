@@ -18,8 +18,12 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
     });
 
     function raf(time: number) {
-      lenisRef.current?.raf(time);
-      requestAnimationFrame(raf);
+      try {
+        lenisRef.current?.raf(time);
+        requestAnimationFrame(raf);
+      } catch (e) {
+        console.error("Lenis RAF error:", e);
+      }
     }
 
     requestAnimationFrame(raf);

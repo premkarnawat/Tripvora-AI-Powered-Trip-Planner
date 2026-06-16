@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import Particles, { initParticlesEngine } from "@tsparticles/react";
 import { loadSlim } from "@tsparticles/slim";
 import dynamic from "next/dynamic";
+import { ErrorBoundary } from "./ErrorBoundary";
 
 const AuroraCanvas = dynamic(() => import("./AuroraCanvas"), { ssr: false });
 
@@ -40,14 +41,17 @@ export function CinematicHero() {
 
       {/* LAYER 8: Aurora Shader (React Three Fiber) */}
       <div className="absolute inset-0 z-[1] pointer-events-none opacity-60 mix-blend-screen">
-        <AuroraCanvas />
+        <ErrorBoundary>
+          <AuroraCanvas />
+        </ErrorBoundary>
       </div>
 
       {/* LAYER 4-5: Atmosphere (Particles) */}
       {init && (
         <div className="absolute inset-0 z-[2] pointer-events-none opacity-40">
-          <Particles
-            id="tsparticles"
+          <ErrorBoundary>
+            <Particles
+              id="tsparticles"
             options={{
               fpsLimit: 60,
               particles: {
@@ -60,6 +64,7 @@ export function CinematicHero() {
               detectRetina: true,
             }}
           />
+          </ErrorBoundary>
         </div>
       )}
 

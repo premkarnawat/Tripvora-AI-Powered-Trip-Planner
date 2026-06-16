@@ -2,7 +2,7 @@
 
 import { motion, useInView } from "framer-motion";
 import { useRef, useEffect, useState } from "react";
-import { Bot, Plane, Hotel, Map, CheckCircle2 } from "lucide-react";
+import { Bot, Plane, Hotel, Map, Check } from "lucide-react";
 
 export function AiDemo() {
   const containerRef = useRef(null);
@@ -87,7 +87,7 @@ export function AiDemo() {
                   className="mt-4 p-4 rounded-xl bg-primary/10 border border-primary/20 text-white"
                 >
                   <div className="flex items-center gap-2 mb-2">
-                    <CheckCircle2 className="w-5 h-5 text-primary" />
+                    <Check className="w-5 h-5 text-primary" />
                     <span className="font-bold text-primary font-sora">Trip Generated!</span>
                   </div>
                   <p className="text-sm text-white/70">
