@@ -38,13 +38,19 @@ export function Navbar() {
 
         {/* Desktop Nav Links */}
         <nav className="hidden lg:flex items-center gap-8">
-          {["Home", "Trips", "Experiences", "Hotels", "About Us"].map((item, i) => (
+          {[
+            { name: "Home", href: "/" },
+            { name: "Trips", href: "/trips" },
+            { name: "Experiences", href: "/experiences" },
+            { name: "Hotels", href: "/hotels" },
+            { name: "About Us", href: "/about" }
+          ].map((item, i) => (
             <Link 
-              key={item} 
-              href="#" 
+              key={item.name} 
+              href={item.href} 
               className="relative text-sm font-medium text-white/80 hover:text-red-500 transition-colors group"
             >
-              {item}
+              {item.name}
               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-red-500 transition-all duration-300 group-hover:w-full"></span>
             </Link>
           ))}
@@ -52,9 +58,11 @@ export function Navbar() {
 
         {/* Desktop Actions */}
         <div className="hidden lg:flex items-center gap-4">
-          <Button className="bg-primary hover:bg-primary/90 text-white rounded-md px-6 shadow-[0_0_15px_rgba(20,184,166,0.3)] hover:shadow-[0_0_25px_rgba(20,184,166,0.5)] transition-all duration-300 shimmer border-none font-medium">
-            Plan My Trip
-          </Button>
+          <Link href="/plan">
+            <Button className="bg-primary hover:bg-primary/90 text-white rounded-md px-6 shadow-[0_0_15px_rgba(20,184,166,0.3)] hover:shadow-[0_0_25px_rgba(20,184,166,0.5)] transition-all duration-300 shimmer border-none font-medium">
+              Plan My Trip
+            </Button>
+          </Link>
           <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 rounded-full">
             <Menu className="w-5 h-5" />
           </Button>
