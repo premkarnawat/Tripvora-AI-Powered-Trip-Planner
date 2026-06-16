@@ -68,8 +68,14 @@ export function StoryScroll() {
         });
       });
 
+      // Refresh ScrollTrigger once everything mounts and loads to recompute positions
+      const timer = setTimeout(() => {
+        ScrollTrigger.refresh();
+      }, 500);
+
       return () => {
         mm.revert();
+        clearTimeout(timer);
       };
     }
   }, []);
