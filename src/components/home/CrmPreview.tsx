@@ -24,9 +24,9 @@ export function CrmPreview() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-8"
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-primary/10 border border-primary/20 mb-8"
             >
-              <span className="text-xs font-bold text-primary uppercase tracking-widest">Travel Business OS</span>
+              <span className="text-xs font-bold text-primary uppercase tracking-widest font-sora">Travel Business OS</span>
             </motion.div>
             
             <motion.h2 
@@ -56,7 +56,7 @@ export function CrmPreview() {
               viewport={{ once: true }}
               transition={{ delay: 0.3 }}
             >
-              <Button size="lg" className="h-14 px-8 bg-white text-[#0F172A] hover:bg-white/90 rounded-full font-bold text-base shadow-[0_0_30px_rgba(255,255,255,0.1)]">
+              <Button size="lg" className="h-14 px-8 bg-white text-[#0F172A] hover:bg-white/95 rounded-md font-bold text-base shadow-lg transition-transform duration-300 hover:scale-[1.01]">
                 Book Agency Demo
               </Button>
             </motion.div>
@@ -71,14 +71,11 @@ export function CrmPreview() {
             className="relative"
             style={{ perspective: "1000px" }}
           >
-            {/* Background Glow */}
-            <div className="absolute inset-0 bg-primary/20 blur-[100px] rounded-full pointer-events-none" />
-            
-            <div className="relative glass-card rounded-[32px] p-8 border border-white/10 shadow-2xl bg-[#0F172A]/80 backdrop-blur-2xl">
+            <div className="relative glass-card rounded-xl p-8 border border-white/10 shadow-2xl bg-[#0F172A]/90 backdrop-blur-2xl">
               
               <div className="flex items-center justify-between mb-8 pb-8 border-b border-white/5">
-                <div>
-                  <h3 className="text-xl font-bold text-white mb-1">Agency Overview</h3>
+                <div className="text-left">
+                  <h3 className="text-xl font-bold text-white mb-1 font-sora tracking-tight">Agency Overview</h3>
                   <p className="text-sm text-white/40">Real-time performance metrics</p>
                 </div>
                 <div className="flex gap-2">
@@ -88,7 +85,7 @@ export function CrmPreview() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4 text-left">
                 <StatBox icon={Users} label="Total Leads" value={2459} prefix="" suffix="" inView={isInView} />
                 <StatBox icon={DollarSign} label="Revenue" value={124.5} prefix="$" suffix="k" inView={isInView} decimals={1} />
                 <StatBox icon={LineChart} label="Conversion" value={34.2} prefix="" suffix="%" inView={isInView} decimals={1} />
@@ -106,9 +103,9 @@ export function CrmPreview() {
 
 function StatBox({ icon: Icon, label, value, prefix, suffix, inView, decimals = 0 }: any) {
   return (
-    <div className="p-5 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors duration-300">
+    <div className="p-5 rounded-lg bg-white/5 border border-white/5 hover:bg-white/10 transition-colors duration-300">
       <Icon className="w-5 h-5 text-primary mb-4" />
-      <div className="text-3xl font-bold text-white font-sora mb-1">
+      <div className="text-3xl font-bold text-white font-sora mb-1 tracking-tight">
         {prefix}
         {inView ? <CountUp end={value} decimals={decimals} duration={2.5} /> : "0"}
         {suffix}

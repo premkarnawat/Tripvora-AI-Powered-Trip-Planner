@@ -46,24 +46,22 @@ export function AiDemo() {
           </p>
         </div>
 
-        <div className="glass-card max-w-3xl mx-auto rounded-[32px] p-6 md:p-10 border border-white/5 shadow-2xl relative overflow-hidden">
-          {/* Subtle background glow */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
-
+        <div className="glass-card max-w-3xl mx-auto rounded-xl p-6 md:p-10 border border-white/10 shadow-2xl relative overflow-hidden bg-[#0F172A]/90">
+          
           {/* User Input Bubble */}
           <motion.div 
             initial={{ opacity: 0, scale: 0.9, x: 20 }}
             animate={step >= 1 ? { opacity: 1, scale: 1, x: 0 } : {}}
             className="flex justify-end mb-8"
           >
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl rounded-tr-sm px-6 py-4 border border-white/10 text-white shadow-lg">
-              <p className="font-medium">Plan a luxury trip to Bali for 5 days under $2000</p>
+            <div className="bg-white/5 backdrop-blur-md rounded-lg px-6 py-4 border border-white/10 text-white shadow-lg">
+              <p className="font-semibold font-sans">Plan a luxury trip to Bali for 5 days under $2000</p>
             </div>
           </motion.div>
 
           {/* AI Processing Bubble */}
           <div className="flex justify-start">
-            <div className="w-10 h-10 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center mr-4 shrink-0 shadow-[0_0_15px_rgba(20,184,166,0.3)]">
+            <div className="w-10 h-10 rounded-md bg-primary/10 border border-primary/20 flex items-center justify-center mr-4 shrink-0">
               <Bot className="w-5 h-5 text-primary" />
             </div>
             
@@ -84,13 +82,13 @@ export function AiDemo() {
                 <motion.div 
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-4 p-4 rounded-xl bg-primary/10 border border-primary/20 text-white"
+                  className="mt-4 p-5 rounded-lg bg-primary/5 border border-primary/20 text-white"
                 >
                   <div className="flex items-center gap-2 mb-2">
-                    <Check className="w-5 h-5 text-primary" />
-                    <span className="font-bold text-primary font-sora">Trip Generated!</span>
+                    <Check className="w-4.5 h-4.5 text-primary" />
+                    <span className="font-bold text-primary font-sora text-sm tracking-wide">Trip Generated!</span>
                   </div>
-                  <p className="text-sm text-white/70">
+                  <p className="text-sm text-white/70 leading-relaxed font-sans">
                     I've crafted a 5-day luxury itinerary in Bali, complete with direct flights and a 5-star oceanfront villa, staying exactly within your $2,000 budget.
                   </p>
                 </motion.div>

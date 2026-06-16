@@ -5,10 +5,10 @@ import { MouseEvent } from "react";
 import { Map, Tent, Navigation, Anchor } from "lucide-react";
 
 const categories = [
-  { name: "Luxury Resorts", icon: Map, color: "from-primary/20 to-primary/0" },
-  { name: "Himalayan Treks", icon: Tent, color: "from-sky-500/20 to-sky-500/0" },
-  { name: "Scuba Diving", icon: Anchor, color: "from-blue-500/20 to-blue-500/0" },
-  { name: "Local Guides", icon: Navigation, color: "from-emerald-500/20 to-emerald-500/0" },
+  { name: "Luxury Resorts", icon: Map, image: "https://images.unsplash.com/photo-1540541338287-41700207dee6?q=80&w=800&auto=format&fit=crop" },
+  { name: "Himalayan Treks", icon: Tent, image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=800&auto=format&fit=crop" },
+  { name: "Scuba Diving", icon: Anchor, image: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?q=80&w=800&auto=format&fit=crop" },
+  { name: "Local Guides", icon: Navigation, image: "https://images.unsplash.com/photo-1519046904884-53103b34b206?q=80&w=800&auto=format&fit=crop" },
 ];
 
 function TiltCard({ category }: { category: any }) {
@@ -19,9 +19,9 @@ function TiltCard({ category }: { category: any }) {
     const { left, top, width, height } = currentTarget.getBoundingClientRect();
     const x = clientX - left;
     const y = clientY - top;
-    // Calculate rotation (-15 to 15 degrees)
-    const rotateX = ((y / height) - 0.5) * -15;
-    const rotateY = ((x / width) - 0.5) * 15;
+    // Calculate rotation (-10 to 10 degrees for a tighter premium feel)
+    const rotateX = ((y / height) - 0.5) * -10;
+    const rotateY = ((x / width) - 0.5) * 10;
     
     mouseX.set(rotateY);
     mouseY.set(rotateX);
@@ -41,19 +41,32 @@ function TiltCard({ category }: { category: any }) {
       }}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      className={`relative h-64 rounded-3xl p-6 flex flex-col justify-end bg-gradient-to-br ${category.color} bg-white/5 border border-white/10 hover:border-white/20 transition-colors cursor-pointer overflow-hidden group shadow-xl`}
+      className="relative h-64 rounded-xl flex flex-col justify-end bg-[#0F172A] border border-white/10 hover:border-white/20 transition-colors cursor-pointer overflow-hidden group shadow-2xl"
     >
-      <div className="absolute top-6 left-6 p-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/5 group-hover:scale-110 transition-transform duration-300">
-        <category.icon className="w-6 h-6 text-white" />
-      </div>
-      
-      <div className="relative z-10 translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-        <h3 className="text-xl font-bold text-white font-sora mb-1">{category.name}</h3>
-        <p className="text-sm text-white/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300">Explore collection →</p>
+      {/* Background Image */}
+      <div className="absolute inset-0 z-0">
+        <img 
+          src={category.image} 
+          alt={category.name} 
+          className="w-full h-full object-cover opacity-50 group-hover:opacity-75 transition-opacity duration-700"
+        />
+        {/* Navy Blue overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A] via-[#0F172A]/40 to-transparent z-10" />
       </div>
 
-      {/* Glow effect that follows mouse - simulated by generic gradient here for simplicity */}
-      <div className="absolute inset-0 bg-gradient-to-t from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+      <div className="absolute top-6 left-6 p-2.5 rounded-md bg-[#0F172A]/80 backdrop-blur-md border border-white/10 group-hover:scale-105 transition-transform duration-300 z-20">
+        <category.icon className="w-5 h-5 text-white" />
+      </div>
+      
+      <div className="relative z-20 p-6 translate-y-2 group-hover:translate-y-0 transition-transform duration-500 ease-out text-left">
+        <h3 className="text-xl font-bold text-white font-sora mb-1 tracking-tight">{category.name}</h3>
+        <p className="text-xs font-semibold text-primary opacity-0 group-hover:opacity-100 transition-all duration-500 font-sans">
+          Explore Collection &rarr;
+        </p>
+      </div>
+
+      {/* Border border lighting effect */}
+      <div className="absolute inset-0 border border-white/5 group-hover:border-primary/30 rounded-xl transition-colors duration-500 pointer-events-none z-30" />
     </motion.div>
   );
 }

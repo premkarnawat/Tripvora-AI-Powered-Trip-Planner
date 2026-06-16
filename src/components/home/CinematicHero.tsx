@@ -27,16 +27,20 @@ export function CinematicHero() {
   return (
     <div className="relative min-h-[100dvh] md:min-h-screen w-full flex items-center justify-center overflow-hidden bg-[#0F172A]">
       
-      {/* LAYER 1-3: Environment (Parallax Background) */}
+      {/* LAYER 1-3: Environment (Parallax Video Background) */}
       <motion.div style={{ y: y1 }} className="absolute inset-0 z-0 w-full h-full pointer-events-none">
-        <img 
-          src="/hero_bg.png" 
-          alt="Mountain Landscape" 
-          className="object-cover object-bottom w-full h-full scale-[1.15]"
-        />
-        {/* Gradients */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A] via-[#0F172A]/40 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0F172A]/80 via-transparent to-[#0F172A]/80" />
+        <video 
+          autoPlay 
+          loop 
+          muted 
+          playsInline 
+          className="object-cover object-center w-full h-full scale-[1.05]"
+        >
+          <source src="https://assets.mixkit.co/videos/preview/mixkit-aerial-panorama-of-a-landscape-with-mountains-and-a-lake-4249-large.mp4" type="video/mp4" />
+        </video>
+        {/* Gradients to enforce true Navy Blue and high readability */}
+        <div className="absolute inset-0 bg-[#0F172A]/60 mix-blend-multiply" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A] via-[#0F172A]/30 to-[#0F172A]/50" />
       </motion.div>
 
       {/* LAYER 8: Aurora Shader (React Three Fiber) */}
@@ -105,10 +109,10 @@ export function CinematicHero() {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md shadow-[0_0_20px_rgba(20,184,166,0.15)] mb-8"
+          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-md bg-white/5 border border-white/10 backdrop-blur-md shadow-[0_1px_2px_rgba(0,0,0,0.5)] mb-8"
         >
-          <Sparkles className="w-4 h-4 text-primary animate-pulse" />
-          <span className="text-sm font-medium text-white/90 tracking-wide uppercase text-xs">AI Powered Travel Platform</span>
+          <Sparkles className="w-3.5 h-3.5 text-primary animate-pulse" />
+          <span className="text-xs font-semibold text-white/90 tracking-widest uppercase font-sora">AI Powered Travel Platform</span>
         </motion.div>
 
         <motion.h1 
@@ -137,9 +141,8 @@ export function CinematicHero() {
           transition={{ duration: 1, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
           className="w-full max-w-5xl mx-auto relative group"
         >
-          {/* Custom tracking mouse-glow effect (simulated by radial gradient) */}
-          <div className="absolute -inset-1 bg-gradient-to-r from-primary to-secondary rounded-full blur-[30px] opacity-20 group-hover:opacity-40 transition duration-1000"></div>
-          <div className="backdrop-blur-[20px]">
+          <div className="absolute -inset-[1px] bg-gradient-to-r from-white/15 to-white/5 rounded-xl opacity-100 transition duration-500"></div>
+          <div className="backdrop-blur-[20px] relative z-10">
             <GlassSearchCard />
           </div>
         </motion.div>

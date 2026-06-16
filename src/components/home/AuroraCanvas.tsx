@@ -21,14 +21,14 @@ const fragmentShader = `
     float a = time * 0.5;
     float d = length(p);
     
-    // Create soft aurora-like color bands (Teal and Sky Blue)
-    vec3 col = vec3(0.05, 0.09, 0.16); // Base Navy
-    col += vec3(0.08, 0.72, 0.65) * 0.1 * sin(p.x * 5.0 + time + p.y * 3.0); // Teal
-    col += vec3(0.22, 0.74, 0.97) * 0.1 * cos(p.y * 4.0 - time + p.x * 2.0); // Sky Blue
+    // Create soft aurora-like color bands (Deep Navy & Slate Blue)
+    vec3 col = vec3(0.03, 0.05, 0.1); // Dark Base Navy
+    col += vec3(0.05, 0.2, 0.4) * 0.08 * sin(p.x * 3.0 + time + p.y * 2.0); // Deep Blue
+    col += vec3(0.08, 0.35, 0.5) * 0.05 * cos(p.y * 3.0 - time + p.x * 1.5); // Deep Slate Blue
     
     // Mask to bottom/center
     float mask = smoothstep(1.0, 0.0, d * 0.8);
-    gl_FragColor = vec4(col, mask * 0.5);
+    gl_FragColor = vec4(col, mask * 0.4);
   }
 `;
 

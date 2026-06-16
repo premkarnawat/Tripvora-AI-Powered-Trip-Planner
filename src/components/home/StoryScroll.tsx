@@ -1,89 +1,178 @@
 "use client";
 
-import { useRef } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
-import { Map, Plane, Compass, Sparkles } from "lucide-react";
+import { useRef, useEffect, useState } from "react";
+import { Sparkles, Map, Compass, MapPin, CreditCard, Heart } from "lucide-react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-const steps = [
-  { title: "Dream", icon: Sparkles, desc: "Get inspired by curated global experiences." },
-  { title: "Plan", icon: Map, desc: "AI builds your personalized itinerary instantly." },
-  { title: "Customize", icon: Compass, desc: "Tweak hotels, flights, and activities easily." },
-  { title: "Book", icon: Plane, desc: "Secure everything with one seamless checkout." },
+const stages = [
+  { 
+    title: "Dream", 
+    icon: Sparkles, 
+    desc: "Get inspired by curated global experiences and luxury retreats tailored to your unique interests.", 
+    image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800&auto=format&fit=crop" 
+  },
+  { 
+    title: "Plan", 
+    icon: Map, 
+    desc: "Our proprietary AI builds your custom itinerary using real-time flight and hotel data in seconds.", 
+    image: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=800&auto=format&fit=crop" 
+  },
+  { 
+    title: "Customize", 
+    icon: Compass, 
+    desc: "Tweak routes, swap hotels, and adjust activities with drag-and-drop simplicity.", 
+    image: "https://images.unsplash.com/photo-1527631746610-bca00a040d60?q=80&w=800&auto=format&fit=crop" 
+  },
+  { 
+    title: "Explore", 
+    icon: MapPin, 
+    desc: "Discover local secret spots, curated dining recommendations, and exclusive off-the-beaten-path experiences.", 
+    image: "https://images.unsplash.com/photo-1488646953014-85cb44e25828?q=80&w=800&auto=format&fit=crop" 
+  },
+  { 
+    title: "Book", 
+    icon: CreditCard, 
+    desc: "Secure flights, premium hotels, and local tours with a single seamless checkout.", 
+    image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=800&auto=format&fit=crop" 
+  },
+  { 
+    title: "Experience", 
+    icon: Heart, 
+    desc: "Embark on a fully-managed trip with 24/7 on-the-road support and instant WhatsApp updates.", 
+    image: "https://images.unsplash.com/photo-1506929562872-bb421503ef21?q=80&w=800&auto=format&fit=crop" 
+  }
 ];
 
 export function StoryScroll() {
   const containerRef = useRef<HTMLDivElement>(null);
-  
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start center", "end center"]
-  });
+  const leftPanelRef = useRef<HTMLDivElement>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      gsap.registerPlugin(ScrollTrigger);
+
+      const mm = gsap.matchMedia(containerRef);
+
+      mm.add("(min-width: 768px)", () => {
+        // Pin the left panel while scrolling past all stage sections
+        ScrollTrigger.create({
+          trigger: containerRef.current,
+          start: "top top",
+          end: "bottom bottom",
+          pin: leftPanelRef.current,
+          pinSpacing: false,
+          scrub: true,
+        });
+
+        // Trigger active state change for each stage block
+        stages.forEach((_, index) => {
+          ScrollTrigger.create({
+            trigger: `#stage-trigger-${index}`,
+            start: "top 40%",
+            end: "bottom 40%",
+            onEnter: () => setActiveIndex(index),
+            onEnterBack: () => setActiveIndex(index),
+          });
+        });
+      });
+
+      return () => {
+        mm.revert();
+      };
+    }
+  }, []);
 
   return (
-    <section ref={containerRef} className="py-40 bg-[#0F172A] relative overflow-hidden">
-      <div className="max-w-[1400px] mx-auto px-4 md:px-8">
+    <section ref={containerRef} className="relative bg-[#0F172A] w-full min-h-screen text-white">
+      
+      {/* Title Header */}
+      <div className="w-full max-w-[1400px] mx-auto px-4 md:px-8 pt-32 pb-12 flex flex-col md:flex-row md:items-end justify-between border-b border-white/5">
+        <div>
+          <span className="text-xs font-semibold text-primary uppercase tracking-widest block mb-3 font-sora">The Journey Blueprint</span>
+          <h2 className="text-4xl md:text-6xl font-bold font-sora tracking-tight leading-[1.1]">
+            How Tripvora Works.
+          </h2>
+        </div>
+        <p className="text-white/40 max-w-sm text-sm font-sans mt-4 md:mt-0 leading-relaxed">
+          From inspiration to your return home, our platform designs and handles every single aspect of your trip.
+        </p>
+      </div>
+
+      {/* Grid Container */}
+      <div className="w-full max-w-[1400px] mx-auto flex flex-col md:flex-row relative">
         
-        <div className="text-center mb-24">
-          <motion.h2 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-4xl md:text-6xl font-bold text-white font-sora mb-6"
-          >
-            How Tripvora Works
-          </motion.h2>
+        {/* Left Visual Panel - Fixed on Desktop */}
+        <div 
+          ref={leftPanelRef}
+          className="w-full md:w-1/2 h-[50vh] md:h-screen flex items-center justify-center p-4 md:p-12 z-20 pointer-events-none"
+        >
+          <div className="w-full h-full max-h-[500px] relative border border-white/10 bg-slate-900/60 p-1.5 rounded-xl overflow-hidden shadow-2xl">
+            {stages.map((stage, index) => (
+              <div 
+                key={index}
+                className={`absolute inset-1.5 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                  index === activeIndex ? "opacity-100 scale-100 z-10" : "opacity-0 scale-95 z-0"
+                }`}
+              >
+                <img 
+                  src={stage.image} 
+                  alt={stage.title} 
+                  className="w-full h-full object-cover rounded-lg brightness-90"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A]/80 via-transparent to-transparent rounded-lg" />
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className="relative">
-          {/* Progress Line */}
-          <div className="absolute top-1/2 left-0 w-full h-1 bg-white/10 -translate-y-1/2 hidden md:block">
-            <motion.div 
-              className="h-full bg-gradient-to-r from-primary to-secondary"
-              style={{ scaleX: scrollYProgress, transformOrigin: "left" }}
-            />
-          </div>
+        {/* Right Stage Triggers & Information Scroll */}
+        <div className="w-full md:w-1/2 flex flex-col px-4 md:px-12 z-10">
+          {stages.map((stage, index) => {
+            const Icon = stage.icon;
+            const isActive = index === activeIndex;
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 md:gap-6 relative z-10">
-            {steps.map((step, index) => {
-              // Custom transforms for each step to create a staggered entry based on scroll
-              const start = Math.max(0, (index - 1) * 0.25);
-              const end = index === 0 ? 0.01 : index * 0.25;
-
-              const y = useTransform(
-                scrollYProgress, 
-                [start, end], 
-                [50, 0]
-              );
-              const opacity = useTransform(
-                scrollYProgress, 
-                [start, end], 
-                [0.2, 1]
-              );
-
-              return (
-                <motion.div 
-                  key={index}
-                  style={{ y, opacity }}
-                  className="flex flex-col items-center text-center group"
-                >
-                  <div className="w-20 h-20 rounded-full bg-[#0F172A] border-4 border-[#0F172A] shadow-[0_0_0_2px_rgba(255,255,255,0.1)] group-hover:shadow-[0_0_0_2px_#14B8A6] flex items-center justify-center mb-6 transition-all duration-500 relative z-10">
-                    <step.icon className="w-8 h-8 text-white/50 group-hover:text-primary transition-colors duration-500" />
-                    
-                    {/* Active Glow */}
-                    <motion.div 
-                      className="absolute inset-0 bg-primary/20 rounded-full blur-xl -z-10"
-                      style={{ opacity }}
-                    />
+            return (
+              <div 
+                key={index} 
+                id={`stage-trigger-${index}`}
+                className="min-h-[60vh] md:min-h-screen flex flex-col justify-center py-20 border-b border-white/5 last:border-b-0"
+              >
+                <div className={`transition-all duration-500 flex flex-col text-left ${isActive ? "opacity-100 translate-x-0" : "opacity-30 -translate-x-2"}`}>
+                  
+                  {/* Indicator Icon */}
+                  <div className={`w-12 h-12 flex items-center justify-center border transition-all duration-500 rounded-md mb-6 ${
+                    isActive ? "border-primary bg-primary/10 text-primary" : "border-white/10 text-white/30"
+                  }`}>
+                    <Icon className="w-5 h-5" />
                   </div>
-                  <h3 className="text-2xl font-bold text-white font-sora mb-3">{step.title}</h3>
-                  <p className="text-white/50 text-sm max-w-[200px]">{step.desc}</p>
-                </motion.div>
-              );
-            })}
-          </div>
+
+                  <span className="text-xs font-bold text-primary uppercase tracking-widest mb-2 font-sora">
+                    Stage 0{index + 1}
+                  </span>
+                  
+                  <h3 className="text-3xl md:text-4xl font-bold text-white font-sora tracking-tight mb-4">
+                    {stage.title}
+                  </h3>
+                  
+                  <p className="text-white/60 text-base font-sans max-w-md leading-relaxed">
+                    {stage.desc}
+                  </p>
+
+                  <div className="mt-8 flex items-center gap-4">
+                    <span className="h-[1px] w-8 bg-white/20" />
+                    <span className="text-xs text-white/40 tracking-wider font-mono">0{index + 1} / 0{stages.length}</span>
+                  </div>
+
+                </div>
+              </div>
+            );
+          })}
         </div>
 
       </div>
+
     </section>
   );
 }

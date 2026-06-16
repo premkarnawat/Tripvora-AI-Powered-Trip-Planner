@@ -30,7 +30,7 @@ export function Destinations() {
               Handpicked premium experiences verified by our experts.
             </p>
           </div>
-          <Button variant="outline" className="border-white/20 text-white hover:bg-white/10 rounded-full w-fit bg-transparent">
+          <Button variant="outline" className="border-white/20 text-white hover:bg-white/10 rounded-md w-fit bg-transparent font-sora text-sm">
             View All Destinations
           </Button>
         </div>
@@ -43,29 +43,29 @@ export function Destinations() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1, duration: 0.6 }}
-              className="group relative h-[450px] rounded-[32px] overflow-hidden cursor-pointer"
+              className="group relative h-[450px] rounded-xl overflow-hidden cursor-pointer border border-white/5"
             >
               <div className="absolute inset-0 bg-[#0F172A]">
                 <img 
                   src={dest.image} 
                   alt={dest.name} 
-                  className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 opacity-80 group-hover:opacity-100"
+                  className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105 opacity-80 group-hover:opacity-100"
                 />
               </div>
               
               {/* Dark Gradient Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A]/90 via-[#0F172A]/20 to-transparent transition-opacity duration-500 group-hover:opacity-80" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A]/90 via-[#0F172A]/10 to-transparent transition-opacity duration-500 group-hover:opacity-85" />
 
               {/* Hover Content */}
               <div className="absolute inset-0 p-8 flex flex-col justify-end">
                 <div className="translate-y-8 group-hover:translate-y-0 transition-transform duration-500 ease-out">
                   <h3 className="text-2xl font-bold text-white font-sora mb-2">{dest.name}</h3>
-                  <div className="flex items-center gap-4 mb-6 opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">
-                    <span className="text-sm font-medium text-primary">50+ Experiences</span>
-                    <span className="w-1 h-1 rounded-full bg-white/30" />
-                    <span className="text-sm font-medium text-white/70">From $1,200</span>
+                  <div className="flex items-center gap-3 mb-6 opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">
+                    <span className="text-sm font-semibold text-primary font-sans">50+ Experiences</span>
+                    <span className="text-white/20">|</span>
+                    <span className="text-sm font-medium text-white/70 font-sans">From $1,200</span>
                   </div>
-                  <Button className="w-full bg-white/10 hover:bg-white text-white hover:text-[#0F172A] backdrop-blur-md border border-white/20 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-500 delay-200">
+                  <Button className="w-full bg-white/10 hover:bg-white text-white hover:text-[#0F172A] backdrop-blur-md border border-white/20 rounded-md opacity-0 group-hover:opacity-100 transition-all duration-500 delay-140 font-sora">
                     Explore
                   </Button>
                 </div>

@@ -56,14 +56,14 @@ export function MacbookShowcase() {
                     transition={{ delay: day * 0.2 }}
                   />
                   <h4 className="text-white font-bold mb-2">Day {day}</h4>
-                  <div className="h-16 rounded-xl bg-white/5 border border-white/10 w-full mb-2 animate-pulse" />
-                  <div className="h-12 rounded-xl bg-white/5 border border-white/10 w-3/4 animate-pulse" />
+                  <div className="h-16 rounded-md bg-white/5 border border-white/10 w-full mb-2 animate-pulse" />
+                  <div className="h-12 rounded-md bg-white/5 border border-white/10 w-3/4 animate-pulse" />
                 </div>
              ))}
           </div>
 
           {/* Map Area */}
-          <div className="flex-1 rounded-2xl bg-slate-800/50 border border-white/5 relative overflow-hidden">
+          <div className="flex-1 rounded-lg bg-slate-800/50 border border-white/5 relative overflow-hidden">
              {/* Simulated map graphic */}
              <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/20 to-transparent" />
              <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
