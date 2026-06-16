@@ -29,7 +29,7 @@ export function AiDemo() {
   }, [isInView]);
 
   return (
-    <section ref={containerRef} className="py-32 relative bg-[#04060E] overflow-hidden border-t border-white/5">
+    <section ref={containerRef} className="py-32 relative bg-[radial-gradient(circle_at_center,rgba(30,41,59,0.25)_0%,rgba(4,6,14,1)_70%)] bg-[#04060E] overflow-hidden border-t border-white/5">
       <div className="max-w-[1200px] mx-auto px-4 md:px-8">
         
         <div className="text-center mb-16">
@@ -46,7 +46,7 @@ export function AiDemo() {
           </p>
         </div>
 
-        <div className="glass-card max-w-3xl mx-auto rounded-xl p-6 md:p-10 border border-white/10 shadow-2xl relative overflow-hidden bg-[#0F172A]/90">
+        <div className="max-w-3xl mx-auto rounded-xl p-6 md:p-10 border border-white/[0.08] shadow-2xl relative overflow-hidden bg-black/95 backdrop-blur-md">
           
           {/* User Input Bubble */}
           <motion.div 
@@ -55,14 +55,14 @@ export function AiDemo() {
             className="flex justify-end mb-8"
           >
             <div className="bg-white/5 backdrop-blur-md rounded-lg px-6 py-4 border border-white/10 text-white shadow-lg">
-              <p className="font-semibold font-sans">Plan a luxury trip to Bali for 5 days under $2000</p>
+              <p className="font-semibold font-sans">Plan a luxury trip to Bali for 5 days under ₹1,50,000</p>
             </div>
           </motion.div>
 
           {/* AI Processing Bubble */}
           <div className="flex justify-start">
-            <div className="w-10 h-10 rounded-md bg-primary/10 border border-primary/20 flex items-center justify-center mr-4 shrink-0">
-              <Bot className="w-5 h-5 text-primary" />
+            <div className="w-10 h-10 rounded-md bg-white/5 border border-white/10 flex items-center justify-center mr-4 shrink-0">
+              <Bot className="w-5 h-5 text-white" />
             </div>
             
             <div className="flex flex-col gap-3 w-full max-w-lg">
@@ -82,14 +82,14 @@ export function AiDemo() {
                 <motion.div 
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-4 p-5 rounded-lg bg-primary/5 border border-primary/20 text-white"
+                  className="mt-4 p-5 rounded-lg bg-white/5 border border-white/10 text-white"
                 >
                   <div className="flex items-center gap-2 mb-2">
-                    <Check className="w-4.5 h-4.5 text-primary" />
-                    <span className="font-bold text-primary font-sora text-sm tracking-wide">Trip Generated!</span>
+                    <Check className="w-4.5 h-4.5 text-white" />
+                    <span className="font-bold text-white font-sora text-sm tracking-wide">Trip Generated!</span>
                   </div>
-                  <p className="text-sm text-white/70 leading-relaxed font-sans">
-                    I've crafted a 5-day luxury itinerary in Bali, complete with direct flights and a 5-star oceanfront villa, staying exactly within your $2,000 budget.
+                  <p className="text-sm text-white/80 leading-relaxed font-sans">
+                    I've crafted a 5-day luxury itinerary in Bali, complete with direct flights and a 5-star oceanfront villa, staying exactly within your ₹1,50,000 budget.
                   </p>
                 </motion.div>
               )}
@@ -110,8 +110,8 @@ function StepItem({ icon: Icon, text, delay }: { icon: any, text: string, delay:
       transition={{ delay }}
       className="flex items-center gap-3"
     >
-      <Icon className="w-4 h-4 text-white/40" />
-      <span className="text-sm text-white/60 font-medium">{text}</span>
+      <Icon className="w-4 h-4 text-white" />
+      <span className="text-sm text-white font-medium">{text}</span>
     </motion.div>
   );
 }

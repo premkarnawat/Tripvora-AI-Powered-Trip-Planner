@@ -2,6 +2,8 @@
 
 import { useRef, useEffect, useState } from "react";
 import { Sparkles, Map, Compass, MapPin, CreditCard, Heart } from "lucide-react";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 const stages = [
   { 
@@ -44,9 +46,13 @@ const stages = [
 
 export function StoryScroll() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
+    // Register GSAP ScrollTrigger if not already registered
+    gsap.registerPlugin(ScrollTrigger);
+
     // Utilize IntersectionObserver for scrolling stage changes.
     // This is 100% reliable with smooth scrolling libraries like Lenis.
     const observerOptions = {
@@ -74,8 +80,54 @@ export function StoryScroll() {
       if (el) observer.observe(el);
     });
 
+    // GSAP ScrollTrigger to move the card up and down as we scroll
+    let ctx = gsap.context(() => {
+      let mm = gsap.matchMedia();
+
+      // Desktop animation: higher translation range
+      mm.add("(min-width: 768px)", () => {
+        if (cardRef.current && containerRef.current) {
+          gsap.fromTo(
+            cardRef.current,
+            { y: -100 },
+            {
+              y: 100,
+              ease: "none",
+              scrollTrigger: {
+                trigger: containerRef.current,
+                start: "top bottom",
+                end: "bottom top",
+                scrub: true,
+              },
+            }
+          );
+        }
+      });
+
+      // Mobile animation: subtle translation to avoid clipping
+      mm.add("(max-width: 767px)", () => {
+        if (cardRef.current && containerRef.current) {
+          gsap.fromTo(
+            cardRef.current,
+            { y: -25 },
+            {
+              y: 25,
+              ease: "none",
+              scrollTrigger: {
+                trigger: containerRef.current,
+                start: "top bottom",
+                end: "bottom top",
+                scrub: true,
+              },
+            }
+          );
+        }
+      });
+    });
+
     return () => {
       observer.disconnect();
+      ctx.revert();
     };
   }, []);
 
@@ -102,7 +154,7 @@ export function StoryScroll() {
         <div 
           className="w-full md:w-1/2 h-[45vh] md:h-[calc(100vh-10rem)] sticky top-0 md:top-24 flex items-center justify-center p-4 md:p-12 z-20 bg-[#04060E] md:bg-transparent border-b md:border-b-0 border-white/5 pointer-events-none"
         >
-          <div className="w-full h-full max-h-[460px] relative border border-white/10 bg-slate-900/60 p-1.5 rounded-xl overflow-hidden shadow-2xl">
+          <div ref={cardRef} className="w-full h-full max-h-[460px] relative border border-white/10 bg-slate-900/60 p-1.5 rounded-xl overflow-hidden shadow-2xl">
             {stages.map((stage, index) => (
               <div 
                 key={index}

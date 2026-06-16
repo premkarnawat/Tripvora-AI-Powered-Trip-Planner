@@ -21,7 +21,7 @@ export function Navbar() {
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
-      className={`fixed top-0 left-0 right-0 z-50 px-4 md:px-8 py-4 transition-all duration-300 ${isScrolled ? 'bg-[#0F172A]/90 backdrop-blur-xl border-b border-white/10 py-3' : 'bg-transparent'}`}
+      className={`fixed top-0 left-0 right-0 z-50 px-4 md:px-8 py-4 transition-all duration-300 ${isScrolled ? 'bg-black/95 backdrop-blur-xl border-b border-white/[0.08] py-3' : 'bg-transparent'}`}
     >
       <div className="max-w-[1400px] mx-auto flex items-center justify-between">
         
@@ -42,10 +42,10 @@ export function Navbar() {
             <Link 
               key={item} 
               href="#" 
-              className="relative text-sm font-medium text-white/80 hover:text-white transition-colors group"
+              className="relative text-sm font-medium text-white/80 hover:text-red-500 transition-colors group"
             >
               {item}
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-red-500 transition-all duration-300 group-hover:w-full"></span>
             </Link>
           ))}
         </nav>
