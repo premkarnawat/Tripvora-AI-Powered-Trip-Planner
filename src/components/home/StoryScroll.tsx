@@ -2,7 +2,7 @@
 
 import { useRef, useEffect, useState } from "react";
 import { Sparkles, Map, Compass, MapPin, CreditCard, Heart } from "lucide-react";
-import { motion, useScroll, useTransform, useSpring } from "framer-motion";
+import { motion, useScroll, useTransform, useSpring, useMotionValue } from "framer-motion";
 
 const stages = [
   { 
