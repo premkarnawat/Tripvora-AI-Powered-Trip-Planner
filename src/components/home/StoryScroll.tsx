@@ -2,8 +2,7 @@
 
 import { useRef, useEffect, useState } from "react";
 import { Sparkles, Map, Compass, MapPin, CreditCard, Heart } from "lucide-react";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { motion, useScroll, useTransform, useSpring } from "framer-motion";
 
 const stages = [
   { 
@@ -46,12 +45,15 @@ const stages = [
 
 export function StoryScroll() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const cardRef = useRef<HTMLDivElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    // Register GSAP ScrollTrigger if not already registered
-    gsap.registerPlugin(ScrollTrigger);
+    // Handle mobile layout state
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    handleResize();
+    window.addEventListener("resize", handleResize);
 
     // Utilize IntersectionObserver for scrolling stage changes.
     // This is 100% reliable with smooth scrolling libraries like Lenis.
@@ -80,56 +82,24 @@ export function StoryScroll() {
       if (el) observer.observe(el);
     });
 
-    // GSAP ScrollTrigger to move the card up and down as we scroll
-    let ctx = gsap.context(() => {
-      let mm = gsap.matchMedia();
-
-      // Desktop animation: higher translation range
-      mm.add("(min-width: 768px)", () => {
-        if (cardRef.current && containerRef.current) {
-          gsap.fromTo(
-            cardRef.current,
-            { y: -100 },
-            {
-              y: 100,
-              ease: "none",
-              scrollTrigger: {
-                trigger: containerRef.current,
-                start: "top bottom",
-                end: "bottom top",
-                scrub: true,
-              },
-            }
-          );
-        }
-      });
-
-      // Mobile animation: subtle translation to avoid clipping
-      mm.add("(max-width: 767px)", () => {
-        if (cardRef.current && containerRef.current) {
-          gsap.fromTo(
-            cardRef.current,
-            { y: -25 },
-            {
-              y: 25,
-              ease: "none",
-              scrollTrigger: {
-                trigger: containerRef.current,
-                start: "top bottom",
-                end: "bottom top",
-                scrub: true,
-              },
-            }
-          );
-        }
-      });
-    });
-
     return () => {
       observer.disconnect();
-      ctx.revert();
+      window.removeEventListener("resize", handleResize);
     };
   }, []);
+
+  // Framer Motion continuous scroll parallax for the card wrapper
+  const { scrollYProgress } = useScroll({
+    target: gridRef,
+    offset: ["start start", "end end"]
+  });
+
+  const yRawDesktop = useTransform(scrollYProgress, [0, 1], [-120, 120]);
+  const yRawMobile = useTransform(scrollYProgress, [0, 1], [-30, 30]);
+  const yRaw = isMobile ? yRawMobile : yRawDesktop;
+  
+  // Apply a smooth spring transition to eliminate scroll stutter
+  const y = useSpring(yRaw, { stiffness: 90, damping: 22, mass: 0.6 });
 
   return (
     <section ref={containerRef} className="relative bg-[#04060E] w-full min-h-screen text-white">
@@ -148,13 +118,16 @@ export function StoryScroll() {
       </div>
 
       {/* Grid Container */}
-      <div className="w-full max-w-[1400px] mx-auto flex flex-col md:flex-row relative">
+      <div ref={gridRef} className="w-full max-w-[1400px] mx-auto flex flex-col md:flex-row relative">
         
         {/* Left Visual Panel - Sticky on Desktop & Mobile */}
         <div 
           className="w-full md:w-1/2 h-[45vh] md:h-[calc(100vh-10rem)] sticky top-0 md:top-24 flex items-center justify-center p-4 md:p-12 z-20 bg-[#04060E] md:bg-transparent border-b md:border-b-0 border-white/5 pointer-events-none"
         >
-          <div ref={cardRef} className="w-full h-full max-h-[460px] relative border border-white/10 bg-slate-900/60 p-1.5 rounded-xl overflow-hidden shadow-2xl">
+          <motion.div 
+            style={{ y }}
+            className="w-full h-full max-h-[460px] relative border border-white/10 bg-slate-900/60 p-1.5 rounded-xl overflow-hidden shadow-2xl"
+          >
             {stages.map((stage, index) => (
               <div 
                 key={index}
@@ -170,7 +143,7 @@ export function StoryScroll() {
                 <div className="absolute inset-0 bg-gradient-to-t from-[#04060E]/80 via-transparent to-transparent rounded-lg" />
               </div>
             ))}
-          </div>
+          </motion.div>
         </div>
 
         {/* Right Stage Triggers & Information Scroll */}

@@ -29,7 +29,13 @@ export function AiDemo() {
   }, [isInView]);
 
   return (
-    <section ref={containerRef} className="py-32 relative bg-[radial-gradient(circle_at_center,rgba(30,41,59,0.25)_0%,rgba(4,6,14,1)_70%)] bg-[#04060E] overflow-hidden border-t border-white/5">
+    <section 
+      ref={containerRef} 
+      className="py-32 relative bg-[#04060E] overflow-hidden border-t border-white/5"
+      style={{
+        background: "radial-gradient(circle at center, rgba(30, 41, 59, 0.25) 0%, rgba(4, 6, 14, 1) 70%)"
+      }}
+    >
       <div className="max-w-[1200px] mx-auto px-4 md:px-8">
         
         <div className="text-center mb-16">
