@@ -98,9 +98,12 @@ export function StoryScroll() {
       const scrolled = -rect.top;
       const progress = Math.max(0, Math.min(1, scrolled / totalDist));
       
-      const targetY = isMobile
-        ? (progress - 0.5) * 50
-        : (progress - 0.5) * 240;
+      // Calculate dynamic wrapper and card heights to prevent border overflow
+      const wrapperHeight = isMobile ? viewportHeight * 0.45 : viewportHeight - 160;
+      const cardHeight = Math.min(460, wrapperHeight - 32);
+      const maxTravel = Math.max(0, (wrapperHeight - cardHeight) / 2 - 16);
+      
+      const targetY = (progress - 0.5) * (maxTravel * 2);
         
       yRaw.set(targetY);
     };
