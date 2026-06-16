@@ -1,3 +1,5 @@
+"use client";
+
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Compass, MapPin, Navigation2, Search, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
