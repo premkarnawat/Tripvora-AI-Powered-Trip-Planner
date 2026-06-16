@@ -56,7 +56,8 @@ export function MacbookShowcase() {
         className="w-[90%] max-w-5xl aspect-video bg-[#121824] rounded-t-3xl border-[16px] border-[#04060E] shadow-[0_-20px_60px_rgba(20,184,166,0.1)] relative overflow-hidden"
       >
         {/* Mock Screen Content - Map and Timeline */}
-        <div className="absolute inset-0 bg-[#04060E] p-8 flex gap-8">
+        {/* We use scale-42 on mobile (origin top-left) and w-[238%] h-[238%] to fit the container perfectly without squishing text */}
+        <div className="absolute inset-0 origin-top-left scale-[0.42] md:scale-100 w-[238%] md:w-full h-[238%] md:h-full bg-[#04060E] p-8 flex gap-8">
           
           {/* Timeline Sidebar */}
           <div className="w-1/3 h-full border-r border-white/10 flex flex-col gap-6 relative">

@@ -56,7 +56,7 @@ export function CrmPreview() {
               viewport={{ once: true }}
               transition={{ delay: 0.3 }}
             >
-              <Button size="lg" className="h-14 px-8 bg-white text-[#0F172A] hover:bg-white/95 rounded-md font-bold text-base shadow-lg transition-transform duration-300 hover:scale-[1.01]">
+              <Button size="lg" className="h-14 px-8 bg-white text-black hover:bg-white/95 rounded-md font-bold text-base shadow-lg transition-transform duration-300 hover:scale-[1.01]">
                 Book Agency Demo
               </Button>
             </motion.div>
@@ -71,7 +71,7 @@ export function CrmPreview() {
             className="relative"
             style={{ perspective: "1000px" }}
           >
-            <div className="relative glass-card rounded-xl p-8 border border-white/10 shadow-2xl bg-[#0F172A]/90 backdrop-blur-2xl">
+            <div className="relative rounded-xl p-8 border border-white/[0.08] shadow-2xl bg-black/95 backdrop-blur-2xl">
               
               <div className="flex items-center justify-between mb-8 pb-8 border-b border-white/5">
                 <div className="text-left">
@@ -87,7 +87,7 @@ export function CrmPreview() {
 
               <div className="grid grid-cols-2 gap-4 text-left">
                 <StatBox icon={Users} label="Total Leads" value={2459} prefix="" suffix="" inView={isInView} />
-                <StatBox icon={DollarSign} label="Revenue" value={124.5} prefix="$" suffix="k" inView={isInView} decimals={1} />
+                <StatBox icon={DollarSign} label="Revenue" value={12.4} prefix="₹" suffix="L" inView={isInView} decimals={1} />
                 <StatBox icon={LineChart} label="Conversion" value={34.2} prefix="" suffix="%" inView={isInView} decimals={1} />
                 <StatBox icon={CalendarDays} label="Bookings" value={182} prefix="" suffix="" inView={isInView} />
               </div>
