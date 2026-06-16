@@ -114,7 +114,7 @@ export function CinematicHero() {
                 color: { value: "#14B8A6" },
                 move: { enable: true, direction: "none", outModes: { default: "out" }, random: true, speed: 0.5, straight: false },
                 number: { density: { enable: true, width: 800 }, value: 50 },
-                opacity: { value: 0.3, random: true },
+                opacity: { value: { min: 0.1, max: 0.3 } },
                 size: { value: { min: 1, max: 3 } },
               },
               detectRetina: true,
