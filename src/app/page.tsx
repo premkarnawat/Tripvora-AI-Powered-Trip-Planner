@@ -17,7 +17,7 @@ export default function Home() {
   const y = useTransform(scrollYProgress, [0, 1], [0, -100]);
 
   return (
-    <main className="bg-[#04060E] min-h-screen overflow-hidden">
+    <main className="bg-[#04060E] min-h-screen overflow-x-hidden">
       <CinematicHero />
       <StoryScroll />
       <AiDemo />

@@ -2,8 +2,6 @@
 
 import { useRef, useEffect, useState } from "react";
 import { Sparkles, Map, Compass, MapPin, CreditCard, Heart } from "lucide-react";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 const stages = [
   { 
@@ -46,38 +44,39 @@ const stages = [
 
 export function StoryScroll() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const leftPanelRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      gsap.registerPlugin(ScrollTrigger);
+    // Utilize IntersectionObserver for scrolling stage changes.
+    // This is 100% reliable with smooth scrolling libraries like Lenis.
+    const observerOptions = {
+      root: null,
+      rootMargin: "-45% 0px -45% 0px", // Trigger when the stage is in the middle of the viewport
+      threshold: 0,
+    };
 
-      const mm = gsap.matchMedia(containerRef);
-
-      mm.add("(min-width: 768px)", () => {
-        // Trigger active state change for each stage block as they scroll into view
-        stages.forEach((_, index) => {
-          ScrollTrigger.create({
-            trigger: `#stage-trigger-${index}`,
-            start: "top 45%",
-            end: "bottom 45%",
-            onEnter: () => setActiveIndex(index),
-            onEnterBack: () => setActiveIndex(index),
-          });
-        });
+    const observerCallback = (entries: IntersectionObserverEntry[]) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const id = entry.target.id;
+          const index = parseInt(id.replace("stage-trigger-", ""), 10);
+          if (!isNaN(index)) {
+            setActiveIndex(index);
+          }
+        }
       });
+    };
 
-      // Refresh ScrollTrigger once everything mounts and loads to recompute positions
-      const timer = setTimeout(() => {
-        ScrollTrigger.refresh();
-      }, 500);
+    const observer = new IntersectionObserver(observerCallback, observerOptions);
 
-      return () => {
-        mm.revert();
-        clearTimeout(timer);
-      };
-    }
+    stages.forEach((_, index) => {
+      const el = document.getElementById(`stage-trigger-${index}`);
+      if (el) observer.observe(el);
+    });
+
+    return () => {
+      observer.disconnect();
+    };
   }, []);
 
   return (
@@ -85,13 +84,13 @@ export function StoryScroll() {
       
       {/* Title Header */}
       <div className="w-full max-w-[1400px] mx-auto px-4 md:px-8 pt-32 pb-12 flex flex-col md:flex-row md:items-end justify-between border-b border-white/5">
-        <div>
+        <div className="text-left">
           <span className="text-xs font-semibold text-primary uppercase tracking-widest block mb-3 font-sora">The Journey Blueprint</span>
           <h2 className="text-4xl md:text-6xl font-bold font-sora tracking-tight leading-[1.1]">
             How Tripvora Works.
           </h2>
         </div>
-        <p className="text-white/40 max-w-sm text-sm font-sans mt-4 md:mt-0 leading-relaxed">
+        <p className="text-white/40 max-w-sm text-sm font-sans mt-4 md:mt-0 leading-relaxed text-left">
           From inspiration to your return home, our platform designs and handles every single aspect of your trip.
         </p>
       </div>
@@ -99,10 +98,9 @@ export function StoryScroll() {
       {/* Grid Container */}
       <div className="w-full max-w-[1400px] mx-auto flex flex-col md:flex-row relative">
         
-        {/* Left Visual Panel - Sticky on Desktop */}
+        {/* Left Visual Panel - Sticky on Desktop & Mobile */}
         <div 
-          ref={leftPanelRef}
-          className="w-full md:w-1/2 h-[50vh] md:h-[calc(100vh-10rem)] md:sticky md:top-24 flex items-center justify-center p-4 md:p-12 z-20 pointer-events-none"
+          className="w-full md:w-1/2 h-[45vh] md:h-[calc(100vh-10rem)] sticky top-0 md:top-24 flex items-center justify-center p-4 md:p-12 z-20 bg-[#04060E] md:bg-transparent border-b md:border-b-0 border-white/5 pointer-events-none"
         >
           <div className="w-full h-full max-h-[460px] relative border border-white/10 bg-slate-900/60 p-1.5 rounded-xl overflow-hidden shadow-2xl">
             {stages.map((stage, index) => (
@@ -124,7 +122,7 @@ export function StoryScroll() {
         </div>
 
         {/* Right Stage Triggers & Information Scroll */}
-        <div className="w-full md:w-1/2 flex flex-col px-4 md:px-12 z-10">
+        <div className="w-full md:w-1/2 flex flex-col px-4 md:px-12 z-10 relative">
           {stages.map((stage, index) => {
             const Icon = stage.icon;
             const isActive = index === activeIndex;
@@ -133,9 +131,9 @@ export function StoryScroll() {
               <div 
                 key={index} 
                 id={`stage-trigger-${index}`}
-                className="min-h-[60vh] md:min-h-screen flex flex-col justify-center py-20 border-b border-white/5 last:border-b-0"
+                className="min-h-[50vh] md:min-h-screen flex flex-col justify-center py-20 border-b border-white/5 last:border-b-0"
               >
-                <div className={`transition-all duration-500 flex flex-col text-left ${isActive ? "opacity-100 translate-x-0" : "opacity-30 -translate-x-2"}`}>
+                <div className={`transition-all duration-500 flex flex-col text-left ${isActive ? "opacity-100 translate-x-0" : "opacity-35 -translate-x-2"}`}>
                   
                   {/* Indicator Icon */}
                   <div className={`w-12 h-12 flex items-center justify-center border transition-all duration-500 rounded-md mb-6 ${
