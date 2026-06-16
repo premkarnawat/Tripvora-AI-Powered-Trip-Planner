@@ -46,14 +46,17 @@ export function StoryScroll() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12 md:gap-6 relative z-10">
             {steps.map((step, index) => {
               // Custom transforms for each step to create a staggered entry based on scroll
+              const start = Math.max(0, (index - 1) * 0.25);
+              const end = index === 0 ? 0.01 : index * 0.25;
+
               const y = useTransform(
                 scrollYProgress, 
-                [Math.max(0, (index - 1) * 0.25), index * 0.25], 
+                [start, end], 
                 [50, 0]
               );
               const opacity = useTransform(
                 scrollYProgress, 
-                [Math.max(0, (index - 1) * 0.25), index * 0.25], 
+                [start, end], 
                 [0.2, 1]
               );
 
