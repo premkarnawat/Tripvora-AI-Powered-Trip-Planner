@@ -113,7 +113,7 @@ export function CinematicHero() {
               particles: {
                 color: { value: "#14B8A6" },
                 move: { enable: true, direction: "none", outModes: { default: "out" }, random: true, speed: 0.5, straight: false },
-                number: { density: { enable: true, area: 800 }, value: 50 },
+                number: { density: { enable: true, width: 800 }, value: 50 },
                 opacity: { value: 0.3, random: true },
                 size: { value: { min: 1, max: 3 } },
               },
