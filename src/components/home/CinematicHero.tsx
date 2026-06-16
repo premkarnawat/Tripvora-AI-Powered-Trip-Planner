@@ -25,7 +25,7 @@ export function CinematicHero() {
   }, []);
 
   return (
-    <div className="relative min-h-[100dvh] md:min-h-screen w-full flex items-center justify-center overflow-hidden bg-[#0F172A]">
+    <div className="relative min-h-[100dvh] md:min-h-screen w-full flex items-center justify-center overflow-hidden bg-[#04060E]">
       
       {/* LAYER 1-3: Environment (Parallax Video Background) */}
       <motion.div style={{ y: y1 }} className="absolute inset-0 z-0 w-full h-full pointer-events-none">
@@ -36,11 +36,11 @@ export function CinematicHero() {
           playsInline 
           className="object-cover object-center w-full h-full scale-[1.05]"
         >
-          <source src="https://assets.mixkit.co/videos/preview/mixkit-aerial-panorama-of-a-landscape-with-mountains-and-a-lake-4249-large.mp4" type="video/mp4" />
+          <source src="/hero_video.mp4" type="video/mp4" />
         </video>
-        {/* Gradients to enforce true Navy Blue and high readability */}
-        <div className="absolute inset-0 bg-[#0F172A]/60 mix-blend-multiply" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A] via-[#0F172A]/30 to-[#0F172A]/50" />
+        {/* Gradients to enforce true dark navy and high readability */}
+        <div className="absolute inset-0 bg-[#04060E]/70 mix-blend-multiply" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#04060E] via-[#04060E]/40 to-[#04060E]/60" />
       </motion.div>
 
       {/* LAYER 8: Aurora Shader (React Three Fiber) */}

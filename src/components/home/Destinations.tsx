@@ -13,7 +13,7 @@ const destinations = [
 
 export function Destinations() {
   return (
-    <section className="py-32 bg-[#0F172A] relative">
+    <section className="py-32 bg-[#04060E] relative border-t border-white/5">
       <div className="max-w-[1400px] mx-auto px-4 md:px-8">
         
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">

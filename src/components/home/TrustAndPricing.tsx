@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 
 const plans = [
   { name: "Traveler", price: "Free", desc: "For individual explorers.", features: ["3 AI Itineraries/mo", "Basic Budgeting", "Email Support"] },
-  { name: "Plus", price: "$9/mo", desc: "For frequent flyers.", features: ["Unlimited Itineraries", "Advanced Filters", "Group Collaboration", "Priority Support"], recommended: true },
-  { name: "Agency OS", price: "$99/mo", desc: "For travel businesses.", features: ["CRM Pipeline", "White-label itineraries", "WhatsApp Automation", "Team Accounts"] },
+  { name: "Plus", price: "₹799/mo", desc: "For frequent flyers.", features: ["Unlimited Itineraries", "Advanced Filters", "Group Collaboration", "Priority Support"], recommended: true },
+  { name: "Agency OS", price: "₹7,999/mo", desc: "For travel businesses.", features: ["CRM Pipeline", "White-label itineraries", "WhatsApp Automation", "Team Accounts"] },
 ];
 
 function PricingCard({ plan }: { plan: any }) {
@@ -96,7 +96,7 @@ function PricingCard({ plan }: { plan: any }) {
 
 export function TrustAndPricing() {
   return (
-    <section className="py-32 bg-[#0F172A] relative overflow-hidden">
+    <section className="py-32 bg-[#04060E] relative overflow-hidden border-t border-white/5">
       
       {/* Infinite Marquee Trust Section */}
       <div className="mb-40">
@@ -130,7 +130,9 @@ export function TrustAndPricing() {
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
+              transition={{ delay: i * 0.1, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+              whileHover={{ y: -8, scale: 1.015 }}
+              className="h-full"
             >
               <PricingCard plan={plan} />
             </motion.div>

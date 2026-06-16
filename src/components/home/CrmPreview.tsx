@@ -11,7 +11,7 @@ export function CrmPreview() {
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   return (
-    <section ref={ref} className="py-32 bg-[#0F172A] relative overflow-hidden">
+    <section ref={ref} className="py-32 bg-[#04060E] relative overflow-hidden border-t border-white/5">
       
       <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
       

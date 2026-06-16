@@ -56,22 +56,12 @@ export function StoryScroll() {
       const mm = gsap.matchMedia(containerRef);
 
       mm.add("(min-width: 768px)", () => {
-        // Pin the left panel while scrolling past all stage sections
-        ScrollTrigger.create({
-          trigger: containerRef.current,
-          start: "top top",
-          end: "bottom bottom",
-          pin: leftPanelRef.current,
-          pinSpacing: false,
-          scrub: true,
-        });
-
-        // Trigger active state change for each stage block
+        // Trigger active state change for each stage block as they scroll into view
         stages.forEach((_, index) => {
           ScrollTrigger.create({
             trigger: `#stage-trigger-${index}`,
-            start: "top 40%",
-            end: "bottom 40%",
+            start: "top 45%",
+            end: "bottom 45%",
             onEnter: () => setActiveIndex(index),
             onEnterBack: () => setActiveIndex(index),
           });
@@ -85,7 +75,7 @@ export function StoryScroll() {
   }, []);
 
   return (
-    <section ref={containerRef} className="relative bg-[#0F172A] w-full min-h-screen text-white">
+    <section ref={containerRef} className="relative bg-[#04060E] w-full min-h-screen text-white">
       
       {/* Title Header */}
       <div className="w-full max-w-[1400px] mx-auto px-4 md:px-8 pt-32 pb-12 flex flex-col md:flex-row md:items-end justify-between border-b border-white/5">
@@ -103,12 +93,12 @@ export function StoryScroll() {
       {/* Grid Container */}
       <div className="w-full max-w-[1400px] mx-auto flex flex-col md:flex-row relative">
         
-        {/* Left Visual Panel - Fixed on Desktop */}
+        {/* Left Visual Panel - Sticky on Desktop */}
         <div 
           ref={leftPanelRef}
-          className="w-full md:w-1/2 h-[50vh] md:h-screen flex items-center justify-center p-4 md:p-12 z-20 pointer-events-none"
+          className="w-full md:w-1/2 h-[50vh] md:h-[calc(100vh-10rem)] md:sticky md:top-24 flex items-center justify-center p-4 md:p-12 z-20 pointer-events-none"
         >
-          <div className="w-full h-full max-h-[500px] relative border border-white/10 bg-slate-900/60 p-1.5 rounded-xl overflow-hidden shadow-2xl">
+          <div className="w-full h-full max-h-[460px] relative border border-white/10 bg-slate-900/60 p-1.5 rounded-xl overflow-hidden shadow-2xl">
             {stages.map((stage, index) => (
               <div 
                 key={index}
@@ -121,7 +111,7 @@ export function StoryScroll() {
                   alt={stage.title} 
                   className="w-full h-full object-cover rounded-lg brightness-90"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A]/80 via-transparent to-transparent rounded-lg" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#04060E]/80 via-transparent to-transparent rounded-lg" />
               </div>
             ))}
           </div>

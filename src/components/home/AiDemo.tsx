@@ -29,7 +29,7 @@ export function AiDemo() {
   }, [isInView]);
 
   return (
-    <section ref={containerRef} className="py-32 relative bg-[#0F172A] overflow-hidden">
+    <section ref={containerRef} className="py-32 relative bg-[#04060E] overflow-hidden border-t border-white/5">
       <div className="max-w-[1200px] mx-auto px-4 md:px-8">
         
         <div className="text-center mb-16">

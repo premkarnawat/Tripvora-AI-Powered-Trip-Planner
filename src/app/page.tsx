@@ -8,6 +8,7 @@ import { MarketplaceGrid } from "@/components/home/MarketplaceGrid";
 import { StoryScroll } from "@/components/home/StoryScroll";
 import { MacbookShowcase } from "@/components/home/MacbookShowcase";
 import { TrustAndPricing } from "@/components/home/TrustAndPricing";
+import { Footer } from "@/components/layout/Footer";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { Button } from "@/components/ui/button";
 
@@ -16,7 +17,7 @@ export default function Home() {
   const y = useTransform(scrollYProgress, [0, 1], [0, -100]);
 
   return (
-    <main className="bg-[#0F172A] min-h-screen overflow-hidden">
+    <main className="bg-[#04060E] min-h-screen overflow-hidden">
       <CinematicHero />
       <StoryScroll />
       <AiDemo />
@@ -29,8 +30,8 @@ export default function Home() {
       {/* Final CTA Section */}
       <section className="relative py-40 overflow-hidden border-t border-white/5">
         <motion.div style={{ y }} className="absolute inset-0 pointer-events-none z-0">
-           <div className="absolute inset-0 bg-[#0F172A]" />
-           <div className="absolute inset-0 bg-gradient-to-b from-[#0F172A] to-[#090D1A]" />
+           <div className="absolute inset-0 bg-[#04060E]" />
+           <div className="absolute inset-0 bg-gradient-to-b from-[#04060E] to-[#020307]" />
         </motion.div>
         
         <div className="relative z-10 max-w-4xl mx-auto px-4 text-center">
@@ -55,6 +56,8 @@ export default function Home() {
           </motion.div>
         </div>
       </section>
+
+      <Footer />
     </main>
   );
 }
