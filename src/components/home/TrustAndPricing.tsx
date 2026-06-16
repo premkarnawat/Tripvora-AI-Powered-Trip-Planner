@@ -1,96 +1,144 @@
 "use client";
 
-import { motion, useMotionTemplate, useMotionValue } from "framer-motion";
+import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const plans = [
-  { name: "Traveler", price: "Free", desc: "For individual explorers.", features: ["3 AI Itineraries/mo", "Basic Budgeting", "Email Support"] },
-  { name: "Plus", price: "₹799/mo", desc: "For frequent flyers.", features: ["Unlimited Itineraries", "Advanced Filters", "Group Collaboration", "Priority Support"], recommended: true },
-  { name: "Agency OS", price: "₹7,999/mo", desc: "For travel businesses.", features: ["CRM Pipeline", "White-label itineraries", "WhatsApp Automation", "Team Accounts"] },
+  { 
+    name: "Free Plan", 
+    price: "₹0", 
+    desc: "For basic trip planning and custom explorations.", 
+    features: [
+      "3 AI Itineraries/mo",
+      "Basic budgeting details",
+      "Standard routing suggestions",
+      "Email support assistance",
+      "Access to saved itineraries"
+    ],
+    theme: "blue",
+    btnText: "Start for Free"
+  },
+  { 
+    name: "Pro Plan", 
+    price: "₹799", 
+    desc: "For frequent travelers seeking advanced tools.", 
+    features: [
+      "Unlimited custom itineraries",
+      "Advanced budget engine",
+      "Multi-city route customization",
+      "Priority WhatsApp support",
+      "Group trip collaboration tools",
+      "Offline PDF itinerary export"
+    ],
+    theme: "white",
+    recommended: true,
+    btnText: "Start Free 7 Days Trial"
+  },
+  { 
+    name: "Advance Plan", 
+    price: "₹7,999", 
+    desc: "For travel agents and coordinators.", 
+    features: [
+      "CRM & customer lead pipeline",
+      "White-label itineraries",
+      "Automated WhatsApp alerts",
+      "Multi-member agency accounts",
+      "Advanced vendor billing OS",
+      "Custom agency subdomain"
+    ],
+    theme: "green",
+    btnText: "Get Started"
+  }
 ];
 
-function PricingCard({ plan }: { plan: any }) {
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
+const logoColors: Record<string, string> = {
+  "Airbnb": "hover:text-[#FF5A5F]",
+  "Expedia": "hover:text-[#FFB700]",
+  "Booking.com": "hover:text-[#003580]",
+  "MakeMyTrip": "hover:text-[#DF1A22]",
+  "Agoda": "hover:text-[#EC4899]",
+  "TripAdvisor": "hover:text-[#00AF87]"
+};
 
-  function handleMouseMove({ currentTarget, clientX, clientY }: React.MouseEvent) {
-    const { left, top } = currentTarget.getBoundingClientRect();
-    mouseX.set(clientX - left);
-    mouseY.set(clientY - top);
+function PricingCard({ plan }: { plan: any }) {
+  const isBlue = plan.theme === "blue";
+  const isGreen = plan.theme === "green";
+  const isWhite = plan.theme === "white";
+
+  let glowColor = "rgba(59,130,246,0.12)";
+  let badgeGradient = "from-blue-500 to-blue-600 shadow-[0_0_15px_rgba(59,130,246,0.4)]";
+  
+  if (isGreen) {
+    glowColor = "rgba(16,185,129,0.12)";
+    badgeGradient = "from-emerald-500 to-emerald-600 shadow-[0_0_15px_rgba(16,185,129,0.4)]";
+  } else if (isWhite) {
+    glowColor = "rgba(255,255,255,0.08)";
+    badgeGradient = "from-white to-gray-300 shadow-[0_0_15px_rgba(255,255,255,0.3)]";
   }
 
   return (
-    <motion.div
-      onMouseMove={handleMouseMove}
-      className={`relative glass-card rounded-xl p-8 flex flex-col group overflow-hidden border text-left ${
-        plan.recommended ? "border-primary/40 bg-[#0B0F19]" : "border-white/10 bg-[#0F172A]"
-      }`}
+    <div
+      className="relative rounded-2xl p-8 flex flex-col h-full border border-white/[0.08] bg-black/90 text-left overflow-hidden shadow-2xl"
+      style={{
+        backgroundImage: `radial-gradient(circle at 15% 15%, ${glowColor} 0%, transparent 60%)`
+      }}
     >
-      {/* Background Radial Mouse Glow */}
-      <motion.div
-        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-0"
-        style={{
-          background: useMotionTemplate`
-            radial-gradient(
-              300px circle at ${mouseX}px ${mouseY}px,
-              rgba(20, 184, 166, 0.06),
-              transparent 80%
-            )
-          `,
-        }}
-      />
-
-      {plan.recommended && (
-        <div className="absolute top-0 right-0 px-4 py-1 bg-primary text-white text-[10px] font-bold uppercase tracking-wider rounded-bl-lg">
-          Most Popular
-        </div>
-      )}
+      {/* Top Right Transparent Circle Outline */}
+      <div className="absolute top-0 right-0 w-36 h-36 rounded-full border border-white/[0.03] -mr-8 -mt-8 pointer-events-none z-0" />
+      
+      {/* Header Info */}
+      <div className="relative z-10 flex items-start justify-between mb-6">
+        {/* Glow Box Badge */}
+        <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${badgeGradient}`} />
+        
+        {/* Popular Badge */}
+        {plan.recommended && (
+          <div className="bg-white/10 border border-white/20 px-3 py-1 rounded-full text-[9px] font-extrabold uppercase tracking-widest text-white flex items-center gap-1 font-mono">
+            ★ Popular
+          </div>
+        )}
+      </div>
 
       <div className="relative z-10 flex-1 flex flex-col">
-        <h3 className="text-2xl font-bold text-white font-sora mb-1 tracking-tight">{plan.name}</h3>
-        <p className="text-white/40 text-xs mb-6 font-sans">{plan.desc}</p>
+        <h3 className="text-xl font-bold text-white font-sora mb-2 tracking-tight">{plan.name}</h3>
         
-        <div className="text-4xl font-extrabold text-white mb-8 font-sora tracking-tight">{plan.price}</div>
+        <div className="text-4xl font-extrabold text-white mb-2 font-sora tracking-tight">
+          {plan.price}
+          <span className="text-sm font-normal text-white/40 font-sans ml-1">/month</span>
+        </div>
+        
+        <p className="text-white/40 text-xs mb-8 font-sans leading-relaxed">{plan.desc}</p>
+        
+        {/* Button */}
+        <Button 
+          className={`w-full h-12 rounded-lg font-bold font-sora text-sm transition-all duration-300 mb-8 border-none ${
+            isWhite 
+              ? "bg-white hover:bg-white/95 text-black shadow-[0_0_20px_rgba(255,255,255,0.15)]" 
+              : "bg-white/5 hover:bg-white/10 text-white border border-white/10"
+          }`}
+        >
+          {plan.btnText}
+        </Button>
 
-        <div className="flex flex-col gap-3.5 mb-8 flex-1">
+        {/* Divider line */}
+        <div className="flex items-center gap-3 mb-6">
+          <span className="h-[1px] flex-1 bg-white/[0.08]" />
+          <span className="text-[9px] font-bold text-white/30 uppercase tracking-widest font-mono">Stand Out Features</span>
+          <span className="h-[1px] flex-1 bg-white/[0.08]" />
+        </div>
+
+        {/* Features */}
+        <div className="flex flex-col gap-4 flex-1">
           {plan.features.map((feature: string, j: number) => (
-            <div key={j} className="flex items-center gap-3">
-              <div className="w-5 h-5 rounded bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20">
-                <Check className="w-3.5 h-3.5 text-primary" />
-              </div>
-              <span className="text-white/70 text-sm font-sans">{feature}</span>
+            <div key={j} className="flex items-start gap-3">
+              <Check className="w-4 h-4 text-white/40 shrink-0 mt-0.5" />
+              <span className="text-white/70 text-xs font-sans leading-relaxed">{feature}</span>
             </div>
           ))}
         </div>
-
-        <Button className={`w-full h-12 rounded-lg font-bold font-sora text-sm transition-all duration-300 ${
-          plan.recommended 
-            ? "bg-primary hover:bg-primary/95 text-white shadow-[0_4px_20px_rgba(20,184,166,0.25)]" 
-            : "bg-white/5 hover:bg-white text-white hover:text-[#0F172A] border border-white/10"
-        }`}>
-          Get Started
-        </Button>
       </div>
-
-      {/* Border border lighting effect */}
-      <motion.div
-        className="absolute inset-0 pointer-events-none z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"
-        style={{
-          border: "1px solid transparent",
-          background: useMotionTemplate`
-            radial-gradient(
-              180px circle at ${mouseX}px ${mouseY}px,
-              #14B8A6,
-              transparent 70%
-            )
-          `,
-          WebkitMask: "linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0)",
-          WebkitMaskComposite: "destination-out",
-          maskComposite: "exclude"
-        }}
-      />
-    </motion.div>
+    </div>
   );
 }
 
@@ -107,10 +155,15 @@ export function TrustAndPricing() {
           <motion.div 
             animate={{ x: [0, -1036] }}
             transition={{ repeat: Infinity, ease: "linear", duration: 20 }}
-            className="flex gap-16 whitespace-nowrap px-8 items-center opacity-50 grayscale"
+            className="flex gap-16 whitespace-nowrap px-8 items-center"
           >
             {[...Array(2)].fill(["Airbnb", "Expedia", "Booking.com", "MakeMyTrip", "Agoda", "TripAdvisor"]).flat().map((logo, i) => (
-              <span key={i} className="text-3xl font-bold text-white font-sora mx-8">{logo}</span>
+              <span 
+                key={i} 
+                className={`text-3xl font-bold font-sora mx-8 text-white/20 transition-all duration-300 cursor-pointer ${logoColors[logo] || 'hover:text-white'}`}
+              >
+                {logo}
+              </span>
             ))}
           </motion.div>
         </div>
@@ -120,7 +173,7 @@ export function TrustAndPricing() {
       <div className="max-w-[1200px] mx-auto px-4 md:px-8">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-white font-sora mb-4 tracking-tight">Simple, transparent pricing.</h2>
-          <p className="text-white/50 text-base font-sans">No hidden fees. Cancel anytime.</p>
+          <p className="text-white/50 text-base font-sans">Choose a plan that fits your goals. No hidden fees.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -131,7 +184,11 @@ export function TrustAndPricing() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-              whileHover={{ y: -8, scale: 1.015 }}
+              whileHover={{ 
+                y: -16, 
+                scale: 1.03,
+                boxShadow: "0px 30px 60px rgba(0, 0, 0, 0.6)"
+              }}
               className="h-full"
             >
               <PricingCard plan={plan} />
