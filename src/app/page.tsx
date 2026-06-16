@@ -1,10 +1,13 @@
 "use client";
 
-import { Hero } from "@/components/home/Hero";
+import { CinematicHero } from "@/components/home/CinematicHero";
 import { AiDemo } from "@/components/home/AiDemo";
 import { Destinations } from "@/components/home/Destinations";
 import { CrmPreview } from "@/components/home/CrmPreview";
 import { MarketplaceGrid } from "@/components/home/MarketplaceGrid";
+import { StoryScroll } from "@/components/home/StoryScroll";
+import { MacbookShowcase } from "@/components/home/MacbookShowcase";
+import { TrustAndPricing } from "@/components/home/TrustAndPricing";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { Button } from "@/components/ui/button";
 
@@ -14,11 +17,14 @@ export default function Home() {
 
   return (
     <main className="bg-[#0F172A] min-h-screen overflow-hidden">
-      <Hero />
+      <CinematicHero />
+      <StoryScroll />
       <AiDemo />
       <Destinations />
+      <MacbookShowcase />
       <MarketplaceGrid />
       <CrmPreview />
+      <TrustAndPricing />
       
       {/* Final CTA Section */}
       <section className="relative py-40 overflow-hidden">
