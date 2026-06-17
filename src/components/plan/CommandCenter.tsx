@@ -220,7 +220,7 @@ export function CommandCenter({ data }: CommandCenterProps) {
                 { label: "Food", val: 8000, color: "bg-orange-500" },
                 { label: "Activities", val: 5500, color: "bg-pink-500" },
                 { label: "Emergency Buffer", val: 2000, color: "bg-emerald-500" }
-              ].map(item => (
+              ].map((item: any) => (
                 <div key={item.label} className="flex items-center justify-between text-xs font-bold">
                   <div className="flex items-center gap-2">
                     <div className={`w-2 h-2 rounded-full ${item.color}`} />
@@ -318,7 +318,7 @@ export function CommandCenter({ data }: CommandCenterProps) {
 
           {/* Dynamic Day-by-Day Timeline */}
           <div className="space-y-12 pt-4 border-l border-white/10 ml-4 pl-8 relative">
-            {timeline.map((day, idx) => (
+            {timeline.map((day: any, idx: number) => (
               <div key={idx} className="relative">
                 {/* Timeline Dot */}
                 <div className="absolute -left-[41px] top-0 w-5 h-5 rounded-full bg-[#030712] border-2 border-teal-500 flex items-center justify-center">
@@ -329,7 +329,7 @@ export function CommandCenter({ data }: CommandCenterProps) {
                 <p className="text-xs text-white/40 font-bold uppercase tracking-widest mb-6">{day.date}</p>
 
                 <div className="space-y-6">
-                  {day.items.map((item, iIdx) => (
+                  {day.items.map((item: any, iIdx: number) => (
                     <div key={iIdx} className="bg-[#0A0F1D]/80 backdrop-blur-md border border-white/5 rounded-2xl p-5 hover:border-white/10 transition-colors">
                       <div className="flex gap-4">
                         <div className="w-12 text-center shrink-0">
@@ -405,7 +405,7 @@ export function CommandCenter({ data }: CommandCenterProps) {
                                 <span className="text-xs font-bold">{item.title}</span>
                               </div>
                               <div className="grid grid-cols-2 gap-3">
-                                {item.restaurants?.map(rest => (
+                                {item.restaurants?.map((rest: any) => (
                                   <div key={rest.name} className="bg-white/5 rounded-xl overflow-hidden border border-white/5">
                                     <img src={rest.img} alt={rest.name} className="w-full h-20 object-cover" />
                                     <div className="p-3">
@@ -447,7 +447,7 @@ export function CommandCenter({ data }: CommandCenterProps) {
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4 text-xs font-semibold">
-              {chatMessages.map((msg, i) => (
+              {chatMessages.map((msg: any, i: number) => (
                 <div key={i} className={`flex flex-col ${msg.sender === "user" ? "items-end" : "items-start"}`}>
                   <div className={`p-3 rounded-2xl max-w-[85%] ${
                     msg.sender === "user" 
