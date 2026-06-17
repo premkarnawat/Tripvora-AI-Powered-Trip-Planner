@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { MapPin, Calendar, Wallet, Compass } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export function GlassSearchCard() {
   return (
@@ -47,15 +48,17 @@ export function GlassSearchCard() {
           </select>
         </div>
       </div>
- 
+  
       {/* Action Button */}
       <div className="w-full md:w-auto p-2">
-        <Button 
-          size="lg" 
-          className="w-full md:w-auto h-14 px-8 rounded-lg bg-primary hover:bg-primary/95 text-white font-bold text-base shadow-[0_4px_20px_rgba(20,184,166,0.25)] hover:shadow-[0_4px_30px_rgba(20,184,166,0.4)] transition-all duration-300 hover:scale-[1.01] active:scale-[0.99] border-none font-sora"
-        >
-          Generate Trip
-        </Button>
+        <Link href="/plan" className="w-full md:w-auto block">
+          <Button 
+            size="lg" 
+            className="w-full md:w-auto h-14 px-8 rounded-lg bg-primary hover:bg-primary/95 text-white font-bold text-base shadow-[0_4px_20px_rgba(20,184,166,0.25)] hover:shadow-[0_4px_30px_rgba(20,184,166,0.4)] transition-all duration-300 hover:scale-[1.01] active:scale-[0.99] border-none font-sora"
+          >
+            Generate Itinary
+          </Button>
+        </Link>
       </div>
  
     </div>

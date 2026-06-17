@@ -39,9 +39,9 @@ export default function LoginPage() {
         <div>
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 mb-16 md:mb-24">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-white">
-              <path d="M2 22L12 2L22 22H2Z" fill="currentColor" fillOpacity="0.8"/>
-              <path d="M12 2L2 22H12V2Z" fill="#14B8A6"/>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M2 22L12 2L22 22H2Z" fill="#14B8A6" fillOpacity="0.8"/>
+              <path d="M12 2L2 22H12V2Z" fill="#38BDF8"/>
             </svg>
             <span className="text-xl font-bold tracking-tight font-sora text-white">TripPilot</span>
           </Link>
@@ -94,12 +94,12 @@ export default function LoginPage() {
           
           {/* Tabs */}
           <div className="flex border-b border-slate-100 mb-6">
-            <button className="flex-1 text-center py-2 text-xs font-bold text-black border-b-2 border-black">
+            <Link href="/login" className="flex-1 text-center py-2 text-xs font-bold text-black border-b-2 border-black">
               Login
-            </button>
-            <button className="flex-1 text-center py-2 text-xs font-bold text-slate-400">
+            </Link>
+            <Link href="/signup" className="flex-1 text-center py-2 text-xs font-bold text-slate-400 hover:text-black transition-colors">
               Sign Up
-            </button>
+            </Link>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4">

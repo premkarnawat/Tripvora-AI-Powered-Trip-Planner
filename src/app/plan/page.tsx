@@ -440,9 +440,9 @@ export default function PlanPage() {
               >
                 <div>
                   <div className="flex items-center gap-2 mb-16">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-white">
-                      <path d="M2 22L12 2L22 22H2Z" fill="currentColor" fillOpacity="0.8"/>
-                      <path d="M12 2L2 22H12V2Z" fill="#14B8A6"/>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M2 22L12 2L22 22H2Z" fill="#14B8A6" fillOpacity="0.8"/>
+                      <path d="M12 2L2 22H12V2Z" fill="#38BDF8"/>
                     </svg>
                     <span className="text-lg font-bold tracking-tight font-sora text-white">TripPilot</span>
                   </div>

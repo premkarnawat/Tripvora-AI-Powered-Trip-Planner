@@ -86,9 +86,11 @@ export default function Home() {
             transition={{ delay: 0.2 }}
             className="flex flex-col sm:flex-row items-center justify-center gap-8"
           >
-            <Button size="lg" className="h-14 px-8 rounded-full bg-[#E2FF00] hover:bg-[#E2FF00]/90 text-black font-extrabold text-base shadow-[0_0_25px_rgba(226,255,0,0.3)] hover:scale-[1.02] active:scale-[0.99] border-none font-sora transition-all duration-300">
-              Generate My First Trip
-            </Button>
+            <Link href="/plan">
+              <Button size="lg" className="h-14 px-8 rounded-full bg-[#E2FF00] hover:bg-[#E2FF00]/90 text-black font-extrabold text-base shadow-[0_0_25px_rgba(226,255,0,0.3)] hover:scale-[1.02] active:scale-[0.99] border-none font-sora transition-all duration-300">
+                Generate Itinary
+              </Button>
+            </Link>
             
             {/* Social Proof Avatars */}
             <div className="flex items-center">

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { 
   Search, SlidersHorizontal, Star, ArrowUpRight, 
-  MapPin, Calendar, Compass, Shield, Users, ChevronLeft, ChevronRight 
+  MapPin, ChevronLeft, ChevronRight, BadgeCheck 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -14,10 +14,16 @@ export default function MarketplacePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [budgetFilter, setBudgetFilter] = useState("All");
   const [ratingFilter, setRatingFilter] = useState("Any");
+  
+  // Staging state to apply search on click of "Explore Now"
+  const [appliedSearchQuery, setAppliedSearchQuery] = useState("");
+  const [appliedBudget, setAppliedBudget] = useState("All");
+  const [appliedRating, setAppliedRating] = useState("Any");
 
   const categories = [
     "All Experiences", "Resorts", "Treks", "Camping", 
-    "Agro Tourism", "Scuba", "Adventure", "Bike Rentals", "Photography"
+    "Agro Tourism", "Scuba", "Adventure", "Bike Rentals", 
+    "Photography", "Cab Services", "Tour Guides", "Go Karting"
   ];
 
   const listings = [
@@ -29,7 +35,8 @@ export default function MarketplacePage() {
       price: "$1,280",
       rating: "4.9",
       badge: "Partner Deal",
-      verified: true
+      verified: true,
+      category: "Scuba"
     },
     {
       id: "zenith-resort",
@@ -39,7 +46,8 @@ export default function MarketplacePage() {
       price: "$3,450",
       rating: "4.6",
       badge: "Trending",
-      verified: true
+      verified: true,
+      category: "Resorts"
     },
     {
       id: "marrakesh-tour",
@@ -49,7 +57,41 @@ export default function MarketplacePage() {
       price: "$2,700",
       rating: "5.0",
       badge: "Festival Deal",
-      verified: false
+      verified: false,
+      category: "Treks"
+    },
+    {
+      id: "sahara-glamping",
+      title: "Sahara Star Glamping",
+      location: "Tunisia",
+      image: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=600&auto=format&fit=crop",
+      price: "$1,500",
+      rating: "4.8",
+      badge: "Festival Offer",
+      verified: true,
+      category: "Camping"
+    },
+    {
+      id: "tuscany-cook",
+      title: "Tuscany Cooking Class",
+      location: "Italy",
+      image: "https://images.unsplash.com/photo-1486894980609-fce7c3c164ad?q=80&w=600&auto=format&fit=crop",
+      price: "$800",
+      rating: "4.7",
+      badge: "Weekend Offer",
+      verified: true,
+      category: "Agro Tourism"
+    },
+    {
+      id: "monaco-gokart",
+      title: "Monaco Circuit Karting",
+      location: "Monaco",
+      image: "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?q=80&w=600&auto=format&fit=crop",
+      price: "$2,200",
+      rating: "4.9",
+      badge: "Partner Promotion",
+      verified: false,
+      category: "Go Karting"
     }
   ];
 
@@ -97,11 +139,51 @@ export default function MarketplacePage() {
     }
   ];
 
+  // Apply search query, budget, rating filters on Explore click (scroll to listings)
+  const handleSearchSubmit = () => {
+    const listingsEl = document.getElementById("listings-section");
+    if (listingsEl) {
+      listingsEl.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  // Filter listings based on active filters in real-time
+  const filteredListings = listings.filter((item) => {
+    // 1. Category Filter (Pills)
+    if (activeCategory !== "All Experiences") {
+      if (item.category !== activeCategory) {
+        return false;
+      }
+    }
+
+    // 2. Search Query Filter
+    if (searchQuery.trim() !== "") {
+      const q = searchQuery.toLowerCase();
+      const matchTitle = item.title.toLowerCase().includes(q);
+      const matchLoc = item.location.toLowerCase().includes(q);
+      const matchCat = item.category.toLowerCase().includes(q);
+      if (!matchTitle && !matchLoc && !matchCat) return false;
+    }
+
+    // 3. Budget Filter
+    const priceNum = parseInt(item.price.replace(/[^0-9]/g, ""));
+    if (budgetFilter === "low" && priceNum >= 1500) return false;
+    if (budgetFilter === "mid" && (priceNum < 1500 || priceNum > 3000)) return false;
+    if (budgetFilter === "high" && priceNum <= 3000) return false;
+
+    // 4. Rating Filter
+    const ratingNum = parseFloat(item.rating);
+    if (ratingFilter === "4.5" && ratingNum < 4.5) return false;
+    if (ratingFilter === "4.8" && ratingNum < 4.8) return false;
+
+    return true;
+  });
+
   return (
-    <div className="min-h-screen bg-[#F8F9FA] text-slate-800 pb-20">
+    <div className="min-h-screen bg-[#F8F9FA] text-slate-800 pb-20 font-sans">
       
-      {/* 1. HERO SECTION WITH WATER VILLA BACKGROUND */}
-      <div className="relative h-[550px] md:h-[620px] w-full overflow-hidden flex items-center bg-[#070D19]">
+      {/* 1. HERO SECTION WITH WATER VILLA BACKGROUND (Added pb-36 md:pb-48 padding for perfect clearance) */}
+      <div className="relative w-full overflow-hidden flex items-center bg-[#070D19] pt-24 pb-36 md:pb-48">
         
         {/* Parallax Image Overlay */}
         <div className="absolute inset-0 z-0">
@@ -121,7 +203,7 @@ export default function MarketplacePage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="max-w-2xl"
+            className="max-w-2xl text-left"
           >
             {/* White Glassmorphic Badge */}
             <span className="inline-block px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-xs font-bold tracking-wider uppercase mb-6 text-teal-300">
@@ -154,12 +236,12 @@ export default function MarketplacePage() {
 
       <div className="max-w-[1400px] mx-auto px-4 md:px-8 relative z-20">
         
-        {/* 2. SEARCH BAR WIDGET (OVERLAPPING HERO) */}
-        <div className="-mt-16 mb-16">
-          <div className="bg-white rounded-3xl md:rounded-full p-4 shadow-[0_15px_50px_rgba(15,23,42,0.08)] border border-slate-100 flex flex-col md:flex-row items-center gap-4 max-w-5xl mx-auto">
+        {/* 2. SEARCH BAR WIDGET (Centered perfectly and uses full max-width with proper grid) */}
+        <div className="-mt-14 mb-16 w-full flex justify-center">
+          <div className="bg-white rounded-3xl lg:rounded-full p-4 shadow-[0_15px_50px_rgba(15,23,42,0.08)] border border-slate-100 flex flex-col lg:flex-row items-center gap-4 w-full max-w-5xl mx-auto">
             
             {/* Destination Search */}
-            <div className="flex-1 w-full flex items-center gap-3 px-4 py-2 border-b md:border-b-0 md:border-r border-slate-100">
+            <div className="flex-1 w-full flex items-center gap-3 px-4 py-2 border-b lg:border-b-0 lg:border-r border-slate-100">
               <Search className="w-5 h-5 text-slate-400 shrink-0" />
               <div className="w-full">
                 <span className="block text-[10px] font-black text-slate-400 tracking-wider uppercase">Where is next?</span>
@@ -174,7 +256,7 @@ export default function MarketplacePage() {
             </div>
 
             {/* Budget filter */}
-            <div className="w-full md:w-48 flex items-center gap-3 px-4 py-2 border-b md:border-b-0 md:border-r border-slate-100">
+            <div className="w-full lg:w-48 flex items-center gap-3 px-4 py-2 border-b lg:border-b-0 lg:border-r border-slate-100">
               <SlidersHorizontal className="w-5 h-5 text-slate-400 shrink-0" />
               <div className="w-full">
                 <span className="block text-[10px] font-black text-slate-400 tracking-wider uppercase">Budget</span>
@@ -192,7 +274,7 @@ export default function MarketplacePage() {
             </div>
 
             {/* Rating Filter */}
-            <div className="w-full md:w-48 flex items-center gap-3 px-4 py-2">
+            <div className="w-full lg:w-48 flex items-center gap-3 px-4 py-2">
               <Star className="w-5 h-5 text-slate-400 shrink-0 fill-slate-100" />
               <div className="w-full">
                 <span className="block text-[10px] font-black text-slate-400 tracking-wider uppercase">Rating</span>
@@ -209,14 +291,17 @@ export default function MarketplacePage() {
             </div>
 
             {/* CTA Button */}
-            <Button className="w-full md:w-auto bg-black hover:bg-black/90 text-white rounded-full px-8 h-12 font-bold shrink-0 border-none">
+            <Button 
+              onClick={handleSearchSubmit}
+              className="w-full lg:w-auto bg-black hover:bg-black/90 text-white rounded-full px-8 h-12 font-bold shrink-0 border-none"
+            >
               Explore Now
             </Button>
           </div>
         </div>
 
         {/* 3. CATEGORIES TABS */}
-        <div className="mb-12">
+        <div id="listings-section" className="mb-12">
           <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide">
             {categories.map((cat) => {
               const active = cat === activeCategory;
@@ -237,70 +322,78 @@ export default function MarketplacePage() {
           </div>
         </div>
 
-        {/* 4. LISTING GRID */}
+        {/* 4. LISTING GRID (Renders dynamically based on active filter selections) */}
         <div className="mb-24">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {listings.map((item) => (
-              <motion.div 
-                key={item.id}
-                whileHover={{ y: -4 }}
-                transition={{ duration: 0.3 }}
-                className="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-[0_4px_25px_rgba(15,23,42,0.02)] group flex flex-col justify-between"
-              >
-                {/* Image container */}
-                <div className="h-64 overflow-hidden relative bg-slate-100">
-                  <img 
-                    src={item.image} 
-                    alt={item.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  {/* Verified Badge */}
-                  {item.verified && (
-                    <span className="absolute top-4 left-4 bg-teal-500 text-white text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full shadow-sm">
-                      Verified
+          {filteredListings.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {filteredListings.map((item) => (
+                <motion.div 
+                  key={item.id}
+                  whileHover={{ y: -4 }}
+                  transition={{ duration: 0.3 }}
+                  className="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-[0_4px_25px_rgba(15,23,42,0.02)] group flex flex-col justify-between"
+                >
+                  {/* Image container */}
+                  <div className="h-64 overflow-hidden relative bg-slate-100">
+                    <img 
+                      src={item.image} 
+                      alt={item.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    {/* Verified Badge */}
+                    {item.verified && (
+                      <span className="absolute top-4 left-4 bg-teal-500 text-white text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full shadow-sm">
+                        Verified
+                      </span>
+                    )}
+                    {/* Category tag */}
+                    <span className="absolute top-4 right-4 bg-black/60 text-white text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full backdrop-blur-sm">
+                      {item.badge}
                     </span>
-                  )}
-                  {/* Category tag */}
-                  <span className="absolute top-4 right-4 bg-black/60 text-white text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full backdrop-blur-sm">
-                    {item.badge}
-                  </span>
-                </div>
-
-                {/* Details */}
-                <div className="p-6 flex-1 flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-1 text-slate-400 text-xs font-bold">
-                        <MapPin className="w-3.5 h-3.5" />
-                        <span>{item.location}</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-black font-extrabold text-xs">
-                        <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
-                        <span>{item.rating}</span>
-                      </div>
-                    </div>
-                    
-                    <h3 className="text-xl font-bold text-black font-sora mb-4 group-hover:text-teal-600 transition-colors">
-                      {item.title}
-                    </h3>
                   </div>
 
-                  <div className="flex items-center justify-between mt-4 border-t border-slate-50 pt-4">
+                  {/* Details */}
+                  <div className="p-6 flex-1 flex flex-col justify-between">
                     <div>
-                      <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Starting from</span>
-                      <span className="text-xl font-black text-black">{item.price}</span>
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-1 text-slate-400 text-xs font-bold">
+                          <MapPin className="w-3.5 h-3.5" />
+                          <span>{item.location}</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-black font-extrabold text-xs">
+                          <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
+                          <span>{item.rating}</span>
+                        </div>
+                      </div>
+                      
+                      <h3 className="text-xl font-bold text-black font-sora mb-4 group-hover:text-teal-600 transition-colors">
+                        {item.title}
+                      </h3>
                     </div>
-                    
-                    <Link href={`/marketplace/${item.id}`}>
-                      <button className="w-10 h-10 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-black hover:bg-black hover:text-white transition-colors">
-                        <ArrowUpRight className="w-4 h-4" />
-                      </button>
-                    </Link>
+
+                    <div className="flex items-center justify-between mt-4 border-t border-slate-50 pt-4">
+                      <div>
+                        <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest">Starting from</span>
+                        <span className="text-xl font-black text-black">{item.price}</span>
+                      </div>
+                      
+                      <Link href={`/marketplace/${item.id}`}>
+                        <button className="w-10 h-10 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-black hover:bg-black hover:text-white transition-colors">
+                          <ArrowUpRight className="w-4 h-4" />
+                        </button>
+                      </Link>
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+                </motion.div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-20 bg-white rounded-3xl border border-slate-100/60 shadow-sm">
+              <SlidersHorizontal className="w-10 h-10 text-slate-350 mx-auto mb-4" />
+              <h4 className="text-lg font-bold text-black mb-1 font-sora">No results found</h4>
+              <p className="text-slate-450 text-xs font-semibold">Try adjusting your filters or search query details.</p>
+            </div>
+          )}
         </div>
 
         {/* 5. UNMISSABLE PROMOTIONS */}
