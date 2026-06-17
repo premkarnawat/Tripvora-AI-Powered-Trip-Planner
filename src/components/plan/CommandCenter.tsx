@@ -14,8 +14,8 @@ interface CommandCenterProps {
 
 export function CommandCenter({ data }: CommandCenterProps) {
   // Budget & State Variables
-  const [budgetLimit, setBudgetLimit] = useState(data.budgetAmount || 50000);
-  const [budgetSpent, setBudgetSpent] = useState(45500);
+  const [budgetLimit, setBudgetLimit] = useState<number>(Number(data.budgetAmount) || 50000);
+  const [budgetSpent, setBudgetSpent] = useState<number>(45500);
   
   // Pilot AI Chat State
   const [chatInput, setChatInput] = useState("");
