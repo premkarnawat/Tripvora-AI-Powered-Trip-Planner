@@ -26,7 +26,7 @@ export function CommandCenter({ data }: CommandCenterProps) {
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   // Dynamic Timeline State
-  const [timeline, setTimeline] = useState([
+  const [timeline, setTimeline] = useState<any[]>([
     {
       day: "Day 1",
       date: "Monday, Oct 14",
