@@ -34,7 +34,7 @@ export default function SignupPage() {
     <div className="min-h-screen bg-white flex flex-col md:flex-row overflow-hidden font-sans">
       {/* Left Column: Deep Navy */}
       <div 
-        className="w-full md:w-[42%] bg-[#0B1329] p-8 md:p-16 text-white flex flex-col justify-between relative min-h-[350px] md:min-h-screen"
+        className="w-full md:w-[45%] bg-[#0B1329] p-8 md:p-16 text-white flex flex-col justify-between relative min-h-[350px] md:min-h-screen"
         style={{
           backgroundImage: "radial-gradient(circle at 10% 10%, rgba(20, 184, 166, 0.15), transparent 60%)"
         }}
@@ -87,11 +87,11 @@ export default function SignupPage() {
       </div>
 
       {/* Right Column: Sign up details */}
-      <div className="flex-1 bg-[#F8F9FA] p-8 md:p-24 flex flex-col justify-between text-slate-800 min-h-screen">
+      <div className="w-full md:w-[55%] bg-[#F8F9FA] p-8 md:p-16 flex flex-col justify-between text-slate-800 min-h-screen relative">
         {/* Spacer at top on desktop */}
         <div className="hidden md:block" />
 
-        <div className="max-w-md w-full mx-auto bg-white rounded-3xl p-8 md:p-10 shadow-[0_10px_35px_rgba(15,23,42,0.02)] border border-slate-100">
+        <div className="max-w-[500px] w-full my-auto mx-auto bg-white rounded-3xl p-8 md:p-10 shadow-[0_10px_35px_rgba(15,23,42,0.02)] border border-slate-100">
           
           {success ? (
             <div className="text-center py-6">

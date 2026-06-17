@@ -250,7 +250,7 @@ export default function MarketplacePage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search experiences..."
-                  className="w-full bg-transparent border-none text-slate-800 text-sm font-semibold focus:outline-none placeholder:text-slate-400 p-0 h-auto"
+                  className="w-full bg-transparent border-none text-slate-800 text-sm font-semibold focus:outline-none placeholder:text-slate-400 p-0 h-5 focus:ring-0"
                 />
               </div>
             </div>
@@ -263,7 +263,7 @@ export default function MarketplacePage() {
                 <select 
                   value={budgetFilter}
                   onChange={(e) => setBudgetFilter(e.target.value)}
-                  className="w-full bg-transparent border-none text-slate-800 text-sm font-semibold focus:outline-none cursor-pointer"
+                  className="w-full bg-transparent border-none text-slate-800 text-sm font-semibold focus:outline-none cursor-pointer p-0 h-5 focus:ring-0"
                 >
                   <option value="All">All Ranges</option>
                   <option value="low">Under $1,500</option>
@@ -281,7 +281,7 @@ export default function MarketplacePage() {
                 <select 
                   value={ratingFilter}
                   onChange={(e) => setRatingFilter(e.target.value)}
-                  className="w-full bg-transparent border-none text-slate-800 text-sm font-semibold focus:outline-none cursor-pointer"
+                  className="w-full bg-transparent border-none text-slate-800 text-sm font-semibold focus:outline-none cursor-pointer p-0 h-5 focus:ring-0"
                 >
                   <option value="Any">Any Rating</option>
                   <option value="4.5">4.5+ Stars</option>
