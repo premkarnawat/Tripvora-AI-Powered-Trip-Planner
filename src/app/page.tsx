@@ -11,6 +11,7 @@ import { TrustAndPricing } from "@/components/home/TrustAndPricing";
 import { Footer } from "@/components/layout/Footer";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 const avatars = [
   "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=100&auto=format&fit=crop",
