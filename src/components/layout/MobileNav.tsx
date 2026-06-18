@@ -26,7 +26,7 @@ export function MobileNav() {
       animate={{ y: 0 }}
       className="fixed bottom-0 left-0 right-0 z-50 p-4 md:hidden"
     >
-      <div className="glass rounded-2xl p-2 flex items-center justify-around">
+      <div className="bg-[#04060E]/98 backdrop-blur-2xl border border-slate-800 shadow-[0_-10px_40px_rgba(0,0,0,0.3)] rounded-2xl p-2 flex items-center justify-around">
         {links.map((link) => {
           const Icon = link.icon;
           const isActive = pathname === link.href;
