@@ -8,13 +8,16 @@ import { cn } from "@/lib/utils";
 
 export function MobileNav() {
   const pathname = usePathname();
+  const isAuthPage = pathname ? (pathname.startsWith("/login") || pathname.startsWith("/signup")) : false;
+  
+  if (isAuthPage) return null;
   
   const links = [
     { href: "/", icon: Home, label: "Home" },
     { href: "/explore", icon: Compass, label: "Explore" },
     { href: "/plan", icon: PlusCircle, label: "Plan", primary: true },
     { href: "/community", icon: Users, label: "Community" },
-    { href: "/profile", icon: User, label: "Profile" },
+    { href: "/login", icon: User, label: "Login" },
   ];
 
   return (
