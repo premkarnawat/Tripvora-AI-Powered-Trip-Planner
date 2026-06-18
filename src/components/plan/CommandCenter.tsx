@@ -166,10 +166,10 @@ export function CommandCenter({ data }: CommandCenterProps) {
   const budgetHealth = Math.round(((budgetLimit - budgetSpent) / budgetLimit) * 100) || 0;
 
   return (
-    <div className="min-h-screen bg-[#030712] text-white pt-24 pb-20 px-4 md:px-8 font-sans">
+    <div className="min-h-screen bg-[#030712] text-white pt-24 pb-20 px-4 md:px-8 font-sans overflow-x-hidden relative">
       
       {/* Background glow canvas */}
-      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-teal-500/10 rounded-full blur-[150px] pointer-events-none z-0" />
+      <div className="absolute top-0 left-1/4 w-[300px] md:w-[500px] h-[300px] md:h-[500px] bg-teal-500/10 rounded-full blur-[100px] md:blur-[150px] pointer-events-none z-0" />
       
       <div className="max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 relative z-10">
         

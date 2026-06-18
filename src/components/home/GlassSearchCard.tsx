@@ -111,10 +111,10 @@ export function GlassSearchCard() {
 
   return (
     <div className="relative w-full">
-      <form onSubmit={handleGenerate} className="relative rounded-xl p-2 flex flex-col lg:flex-row items-stretch lg:items-center gap-2 bg-black/95 backdrop-blur-2xl border border-white/[0.08] shadow-[0_20px_40px_rgba(0,0,0,0.6)] z-30">
+      <form onSubmit={handleGenerate} className="relative rounded-xl p-2 flex flex-col md:flex-row items-stretch md:items-center gap-2 bg-black/95 backdrop-blur-2xl border border-white/[0.08] shadow-[0_20px_40px_rgba(0,0,0,0.6)] z-30">
         
         {/* Input Group 1: Destination */}
-        <div className="flex-1 flex items-center gap-4 px-6 py-4 rounded-lg hover:bg-white/5 transition-colors cursor-text group border-b lg:border-b-0 lg:border-r border-white/5">
+        <div className="flex-1 flex items-center gap-4 px-4 md:px-6 py-4 rounded-lg hover:bg-white/5 transition-colors cursor-text group border-b md:border-b-0 md:border-r border-white/5">
           <MapPin className="text-primary w-5 h-5 group-hover:scale-105 transition-transform duration-300 shrink-0" />
           <div className="flex flex-col w-full text-left">
             <span className="text-[11px] font-bold text-white/40 uppercase tracking-widest mb-1 font-sora">Where to?</span>
@@ -135,7 +135,7 @@ export function GlassSearchCard() {
               setShowDates(!showDates);
               setShowBudget(false);
             }}
-            className="flex items-center gap-4 px-6 py-4 rounded-lg hover:bg-white/5 transition-colors cursor-pointer group border-b lg:border-b-0 lg:border-r border-white/5 h-full"
+            className="flex items-center gap-4 px-4 md:px-6 py-4 rounded-lg hover:bg-white/5 transition-colors cursor-pointer group border-b md:border-b-0 md:border-r border-white/5 h-full"
           >
             <Calendar className="text-primary w-5 h-5 group-hover:scale-105 transition-transform duration-300 shrink-0" />
             <div className="flex flex-col w-full text-left">
@@ -153,7 +153,7 @@ export function GlassSearchCard() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 10 }}
-                className="absolute top-full left-0 mt-3 z-50 bg-[#0A0F1D]/98 border border-white/10 backdrop-blur-xl rounded-2xl p-5 shadow-2xl max-w-sm w-full text-left flex flex-col gap-4 text-white"
+                className="fixed inset-x-0 bottom-0 md:absolute md:top-full md:bottom-auto md:left-0 md:mt-3 z-[60] bg-[#0A0F1D]/98 border-t md:border border-white/10 backdrop-blur-xl rounded-t-3xl md:rounded-2xl p-6 md:p-5 shadow-2xl w-full md:max-w-sm text-left flex flex-col gap-4 text-white pb-10 md:pb-5"
               >
                 <div className="flex justify-between items-center mb-1">
                   <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Travel Dates</span>
@@ -247,7 +247,7 @@ export function GlassSearchCard() {
         </div>
    
         {/* Input Group 3: Travel Type */}
-        <div className="flex-1 flex items-center gap-4 px-6 py-4 rounded-lg hover:bg-white/5 transition-colors cursor-pointer group border-b lg:border-b-0 lg:border-r border-white/5">
+        <div className="flex-1 flex items-center gap-4 px-4 md:px-6 py-4 rounded-lg hover:bg-white/5 transition-colors cursor-pointer group border-b md:border-b-0 md:border-r border-white/5">
           <Compass className="text-primary w-5 h-5 group-hover:scale-105 transition-transform duration-300 shrink-0" />
           <div className="flex flex-col w-full text-left">
             <span className="text-[11px] font-bold text-white/40 uppercase tracking-widest mb-1 font-sora">Travel Type</span>
@@ -271,7 +271,7 @@ export function GlassSearchCard() {
               setShowBudget(!showBudget);
               setShowDates(false);
             }}
-            className="flex items-center gap-4 px-6 py-4 rounded-lg hover:bg-white/5 transition-colors cursor-pointer group h-full"
+            className="flex items-center gap-4 px-4 md:px-6 py-4 rounded-lg hover:bg-white/5 transition-colors cursor-pointer group h-full"
           >
             <Wallet className="text-primary w-5 h-5 group-hover:scale-105 transition-transform duration-300 shrink-0" />
             <div className="flex flex-col w-full text-left">
@@ -289,7 +289,7 @@ export function GlassSearchCard() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 10 }}
-                className="absolute top-full left-0 mt-3 z-50 bg-[#0A0F1D]/98 border border-white/10 backdrop-blur-xl rounded-2xl p-5 shadow-2xl max-w-sm w-full text-left flex flex-col gap-4 text-white"
+                className="fixed inset-x-0 bottom-0 md:absolute md:top-full md:bottom-auto md:left-0 md:mt-3 z-[60] bg-[#0A0F1D]/98 border-t md:border border-white/10 backdrop-blur-xl rounded-t-3xl md:rounded-2xl p-6 md:p-5 shadow-2xl w-full md:max-w-sm text-left flex flex-col gap-4 text-white pb-10 md:pb-5"
               >
                 <div className="flex justify-between items-center mb-1">
                   <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Select Budget</span>
@@ -353,11 +353,11 @@ export function GlassSearchCard() {
         </div>
     
         {/* Action Button */}
-        <div className="w-full lg:w-auto p-2">
+        <div className="w-full md:w-auto p-2">
           <Button 
             type="submit"
             size="lg" 
-            className="w-full lg:w-auto h-14 px-8 rounded-lg bg-primary hover:bg-primary/95 text-white font-bold text-base shadow-[0_4px_20px_rgba(20,184,166,0.25)] hover:shadow-[0_4px_30px_rgba(20,184,166,0.4)] transition-all duration-300 hover:scale-[1.01] active:scale-[0.99] border-none font-sora shrink-0"
+            className="w-full md:w-auto h-14 px-8 rounded-lg bg-primary hover:bg-primary/95 text-white font-bold text-base shadow-[0_4px_20px_rgba(20,184,166,0.25)] hover:shadow-[0_4px_30px_rgba(20,184,166,0.4)] transition-all duration-300 hover:scale-[1.01] active:scale-[0.99] border-none font-sora shrink-0"
           >
             Generate Itinerary
           </Button>
