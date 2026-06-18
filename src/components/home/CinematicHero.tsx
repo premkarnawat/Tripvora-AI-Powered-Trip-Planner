@@ -15,7 +15,6 @@ export function CinematicHero() {
   const { scrollY } = useScroll();
   const y1 = useTransform(scrollY, [0, 1000], [0, 200]);
   const y2 = useTransform(scrollY, [0, 1000], [0, -100]);
-  const opacity = useTransform(scrollY, [0, 500], [1, 0]);
 
   const [init, setInit] = useState(false);
   useEffect(() => {
@@ -25,7 +24,7 @@ export function CinematicHero() {
   }, []);
 
   return (
-    <div className="relative min-h-[100dvh] md:min-h-screen w-full flex items-center justify-center overflow-hidden bg-[#04060E]">
+    <div className="relative min-h-[100dvh] md:min-h-screen w-full flex flex-col overflow-hidden bg-[#04060E]">
       
       {/* LAYER 1-3: Environment (Parallax Video Background) */}
       <motion.div style={{ y: y1 }} className="absolute inset-0 z-0 w-full h-full pointer-events-none">
@@ -33,7 +32,8 @@ export function CinematicHero() {
           autoPlay 
           loop 
           muted 
-          playsInline 
+          playsInline
+          poster="https://images.unsplash.com/photo-1682687220063-474237cfd53b?q=80&w=1200&auto=format&fit=crop"
           className="object-cover object-center w-full h-full scale-[1.05]"
         >
           <source src="/hero_video.mp4" type="video/mp4" />
@@ -102,8 +102,8 @@ export function CinematicHero() {
 
       {/* LAYER 7 & CONTENT */}
       <motion.div 
-        style={{ opacity, y: y2 }}
-        className="relative z-10 w-full max-w-[1400px] mx-auto px-4 md:px-8 pt-32 pb-20 flex flex-col items-center text-center mt-10"
+        style={{ y: y2 }}
+        className="relative z-10 w-full max-w-[1400px] mx-auto px-4 md:px-8 pt-32 md:pt-40 pb-20 flex flex-col items-center text-center flex-1 justify-center"
       >
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
