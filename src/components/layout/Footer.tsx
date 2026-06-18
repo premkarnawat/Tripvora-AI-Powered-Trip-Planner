@@ -52,8 +52,8 @@ export function Footer() {
             <div className="flex flex-col gap-3">
               {[
                 { name: "For Agencies", href: "/agencies" },
-                { name: "Advertise", href: "/marketplace" },
-                { name: "Partner With Us", href: "/agencies#pricing" },
+                { name: "Advertise", href: "/advertise" },
+                { name: "Partner With Us", href: "/partner" },
                 { name: "Affiliate Program", href: "/pricing" }
               ].map((item) => (
                 <Link key={item.name} href={item.href} className="text-white/50 hover:text-[#14B8A6] transition-colors text-xs font-bold">
@@ -99,6 +99,7 @@ export function Footer() {
           <div className="flex flex-col text-left">
             <h4 className="text-white font-sora text-xs font-black tracking-widest uppercase mb-6">Contact</h4>
             <div className="flex flex-col gap-3">
+              <Link href="/contact" className="text-white/50 hover:text-[#14B8A6] transition-colors text-xs font-bold">Contact Us</Link>
               <span className="text-white/50 text-xs font-bold flex items-center gap-1.5">
                 <Mail className="w-3.5 h-3.5 text-[#14B8A6]" />
                 <a href="mailto:trips@tripvora.com" className="hover:text-white transition-colors">trips@tripvora.com</a>
