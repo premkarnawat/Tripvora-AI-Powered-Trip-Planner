@@ -100,7 +100,7 @@ export function Navbar() {
           </Link>
 
           {/* User Profile Avatar Link */}
-          <Link href="/login">
+          <Link href="/dashboard">
             <div className="w-9 h-9 rounded-full border border-white/10 overflow-hidden cursor-pointer hover:opacity-80 transition-opacity">
               <img 
                 src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=100&auto=format&fit=crop" 
@@ -113,7 +113,7 @@ export function Navbar() {
 
         {/* Mobile Menu Button */}
         <div className="lg:hidden flex items-center gap-3">
-          <Link href="/login">
+          <Link href="/dashboard">
             <div className="w-8 h-8 rounded-full border border-white/10 overflow-hidden">
               <img 
                 src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=100&auto=format&fit=crop" 

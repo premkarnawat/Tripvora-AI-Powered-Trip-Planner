@@ -17,7 +17,7 @@ export function MobileNav() {
     { href: "/explore", icon: Compass, label: "Explore" },
     { href: "/plan", icon: PlusCircle, label: "Plan", primary: true },
     { href: "/community", icon: Users, label: "Community" },
-    { href: "/login", icon: User, label: "Login" },
+    { href: "/dashboard", icon: User, label: "Dashboard" },
   ];
 
   return (
