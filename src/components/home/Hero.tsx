@@ -17,7 +17,8 @@ export function Hero() {
           autoPlay 
           loop 
           muted 
-          playsInline 
+          playsInline
+          poster="https://images.unsplash.com/photo-1682687220063-474237cfd53b?q=80&w=1200&auto=format&fit=crop"
           className="object-cover w-full h-full scale-105"
         >
           {/* Using a premium high-quality nature video link */}
