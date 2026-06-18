@@ -384,7 +384,7 @@ export function GlassSearchCard() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-[28px] overflow-hidden shadow-2xl max-w-4xl w-full flex flex-col md:flex-row min-h-[500px] relative z-10 text-slate-800"
+              className="bg-white rounded-[28px] overflow-y-auto overflow-x-hidden shadow-2xl max-w-4xl w-full flex flex-col md:flex-row min-h-[500px] max-h-[90vh] relative z-10 text-slate-800"
             >
               {/* Close Button */}
               <button 

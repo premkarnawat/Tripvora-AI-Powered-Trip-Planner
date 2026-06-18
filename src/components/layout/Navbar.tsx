@@ -12,6 +12,7 @@ export function Navbar() {
   const { scrollY } = useScroll();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   useEffect(() => {
     setMounted(true);
@@ -121,11 +122,40 @@ export function Navbar() {
               />
             </div>
           </Link>
-          <Button variant="ghost" size="icon" className="text-white hover:bg-white/5">
+          <Button variant="ghost" size="icon" className="text-white hover:bg-white/5" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
             <Menu className="w-6 h-6" />
           </Button>
         </div>
       </div>
+
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="absolute top-full left-0 w-full bg-[#04060E]/95 backdrop-blur-xl border-b border-white/10 p-4 flex flex-col gap-4 lg:hidden shadow-2xl"
+        >
+          {[
+            { name: "Marketplace", href: "/marketplace" },
+            { name: "Destinations", href: "/destinations" },
+            { name: "Journal", href: "/community" }
+          ].map((item) => (
+            <Link 
+              key={item.name} 
+              href={item.href} 
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="text-white/80 hover:text-[#E2FF00] font-semibold text-lg py-2 border-b border-white/5"
+            >
+              {item.name}
+            </Link>
+          ))}
+          <Link href="/plan" onClick={() => setIsMobileMenuOpen(false)} className="mt-2">
+            <Button className="w-full h-12 font-bold bg-[#E2FF00] text-black hover:bg-[#E2FF00]/90">
+              Plan Trip
+            </Button>
+          </Link>
+        </motion.div>
+      )}
     </motion.header>
   );
 }

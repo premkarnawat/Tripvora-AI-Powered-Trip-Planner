@@ -7,10 +7,9 @@ import { GlassSearchCard } from "./GlassSearchCard";
 export function Hero() {
   const { scrollY } = useScroll();
   const y = useTransform(scrollY, [0, 1000], [0, 300]);
-  const opacity = useTransform(scrollY, [0, 500], [1, 0]);
 
   return (
-    <div className="relative min-h-[100dvh] md:min-h-screen w-full flex items-center justify-center overflow-hidden">
+    <div className="relative min-h-[100dvh] md:min-h-screen w-full flex items-center justify-center overflow-x-hidden">
       
       {/* Layer 1: 4K Video Background (Simulated with high-quality MP4) */}
       <motion.div style={{ y }} className="absolute inset-0 z-0 w-full h-full">
@@ -60,7 +59,6 @@ export function Hero() {
 
       {/* Content Layer */}
       <motion.div 
-        style={{ opacity }}
         className="relative z-10 w-full max-w-[1400px] mx-auto px-4 md:px-8 pt-32 pb-20 flex flex-col items-center text-center mt-10 md:mt-20"
       >
         <motion.div 
