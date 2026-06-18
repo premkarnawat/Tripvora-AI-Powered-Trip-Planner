@@ -9,7 +9,7 @@ export function Hero() {
   const y = useTransform(scrollY, [0, 1000], [0, 300]);
 
   return (
-    <div className="relative min-h-[100dvh] md:min-h-screen w-full flex items-center justify-center overflow-x-hidden">
+    <div className="relative min-h-[100dvh] md:min-h-screen w-full flex flex-col overflow-x-hidden">
       
       {/* Layer 1: 4K Video Background (Simulated with high-quality MP4) */}
       <motion.div style={{ y }} className="absolute inset-0 z-0 w-full h-full">
@@ -25,8 +25,9 @@ export function Hero() {
         </video>
         
         {/* Layer 2: Gradient Overlays for Navy Theme Blend */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A] via-[#0F172A]/60 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0F172A]/80 via-transparent to-[#0F172A]/80" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#04060E] via-[#04060E]/50 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#04060E]/70 via-transparent to-[#04060E]/70 hidden md:block" />
+        <div className="absolute inset-0 bg-black/30 md:hidden" />
       </motion.div>
 
       {/* Layer 6: Animated SVG Flight Routes */}
@@ -59,7 +60,7 @@ export function Hero() {
 
       {/* Content Layer */}
       <motion.div 
-        className="relative z-10 w-full max-w-[1400px] mx-auto px-4 md:px-8 pt-32 pb-20 flex flex-col items-center text-center mt-10 md:mt-20"
+        className="relative z-10 w-full max-w-[1400px] mx-auto px-4 md:px-8 pt-32 md:pt-40 pb-20 flex flex-col items-center text-center flex-1 justify-center"
       >
         <motion.div 
           initial={{ opacity: 0, y: 30 }}

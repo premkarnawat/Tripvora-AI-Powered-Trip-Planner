@@ -312,19 +312,19 @@ export function WizardPhase({ initialData, onComplete }: WizardPhaseProps) {
         </AnimatePresence>
 
         {/* Footer Navigation */}
-        <div className="mt-auto pt-8 border-t border-white/10 flex justify-between items-center">
+        <div className="mt-auto pt-8 border-t border-white/10 flex flex-col-reverse md:flex-row justify-between items-center gap-4">
           <Button 
             variant="ghost" 
             onClick={prevStep}
             disabled={step === 1}
-            className="text-white hover:bg-white/10 font-bold"
+            className="text-white hover:bg-white/10 font-bold w-full md:w-auto"
           >
             <ChevronLeft className="w-5 h-5 mr-1" /> Back
           </Button>
           
           <Button 
             onClick={nextStep}
-            className={`font-bold px-8 h-12 rounded-xl transition-all border-none ${
+            className={`font-bold px-4 md:px-8 h-14 w-full md:w-auto rounded-xl transition-all border-none ${
               step === 5 ? "bg-gradient-to-r from-teal-500 to-blue-500 hover:from-teal-400 hover:to-blue-400 text-white shadow-[0_0_20px_rgba(20,184,166,0.4)] hover:scale-105" : "bg-white text-black hover:bg-white/90"
             }`}
           >

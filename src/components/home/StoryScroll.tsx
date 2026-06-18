@@ -139,9 +139,9 @@ export function StoryScroll() {
       {/* Grid Container */}
       <div ref={gridRef} className="w-full max-w-[1400px] mx-auto flex flex-col md:flex-row relative">
         
-        {/* Left Visual Panel - Sticky on Desktop only */}
+        {/* Left Visual Panel - Sticky on Desktop & Mobile */}
         <div 
-          className="hidden md:flex w-full md:w-1/2 h-[45vh] md:h-[calc(100vh-10rem)] sticky top-0 md:top-24 items-center justify-center p-4 md:p-12 z-20 bg-[#04060E] md:bg-transparent border-b md:border-b-0 border-white/5 pointer-events-none"
+          className="flex w-full md:w-1/2 h-[40vh] md:h-[calc(100vh-10rem)] sticky top-20 md:top-24 items-center justify-center p-4 md:p-12 z-20 bg-[#04060E] md:bg-transparent border-b md:border-b-0 border-white/5 pointer-events-none"
         >
           <motion.div 
             style={{ y }}
@@ -178,12 +178,6 @@ export function StoryScroll() {
                 className="min-h-[50vh] md:min-h-screen flex flex-col justify-center py-20 border-b border-white/5 last:border-b-0"
               >
                 <div className={`transition-all duration-500 flex flex-col text-left ${isActive ? "opacity-100 translate-x-0" : "opacity-35 -translate-x-2"}`}>
-                  
-                  {/* Mobile Inline Image */}
-                  <div className="block md:hidden w-full h-[35vh] min-h-[250px] relative rounded-2xl overflow-hidden mb-8 border border-white/10 shadow-2xl">
-                    <img src={stage.image} alt={stage.title} className="w-full h-full object-cover brightness-90" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#04060E]/80 via-transparent to-transparent" />
-                  </div>
 
                   {/* Indicator Icon */}
                   <div className={`w-12 h-12 flex items-center justify-center border transition-all duration-500 rounded-md mb-6 ${
