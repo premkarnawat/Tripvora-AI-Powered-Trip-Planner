@@ -102,9 +102,9 @@ function LeadsTable({ leads }: any) {
               </td>
               <td className="py-3 px-4 text-right">
                 <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button className="w-7 h-7 rounded bg-[#10B981]/10 text-[#10B981] flex items-center justify-center hover:bg-[#10B981]/20"><MessageCircle className="w-3.5 h-3.5" /></button>
-                  <button className="w-7 h-7 rounded bg-white/5 text-white flex items-center justify-center hover:bg-white/10"><Phone className="w-3.5 h-3.5" /></button>
-                  <button className="w-7 h-7 rounded bg-white/5 text-white flex items-center justify-center hover:bg-white/10"><MoreHorizontal className="w-3.5 h-3.5" /></button>
+                  <button className="h-7 px-2 rounded bg-[#10B981]/10 text-[#10B981] flex items-center justify-center hover:bg-[#10B981]/20 text-[10px] font-bold"><MessageCircle className="w-3.5 h-3.5 mr-1" /> WhatsApp</button>
+                  <button className="h-7 px-2 rounded bg-[#38BDF8]/10 text-[#38BDF8] flex items-center justify-center hover:bg-[#38BDF8]/20 text-[10px] font-bold">Gen Package</button>
+                  <button className="h-7 px-2 rounded bg-white/5 text-white flex items-center justify-center hover:bg-white/10 text-[10px] font-bold">Quote</button>
                 </div>
               </td>
             </tr>
@@ -174,8 +174,11 @@ function LeadsKanban({ leads }: any) {
                 </div>
                 <h4 className="text-sm font-bold text-white mb-1">{lead.name}</h4>
                 <p className="text-xs text-[#14B8A6] font-medium mb-3">{lead.dest}</p>
-                <div className="flex justify-between items-end pt-2 border-t border-white/5">
-                  <p className="text-xs font-bold text-white">{lead.budget}</p>
+                <div className="flex justify-between items-end pt-3 mt-3 border-t border-white/5">
+                  <div className="flex gap-1">
+                     <button className="w-6 h-6 rounded bg-[#10B981]/10 text-[#10B981] flex items-center justify-center hover:bg-[#10B981]/20" title="WhatsApp"><MessageCircle className="w-3 h-3" /></button>
+                     <button className="w-6 h-6 rounded bg-[#38BDF8]/10 text-[#38BDF8] flex items-center justify-center hover:bg-[#38BDF8]/20" title="Generate Package"><MapPin className="w-3 h-3" /></button>
+                  </div>
                   <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-[8px] font-bold text-white" title={`Owner: ${lead.owner}`}>
                     {lead.owner.substring(0, 1)}
                   </div>

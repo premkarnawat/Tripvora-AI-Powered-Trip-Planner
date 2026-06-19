@@ -17,46 +17,30 @@ const sidebarGroups = [
     title: "SALES",
     links: [
       { name: "Dashboard", href: "/agency", icon: LayoutDashboard },
-      { name: "Leads", href: "/agency/leads", icon: Users },
-      { name: "Customers", href: "/agency/customers", icon: Briefcase },
       { name: "Marketplace Leads", href: "/agency/marketplace", icon: Store },
+      { name: "Leads Pipeline", href: "/agency/leads", icon: Users },
+      { name: "Customers", href: "/agency/customers", icon: Briefcase },
+    ]
+  },
+  {
+    title: "BUILDERS",
+    links: [
+      { name: "AI Package Builder", href: "/agency/packages", icon: Package },
       { name: "Quotations", href: "/agency/quotations", icon: FileText },
-      { name: "Tasks", href: "/agency/tasks", icon: CheckSquare },
     ]
   },
   {
     title: "OPERATIONS",
     links: [
-      { name: "Bookings", href: "/agency/bookings", icon: CalendarCheck },
-      { name: "Trips", href: "/agency/trips", icon: Map },
-      { name: "Calendar", href: "/agency/calendar", icon: CalendarCheck },
-      { name: "Packages", href: "/agency/packages", icon: Package },
-      { name: "Vendors", href: "/agency/vendors", icon: Car },
-      { name: "Partners", href: "/agency/partners", icon: Building2 },
-    ]
-  },
-  {
-    title: "BUSINESS",
-    links: [
-      { name: "Revenue", href: "/agency/revenue", icon: DollarSign },
-      { name: "Analytics", href: "/agency/analytics", icon: TrendingUp },
-      { name: "Marketing", href: "/agency/marketing", icon: MessageSquare },
-      { name: "Affiliate Revenue", href: "/agency/affiliates", icon: Plug },
-    ]
-  },
-  {
-    title: "AUTOMATION",
-    links: [
       { name: "WhatsApp Hub", href: "/agency/whatsapp", icon: Phone },
-      { name: "Notifications", href: "/agency/notifications", icon: Bell },
+      { name: "Trips & Bookings", href: "/agency/trips", icon: Map },
     ]
   },
   {
     title: "ACCOUNT",
     links: [
-      { name: "Subscription", href: "/agency/subscription", icon: CreditCard },
-      { name: "Billing", href: "/agency/billing", icon: FileText },
-      { name: "Settings", href: "/agency/settings", icon: Settings },
+      { name: "Revenue Dashboard", href: "/agency/revenue", icon: DollarSign },
+      { name: "Subscription & Settings", href: "/agency/subscription", icon: Settings },
     ]
   }
 ];
@@ -66,10 +50,10 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <div className="bg-[#020817] min-h-screen w-full flex overflow-hidden font-sans text-white">
+    <div className="bg-[#020817] min-h-screen w-full flex font-sans text-white relative">
       
       {/* 1. Desktop Left Sidebar (260px) - Denser Width */}
-      <aside className="hidden xl:flex w-[260px] flex-col bg-[#020817] border-r border-white/10 h-screen shrink-0 relative z-20">
+      <aside className="hidden xl:flex w-[260px] flex-col bg-[#020817] border-r border-white/10 h-screen shrink-0 sticky top-0 z-20">
         <div className="p-5 border-b border-white/5">
           <Link href="/agency" className="flex items-center gap-2">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -196,10 +180,10 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
       </AnimatePresence>
 
       {/* 2. Center Main Content Area */}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden bg-[#020817] relative">
+      <div className="flex-1 flex flex-col min-h-screen bg-[#020817] relative">
         
         {/* Dense Top Header */}
-        <header className="hidden xl:flex h-14 bg-[#020817] border-b border-white/10 shrink-0 px-6 items-center justify-between z-10 sticky top-0">
+        <header className="hidden xl:flex h-14 bg-[#020817]/95 backdrop-blur-md border-b border-white/10 shrink-0 px-6 items-center justify-between z-10 sticky top-0">
           <div className="relative w-80">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#94A3B8]" />
             <input 
@@ -226,8 +210,8 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        {/* Scrollable Page Content */}
-        <main className="flex-1 overflow-y-auto custom-scrollbar pt-16 xl:pt-0 p-4 md:p-8">
+        {/* Page Content */}
+        <main className="flex-1 pt-16 xl:pt-0 p-4 md:p-8">
           {children}
         </main>
       </div>
