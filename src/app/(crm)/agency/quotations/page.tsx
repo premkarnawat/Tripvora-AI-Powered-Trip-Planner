@@ -77,9 +77,24 @@ export default function QuotationBuilderPage() {
             { name: "JR Pass (14 Days) - 4 Pax", cost: "₹25,000" },
             { name: "Airport Transfers (VIP Alphard)", cost: "₹5,000" }
           ]} />
+          
+          <ComponentSection title="Meals & Dining" total="₹20,000" items={[
+            { name: "Welcome Gala Dinner", cost: "₹15,000" },
+            { name: "Daily Breakfast Supplement", cost: "₹5,000" }
+          ]} />
+
+          <div className="bg-[#020817] border border-white/5 rounded-md p-4 space-y-3">
+             <label className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest block">Travel Notes & Inclusions</label>
+             <textarea className="w-full bg-[#0B1220] border border-white/10 rounded-md p-3 text-xs text-white focus:outline-none focus:border-[#38BDF8] min-h-[80px]" defaultValue="Includes all local taxes and service charges. Early check-in requested but subject to availability." />
+          </div>
+
+          <div className="bg-[#020817] border border-white/5 rounded-md p-4 space-y-3">
+             <label className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest block">Terms & Conditions</label>
+             <textarea className="w-full bg-[#0B1220] border border-white/10 rounded-md p-3 text-xs text-white focus:outline-none focus:border-[#38BDF8] min-h-[80px]" defaultValue="100% advance required for flight confirmation. 50% advance for hotels. Standard cancellation policy applies." />
+          </div>
 
           <Button className="w-full h-10 border border-dashed border-white/20 bg-transparent hover:bg-white/5 text-[#94A3B8] hover:text-white rounded-md text-xs font-bold transition-colors">
-            <PlusCircle className="w-4 h-4 mr-1.5" /> Add New Component (Meals, Flights, etc.)
+            <PlusCircle className="w-4 h-4 mr-1.5" /> Add Custom Component
           </Button>
         </div>
 

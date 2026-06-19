@@ -34,6 +34,7 @@ const sidebarGroups = [
     links: [
       { name: "WhatsApp Hub", href: "/agency/whatsapp", icon: Phone },
       { name: "Trips & Bookings", href: "/agency/trips", icon: Map },
+      { name: "Vendors Library", href: "/agency/vendors", icon: Building2 },
     ]
   },
   {
