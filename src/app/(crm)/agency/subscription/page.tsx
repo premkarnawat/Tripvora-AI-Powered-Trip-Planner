@@ -29,7 +29,7 @@ export default function SubscriptionPage() {
                 TripPilot Professional
                 <span className="text-[10px] bg-[#10B981]/10 text-[#10B981] border border-[#10B981]/20 px-2 py-0.5 rounded-full uppercase tracking-wider">Active</span>
               </h2>
-              <p className="text-sm text-[#94A3B8] mt-1">Billed ₹4,999/month. Next cycle: Nov 01, 2026</p>
+              <p className="text-sm text-[#94A3B8] mt-1">Billed ₹2,999/month. Next cycle: Nov 01, 2026</p>
             </div>
             <Button className="h-9 text-xs font-bold bg-white/5 hover:bg-white/10 text-white border border-white/10 transition-colors">
               Manage Billing
