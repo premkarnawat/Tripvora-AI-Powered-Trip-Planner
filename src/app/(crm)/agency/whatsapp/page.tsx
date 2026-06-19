@@ -52,8 +52,12 @@ function TabButton({ active, onClick, icon: Icon, label }: any) {
 function TemplatesTab() {
   const templates = [
     { name: "Welcome Message", desc: "Hello {{1}}, Thank you for your interest in our {{2}} package. Our travel expert will contact you shortly.", icon: MessageSquare, color: "text-[#38BDF8]" },
-    { name: "Quotation PDF", desc: "Hi {{1}}, please find attached the quotation for your trip to {{2}}. Let us know if you have any questions.", icon: FileText, color: "text-purple-400" },
+    { name: "Send Package", desc: "Hi {{1}}, here is the customized travel package for {{2}} we discussed. Let us know your thoughts!", icon: FileText, color: "text-indigo-400" },
+    { name: "Send Quotation", desc: "Hi {{1}}, please find attached the quotation for your trip to {{2}}. Let us know if you have any questions.", icon: FileText, color: "text-purple-400" },
+    { name: "Send Follow Up", desc: "Hello {{1}}, just checking in on the quotation sent for {{2}}. Do you need any modifications?", icon: MessageSquare, color: "text-pink-400" },
+    { name: "Send Invoice", desc: "Hi {{1}}, please find your official invoice for booking {{2}} attached. Thank you!", icon: CreditCard, color: "text-blue-400" },
     { name: "Payment Reminder", desc: "Hello {{1}}, Your advance payment of {{2}} is pending. Please complete it to confirm your booking.", icon: CreditCard, color: "text-[#F59E0B]" },
+    { name: "Send Itinerary PDF", desc: "Hi {{1}}, your booking is confirmed! Here is the detailed day-by-day itinerary for {{2}}.", icon: Map, color: "text-teal-400" },
     { name: "Trip Reminder", desc: "Your {{1}} trip starts tomorrow! Please find attached your final itinerary and emergency contacts.", icon: Map, color: "text-[#10B981]" },
     { name: "Review Request", desc: "Hope you enjoyed your trip to {{1}}. Please share your review to help us improve!", icon: Star, color: "text-yellow-400" },
   ];

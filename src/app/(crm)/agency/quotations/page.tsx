@@ -36,6 +36,17 @@ export default function QuotationBuilderPage() {
           </div>
         </div>
 
+        {/* AI Estimation Mode Warning */}
+        <div className="bg-purple-500/10 border border-purple-500/20 rounded-md p-3 flex items-start gap-3">
+          <div className="mt-0.5">
+            <Calculator className="w-4 h-4 text-purple-400" />
+          </div>
+          <div>
+            <h3 className="text-xs font-bold text-purple-400 uppercase tracking-widest">Estimated Pricing Mode</h3>
+            <p className="text-xs text-purple-300/80 mt-0.5">No local vendors were found for this destination. These costs are AI-generated estimates. Please verify actual availability before finalizing booking.</p>
+          </div>
+        </div>
+
         {/* Client & Trip Details */}
         <div className="bg-[#0B1220] border border-white/5 rounded-md p-5 grid grid-cols-2 lg:grid-cols-4 gap-4">
           <div>

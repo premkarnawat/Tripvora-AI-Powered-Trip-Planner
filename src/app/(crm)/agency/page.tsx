@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { DollarSign, Users, FileText, CalendarCheck, Clock, ArrowRight, Activity, PlaneTakeoff, Plus } from "lucide-react";
+import { DollarSign, Users, FileText, CalendarCheck, Clock, ArrowRight, Activity, PlaneTakeoff, Plus, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function AgencyDashboard() {
@@ -21,23 +21,28 @@ export default function AgencyDashboard() {
             Overview
           </h1>
         </div>
-        <div className="flex gap-3">
-          <Button className="h-8 text-xs font-bold bg-white/5 hover:bg-white/10 text-white border border-white/10">
-            Generate Report
+        <div className="flex gap-2">
+          <Button className="h-8 text-xs font-bold bg-[#38BDF8]/10 hover:bg-[#38BDF8]/20 text-[#38BDF8] border border-[#38BDF8]/20 shadow-sm transition-colors">
+            Generate Package
           </Button>
-          <Button className="h-8 text-xs font-bold bg-[#14B8A6] hover:bg-[#14B8A6]/90 text-[#0F172A] border-none shadow-sm">
-            <Plus className="w-3.5 h-3.5 mr-1" /> New Deal
+          <Button className="h-8 text-xs font-bold bg-[#14B8A6]/10 hover:bg-[#14B8A6]/20 text-[#14B8A6] border border-[#14B8A6]/20 shadow-sm transition-colors">
+            Generate Quotation
+          </Button>
+          <Button className="h-8 text-xs font-bold bg-[#10B981] hover:bg-[#10B981]/90 text-[#0F172A] border-none shadow-sm transition-colors">
+            Send WhatsApp
           </Button>
         </div>
       </div>
 
       {/* 1. TOP ROW: Dense KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
         <KpiMetric title="Today's Leads" value="12" icon={Users} trend="+3" />
         <KpiMetric title="Pending Quotes" value="42" icon={FileText} trend="-2" warning />
         <KpiMetric title="Upcoming Trips" value="8" icon={PlaneTakeoff} />
-        <KpiMetric title="Pending Payments" value="$14,200" icon={Clock} warning />
-        <KpiMetric title="Monthly Revenue" value="$412,850" icon={DollarSign} trend="+12%" success />
+        <KpiMetric title="Pending Payments" value="₹14,200" icon={Clock} warning />
+        <KpiMetric title="Monthly Revenue" value="₹41,28,500" icon={DollarSign} trend="+12%" success />
+        <KpiMetric title="Monthly Profit" value="₹8,25,000" icon={Activity} trend="+8%" success />
+        <KpiMetric title="Lead Conversion" value="24.5%" icon={TrendingUp} trend="+2.1%" success />
       </div>
 
       {/* 2. SECOND ROW: Linear Lead Pipeline */}
@@ -112,8 +117,8 @@ export default function AgencyDashboard() {
           </div>
           <div className="space-y-4 flex-1 overflow-y-auto custom-scrollbar pr-2">
             <ActivityItem type="new_lead" text="New Lead: Priya Sharma (Europe Tour)" time="Just now" />
-            <ActivityItem type="payment" text="Payment Received: $4,500 from Jenkins" time="15m ago" />
-            <ActivityItem type="proposal" text="Proposal Sent: Acme Corp Retreat ($45k)" time="1h ago" />
+            <ActivityItem type="payment" text="Payment Received: ₹45,000 from Jenkins" time="15m ago" />
+            <ActivityItem type="proposal" text="Proposal Sent: Acme Corp Retreat (₹4,50,000)" time="1h ago" />
             <ActivityItem type="booking" text="Booking Confirmed: Tokyo Flight (Smith)" time="2h ago" />
             <ActivityItem type="whatsapp" text="WhatsApp Read: David Kim" time="3h ago" />
             <ActivityItem type="new_lead" text="New Marketplace Lead: Emma Stone" time="5h ago" />
