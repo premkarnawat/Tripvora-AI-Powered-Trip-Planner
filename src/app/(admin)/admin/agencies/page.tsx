@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Building, CheckCircle2, XCircle, Search, MoreVertical, Ban } from "lucide-react";
+import { Building, CheckCircle2, XCircle, Search, MoreVertical, Ban, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function AdminAgenciesPage() {
