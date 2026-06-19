@@ -106,9 +106,12 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
         </div>
 
         <div className="p-4 border-t border-white/5 bg-[#0B1220]">
-          <button className="w-full bg-[#38BDF8] hover:bg-[#38BDF8]/90 text-[#0F172A] font-bold py-2 rounded-md text-sm transition-colors shadow-sm">
-            Quick Action (Cmd+K)
-          </button>
+          <Link href="/agency/packages">
+            <button className="w-full bg-[#14B8A6] hover:bg-[#14B8A6]/90 text-[#0F172A] font-extrabold py-3 rounded-md text-sm transition-all shadow-[0_0_15px_rgba(20,184,166,0.3)] hover:scale-[1.02] flex items-center justify-center gap-2">
+              <Package className="w-4 h-4" />
+              Generate Package
+            </button>
+          </Link>
         </div>
       </aside>
 
