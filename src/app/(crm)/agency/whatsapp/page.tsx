@@ -148,7 +148,7 @@ function TemplatesTab() {
                 )}
               </div>
               <h3 className="text-sm font-bold text-white mb-2">{tpl.name}</h3>
-              <p className="text-xs text-[#94A3B8] line-clamp-2">"Hi {{1}}, thanks for contacting Elite Travels! Your trip to {{2}} is being processed..."</p>
+              <p className="text-xs text-[#94A3B8] line-clamp-2">{"\"Hi {{1}}, thanks for contacting Elite Travels! Your trip to {{2}} is being processed...\""}</p>
             </div>
             <div className="mt-4 pt-3 border-t border-white/5 flex gap-2">
               <button className="flex-1 text-center py-1.5 bg-white/[0.03] hover:bg-white/[0.08] text-xs font-bold text-white rounded transition-colors">Edit</button>
