@@ -1,129 +1,181 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Plus, Search, FileText, Send, CheckCircle2 } from "lucide-react";
+import { useState } from "react";
+import { FileText, Download, Send, Phone, MessageCircle, Mail, Plus, MapPin, Calculator, PlusCircle, Trash2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export default function QuotationsTool() {
+export default function QuotationBuilderPage() {
+  const [markup, setMarkup] = useState(18);
+  const [baseCost, setBaseCost] = useState(195000);
+  const [gst, setGst] = useState(5);
+
+  const markupAmount = (baseCost * markup) / 100;
+  const subtotal = baseCost + markupAmount;
+  const gstAmount = (subtotal * gst) / 100;
+  const finalPrice = subtotal + gstAmount;
+
   return (
-    <div className="w-full">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-          <h1 className="text-3xl md:text-4xl font-bold text-white font-sora">
-            Quotation Builder
-          </h1>
-          <p className="text-white/60 mt-2">Create stunning AI-powered proposals for your clients.</p>
-        </motion.div>
-        
-        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
-          <Button className="bg-teal-500 hover:bg-teal-600 text-white font-bold rounded-xl shadow-[0_0_15px_rgba(20,184,166,0.3)]">
-            <Plus className="w-4 h-4 mr-2" /> New Proposal
+    <div className="w-full max-w-[1400px] mx-auto space-y-6 pb-10 flex flex-col xl:flex-row gap-6">
+      
+      {/* Main Builder Area */}
+      <div className="flex-1 space-y-6">
+        <div className="flex justify-between items-end border-b border-white/5 pb-4">
+          <div>
+            <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+              Quotation Builder
+            </h1>
+            <p className="text-xs text-[#94A3B8] mt-1">Create and send premium proposals to clients.</p>
+          </div>
+          <div className="flex gap-2">
+            <Button className="h-8 text-xs font-bold bg-[#020817] hover:bg-white/5 text-white border border-white/10">
+              Save Draft
+            </Button>
+            <Button className="h-8 text-xs font-bold bg-[#14B8A6] hover:bg-[#14B8A6]/90 text-[#0F172A] border-none shadow-sm">
+              <Download className="w-3.5 h-3.5 mr-1" /> Generate PDF
+            </Button>
+          </div>
+        </div>
+
+        {/* Client & Trip Details */}
+        <div className="bg-[#0B1220] border border-white/5 rounded-md p-5 grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div>
+            <label className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest mb-1 block">Lead / Client</label>
+            <select className="w-full bg-[#020817] border border-white/10 rounded-md py-1.5 px-3 text-xs text-white focus:outline-none focus:border-[#38BDF8]">
+              <option>Smith Family (L-4092)</option>
+              <option>Acme Corp (L-4089)</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest mb-1 block">Destination</label>
+            <input type="text" defaultValue="Tokyo, Japan" className="w-full bg-[#020817] border border-white/10 rounded-md py-1.5 px-3 text-xs text-white focus:outline-none focus:border-[#38BDF8]" />
+          </div>
+          <div>
+            <label className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest mb-1 block">Dates</label>
+            <input type="text" defaultValue="Oct 15 - Oct 25, 2026" className="w-full bg-[#020817] border border-white/10 rounded-md py-1.5 px-3 text-xs text-white focus:outline-none focus:border-[#38BDF8]" />
+          </div>
+          <div>
+            <label className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest mb-1 block">Travelers</label>
+            <input type="number" defaultValue={4} className="w-full bg-[#020817] border border-white/10 rounded-md py-1.5 px-3 text-xs text-white focus:outline-none focus:border-[#38BDF8]" />
+          </div>
+        </div>
+
+        {/* Components Editor */}
+        <div className="space-y-4">
+          <h2 className="text-sm font-bold text-white uppercase tracking-widest px-1">Package Components</h2>
+          
+          <ComponentSection title="Hotels & Accommodation" total="₹1,20,000" items={[
+            { name: "The Ritz-Carlton, Tokyo (Deluxe Room, 5 Nights)", cost: "₹80,000" },
+            { name: "Hoshinoya Kyoto (Ryokan, 5 Nights)", cost: "₹40,000" }
+          ]} />
+          
+          <ComponentSection title="Activities & Sightseeing" total="₹45,000" items={[
+            { name: "Private Mt. Fuji Tour with Guide", cost: "₹25,000" },
+            { name: "Kyoto Temple Pass & Tea Ceremony", cost: "₹20,000" }
+          ]} />
+          
+          <ComponentSection title="Transportation" total="₹30,000" items={[
+            { name: "JR Pass (14 Days) - 4 Pax", cost: "₹25,000" },
+            { name: "Airport Transfers (VIP Alphard)", cost: "₹5,000" }
+          ]} />
+
+          <Button className="w-full h-10 border border-dashed border-white/20 bg-transparent hover:bg-white/5 text-[#94A3B8] hover:text-white rounded-md text-xs font-bold transition-colors">
+            <PlusCircle className="w-4 h-4 mr-1.5" /> Add New Component (Meals, Flights, etc.)
           </Button>
-        </motion.div>
+        </div>
+
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Right Calculator & Actions Sidebar */}
+      <div className="xl:w-[350px] shrink-0 space-y-6">
         
-        {/* Left Col: Builder Form Preview */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-          className="lg:col-span-2 glass-card rounded-3xl p-6"
-        >
-          <div className="border-b border-white/10 pb-4 mb-6 flex justify-between items-center">
-            <h3 className="text-xl font-bold text-white">Create New Package</h3>
-            <span className="text-xs font-bold text-white/40 uppercase tracking-widest">Draft</span>
-          </div>
+        {/* Live Calculator */}
+        <div className="bg-[#0B1220] border border-white/5 rounded-md p-5 shadow-lg relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#14B8A6] to-[#38BDF8]" />
           
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="text-xs font-bold text-white/50 uppercase tracking-widest mb-2 block">Client Name</label>
-                <input type="text" placeholder="Select or type client name" className="w-full bg-[#121824] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-teal-500 transition-colors outline-none" />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-white/50 uppercase tracking-widest mb-2 block">Destination</label>
-                <input type="text" placeholder="e.g., Paris, France" className="w-full bg-[#121824] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-teal-500 transition-colors outline-none" />
-              </div>
-            </div>
-            
-            <div className="p-4 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-teal-500/20 flex items-center justify-center">
-                  <span className="text-2xl">✨</span>
-                </div>
-                <div>
-                  <h4 className="font-bold text-white">AI Itinerary Generation</h4>
-                  <p className="text-sm text-white/50">Let TripPilot AI build the day-by-day plan.</p>
-                </div>
-              </div>
-              <Button className="bg-white/10 hover:bg-white/20 text-white font-bold border-none">
-                Generate
-              </Button>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <label className="text-xs font-bold text-white/50 uppercase tracking-widest mb-2 block">Package Cost</label>
-                <input type="text" placeholder="$0" className="w-full bg-[#121824] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-teal-500 transition-colors outline-none" />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-white/50 uppercase tracking-widest mb-2 block">Agency Markup</label>
-                <input type="text" placeholder="15%" className="w-full bg-[#121824] border border-white/10 rounded-xl px-4 py-3 text-white focus:border-teal-500 transition-colors outline-none" />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-white/50 uppercase tracking-widest mb-2 block">Total Quote</label>
-                <input type="text" placeholder="$0" readOnly className="w-full bg-teal-500/10 border border-teal-500/30 rounded-xl px-4 py-3 text-teal-400 font-bold focus:outline-none" />
-              </div>
-            </div>
-          </div>
-        </motion.div>
+          <h2 className="text-sm font-bold text-white flex items-center gap-2 mb-6">
+            <Calculator className="w-4 h-4 text-[#14B8A6]" /> Live Profit Calculator
+          </h2>
 
-        {/* Right Col: Recent Quotes */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-          className="glass-card rounded-3xl p-6"
-        >
-          <div className="relative mb-6">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-            <input 
-              type="text" 
-              placeholder="Search proposals..." 
-              className="w-full bg-white/5 border border-white/10 rounded-full py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-teal-500 transition-colors"
-            />
-          </div>
-          
-          <h3 className="text-sm font-bold text-white/50 uppercase tracking-widest mb-4">Recent Quotes</h3>
-          
           <div className="space-y-4">
-            {[
-              { id: "QT-1042", client: "Sarah Jenkins", total: "$4,500", status: "Sent" },
-              { id: "QT-1041", client: "David Kim", total: "$3,200", status: "Accepted" },
-              { id: "QT-1040", client: "Priya Sharma", total: "$8,000", status: "Draft" },
-            ].map((quote) => (
-              <div key={quote.id} className="p-4 bg-white/5 border border-white/10 rounded-2xl cursor-pointer hover:bg-white/10 transition-colors">
-                <div className="flex justify-between items-start mb-2">
-                  <span className="text-xs font-mono text-white/40">{quote.id}</span>
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                    quote.status === "Sent" ? "bg-blue-500/20 text-blue-400" :
-                    quote.status === "Accepted" ? "bg-teal-500/20 text-teal-400" :
-                    "bg-white/10 text-white/60"
-                  }`}>
-                    {quote.status}
-                  </span>
-                </div>
-                <h4 className="font-bold text-white">{quote.client}</h4>
-                <div className="flex justify-between items-center mt-3">
-                  <span className="font-bold text-white">{quote.total}</span>
-                  <div className="flex gap-2">
-                    <button className="text-white/40 hover:text-white transition-colors"><FileText className="w-4 h-4" /></button>
-                    <button className="text-white/40 hover:text-white transition-colors"><Send className="w-4 h-4" /></button>
-                  </div>
-                </div>
+            <div className="flex justify-between items-center pb-3 border-b border-white/5">
+              <span className="text-xs text-[#94A3B8]">Total Base Cost</span>
+              <span className="text-sm font-mono font-bold text-white">₹{baseCost.toLocaleString()}</span>
+            </div>
+            
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-[#94A3B8]">Agency Margin (%)</span>
+              <div className="flex items-center gap-2">
+                <input 
+                  type="number" 
+                  value={markup} 
+                  onChange={(e) => setMarkup(Number(e.target.value))} 
+                  className="w-16 bg-[#020817] border border-white/10 rounded-md py-1 px-2 text-xs text-white text-right font-mono focus:border-[#38BDF8] focus:outline-none"
+                />
+                <span className="text-xs font-bold text-[#14B8A6]">₹{markupAmount.toLocaleString()}</span>
               </div>
-            ))}
-          </div>
-        </motion.div>
+            </div>
 
+            <div className="flex justify-between items-center pb-3 border-b border-white/5">
+              <span className="text-xs text-[#94A3B8]">GST (%)</span>
+              <div className="flex items-center gap-2">
+                <input 
+                  type="number" 
+                  value={gst} 
+                  onChange={(e) => setGst(Number(e.target.value))} 
+                  className="w-16 bg-[#020817] border border-white/10 rounded-md py-1 px-2 text-xs text-white text-right font-mono focus:border-[#38BDF8] focus:outline-none"
+                />
+                <span className="text-xs font-mono text-[#94A3B8]">₹{gstAmount.toLocaleString()}</span>
+              </div>
+            </div>
+
+            <div className="pt-2">
+              <p className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest mb-1">Final Selling Price</p>
+              <h3 className="text-3xl font-bold text-white tracking-tight">₹{finalPrice.toLocaleString()}</h3>
+            </div>
+          </div>
+        </div>
+
+        {/* Send Actions */}
+        <div className="bg-[#0B1220] border border-white/5 rounded-md p-5 space-y-4">
+          <h2 className="text-sm font-bold text-white mb-4">Send Proposal</h2>
+          
+          <Button className="w-full h-10 bg-[#10B981]/10 hover:bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/20 text-xs font-bold flex justify-between group transition-colors">
+            <span className="flex items-center gap-2"><MessageCircle className="w-4 h-4" /> Send via WhatsApp</span>
+            <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </Button>
+
+          <Button className="w-full h-10 bg-white/5 hover:bg-white/10 text-white border border-white/10 text-xs font-bold flex justify-between group transition-colors">
+            <span className="flex items-center gap-2"><Mail className="w-4 h-4" /> Send via Email</span>
+            <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </Button>
+          
+          <Button className="w-full h-10 bg-[#38BDF8]/10 hover:bg-[#38BDF8]/20 text-[#38BDF8] border border-[#38BDF8]/20 text-xs font-bold flex justify-between group transition-colors">
+            <span className="flex items-center gap-2"><Phone className="w-4 h-4" /> Copy Direct Link</span>
+          </Button>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+function ComponentSection({ title, total, items }: any) {
+  return (
+    <div className="bg-[#0B1220] border border-white/5 rounded-md overflow-hidden">
+      <div className="flex justify-between items-center bg-white/[0.02] p-3 border-b border-white/5">
+        <h3 className="text-xs font-bold text-white">{title}</h3>
+        <span className="text-xs font-mono font-bold text-[#14B8A6]">{total}</span>
+      </div>
+      <div className="p-2 space-y-1">
+        {items.map((item: any, i: number) => (
+          <div key={i} className="flex justify-between items-center p-2 hover:bg-white/[0.02] rounded-md transition-colors group">
+            <div className="flex items-center gap-3">
+              <button className="text-white/20 hover:text-[#EF4444] transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
+              <span className="text-xs text-white/90">{item.name}</span>
+            </div>
+            <span className="text-xs font-mono text-[#94A3B8] group-hover:text-white transition-colors">{item.cost}</span>
+          </div>
+        ))}
       </div>
     </div>
   );
