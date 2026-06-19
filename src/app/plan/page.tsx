@@ -23,14 +23,28 @@ export default function PlanPage() {
     }
   }, []);
 
-  const handleWizardComplete = (data: any) => {
-    setTripData(data);
+  const handleWizardComplete = async (data: any) => {
     setPhase("loading");
     
-    // Simulate AI Generation Delay
-    setTimeout(() => {
+    try {
+      // Connect to the API Architecture
+      const response = await fetch('/api/generate-trip', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      
+      if (!response.ok) throw new Error("Failed to generate trip");
+      
+      const itineraryData = await response.json();
+      setTripData(itineraryData);
       setPhase("os");
-    }, 3000);
+    } catch (error) {
+      console.error("Error generating trip:", error);
+      // Fallback for now if API fails
+      setTripData(data);
+      setPhase("os");
+    }
   };
 
   if (!isMounted) return null;
