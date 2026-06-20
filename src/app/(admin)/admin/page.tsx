@@ -1,108 +1,225 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Users, DollarSign, Activity, TrendingUp, Building } from "lucide-react";
+import { motion } from "react-use"; // Wait, lucide-react and standard react hooks are preferred
+import { useState } from "react";
+import { 
+  TrendingUp, Users, Building2, Store, Compass, Send, ShieldAlert, 
+  ArrowUpRight, ArrowDownRight, CreditCard, Clock, CheckCircle2, ChevronRight, Activity
+} from "lucide-react";
 
 export default function AdminDashboard() {
+  const [revenuePeriod, setRevenuePeriod] = useState("This Month");
+
+  // Summary Metrics
+  const metrics = [
+    { title: "Total Revenue", value: "₹48,92,400", change: "+14.2%", isPositive: true, subtext: "vs last month" },
+    { title: "Monthly Revenue", value: "₹6,24,800", change: "+8.4%", isPositive: true, subtext: "vs last month" },
+    { title: "Active Agencies", value: "124", change: "+12.1%", isPositive: true, subtext: "28 onboarding" },
+    { title: "Marketplace Listings", value: "1,842", change: "+16.5%", isPositive: true, subtext: "54 new reviews" },
+    { title: "Website Users", value: "34,250", change: "+22.4%", isPositive: true, subtext: "4,800 premium" },
+    { title: "Trips Generated", value: "84,900", change: "+18.9%", isPositive: true, subtext: "Gemini AI" },
+    { title: "Qualified Leads", value: "2,840", change: "-2.4%", isPositive: false, subtext: "conversion 18%" },
+    { title: "Pending Approvals", value: "16", change: "Alert", isPositive: false, subtext: "needs review" },
+  ];
+
   return (
-    <div className="w-full">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-          <h2 className="text-xl text-white/60 mb-1 font-medium">TripPilot OS</h2>
-          <h1 className="text-3xl md:text-4xl font-bold text-white font-sora">
-            Super Admin Dashboard
-          </h1>
-        </motion.div>
+    <div className="space-y-8">
+      
+      {/* Top Banner Welcome */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xs font-bold text-[#64748B] uppercase tracking-widest mb-1">TripPilot Hub</h2>
+          <h1 className="text-3xl font-bold font-sora text-[#0F172A]">Welcome Back, Admin</h1>
+          <p className="text-sm text-[#64748B] mt-1">Here is the latest snapshot of your travel ecosystem today.</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="flex items-center gap-1.5 text-xs font-semibold text-[#16A34A] bg-[#16A34A]/10 px-3 py-1.5 rounded-full">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] animate-pulse"></span>
+            <span>All systems nominal</span>
+          </span>
+        </div>
       </div>
 
-      {/* KPI Stats */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
-      >
-        <StatCard title="Total Platform Users" value="12,450" icon={Users} trend="+840 this week" />
-        <StatCard title="B2B Agencies" value="342" icon={Building} trend="+12 pending approval" />
-        <StatCard title="MRR (SaaS + Affiliate)" value="$124,500" icon={DollarSign} trend="+15% vs last month" />
-        <StatCard title="Trips Generated" value="84,200" icon={Activity} trend="99.9% uptime" />
-      </motion.div>
+      {/* Grid of 8 Metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {metrics.map((m, idx) => (
+          <div 
+            key={idx}
+            className="bg-white border border-[#E5E7EB] rounded-2xl p-5 hover:translate-y-[-2px] transition-all hover:shadow-[0_4px_20px_rgba(0,0,0,0.04)]"
+          >
+            <p className="text-[10px] font-bold text-[#64748B] uppercase tracking-widest mb-2">{m.title}</p>
+            <div className="flex items-baseline gap-2">
+              <h3 className="text-2xl font-bold font-sora text-[#0F172A]">{m.value}</h3>
+              <span className={`text-[10px] font-bold flex items-center ${
+                m.isPositive ? "text-[#16A34A]" : "text-[#DC2626]"
+              }`}>
+                {m.isPositive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+                {m.change}
+              </span>
+            </div>
+            <p className="text-xs text-[#94A3B8] mt-1 font-medium">{m.subtext}</p>
+          </div>
+        ))}
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Revenue Chart Placeholder */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}
-          className="glass-card rounded-3xl p-6 h-[400px] flex flex-col"
-        >
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold text-white">Revenue Growth</h3>
-            <select className="bg-[#121824] border border-white/10 rounded-xl px-3 py-1.5 text-sm text-white outline-none">
-              <option>Last 30 Days</option>
+      {/* Charts Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* Revenue Chart */}
+        <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6 lg:col-span-2 flex flex-col justify-between h-[380px]">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-base font-bold font-sora text-[#0F172A]">Revenue & Transaction Flow</h3>
+              <p className="text-xs text-[#64748B]">Monthly platform commission and subscriptions</p>
+            </div>
+            <select 
+              value={revenuePeriod} 
+              onChange={(e) => setRevenuePeriod(e.target.value)}
+              className="bg-[#F1F5F9] border-none rounded-lg px-2.5 py-1.5 text-xs text-[#0F172A] font-bold focus:outline-none"
+            >
+              <option>This Month</option>
               <option>This Year</option>
             </select>
           </div>
-          
-          <div className="flex-1 flex items-end justify-between gap-2 pt-10">
-            {[40, 60, 45, 80, 65, 90, 100].map((h, i) => (
-              <div key={i} className="w-full relative group">
-                <div 
-                  className="w-full bg-purple-500/20 border border-purple-500/30 rounded-t-lg transition-all group-hover:bg-purple-500/40"
-                  style={{ height: `${h}%` }}
-                />
-                <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 bg-white text-black text-xs font-bold py-1 px-2 rounded transition-opacity pointer-events-none">
-                  ${h * 1000}
+
+          {/* Premium SVG Line/Bar Chart */}
+          <div className="flex-1 w-full flex items-end gap-2 pt-6 pb-2">
+            {[45, 65, 50, 85, 70, 95, 110, 80, 105, 120, 90, 130].map((val, idx) => (
+              <div key={idx} className="flex-1 flex flex-col items-center gap-2 group cursor-pointer h-full justify-end">
+                <div className="w-full relative flex justify-center items-end h-full">
+                  {/* Subtle bar background */}
+                  <div 
+                    className="w-full bg-[#0EA5A4]/10 group-hover:bg-[#0EA5A4]/25 rounded-t-md transition-all"
+                    style={{ height: `${val}%` }}
+                  />
+                  {/* Floating tooltip */}
+                  <div className="absolute bottom-full mb-1 opacity-0 group-hover:opacity-100 bg-[#0F172A] text-white text-[9px] font-bold px-2 py-0.5 rounded shadow pointer-events-none transition-opacity whitespace-nowrap">
+                    ₹{(val * 5).toFixed(1)}k
+                  </div>
                 </div>
+                <span className="text-[9px] font-bold text-[#94A3B8] uppercase">
+                  {["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"][idx]}
+                </span>
               </div>
             ))}
           </div>
-          <div className="flex justify-between mt-4 text-xs font-bold text-white/40 uppercase">
-            <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
-          </div>
-        </motion.div>
+        </div>
 
-        {/* Recent Platform Activity */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }}
-          className="glass-card rounded-3xl p-6"
-        >
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold text-white">Live Platform Activity</h3>
-            <span className="flex items-center gap-2 text-xs font-bold text-green-400 bg-green-400/10 px-2 py-1 rounded-full">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span> Live
-            </span>
+        {/* Traffic Chart & Leads Funnel */}
+        <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6 flex flex-col justify-between h-[380px]">
+          <div>
+            <h3 className="text-base font-bold font-sora text-[#0F172A]">Leads Conversion Funnel</h3>
+            <p className="text-xs text-[#64748B]">Platform inquiry to closed booking</p>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-4 py-4">
             {[
-              { text: "New user signed up from Paris, France", time: "2 mins ago", icon: Users, color: "text-blue-400", bg: "bg-blue-400/10" },
-              { text: "Agency 'GlobeTrotters' paid $99/mo Pro tier", time: "15 mins ago", icon: DollarSign, color: "text-green-400", bg: "bg-green-400/10" },
-              { text: "Gemini API successfully generated 5-day Tokyo trip", time: "42 mins ago", icon: Activity, color: "text-purple-400", bg: "bg-purple-400/10" },
-              { text: "New B2B Agency application requires approval", time: "1 hour ago", icon: Building, color: "text-orange-400", bg: "bg-orange-400/10" },
-            ].map((activity, i) => (
-              <div key={i} className="flex items-start gap-4 p-3 rounded-xl hover:bg-white/5 transition-colors">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${activity.bg}`}>
-                  <activity.icon className={`w-5 h-5 ${activity.color}`} />
+              { stage: "Total Inquiries", count: "12,400", percent: 100, color: "bg-[#0EA5A4]" },
+              { stage: "Qualified Leads", count: "5,840", percent: 47, color: "bg-[#14B8A6]" },
+              { stage: "Quotations Sent", count: "2,840", percent: 22, color: "bg-teal-400" },
+              { stage: "Bookings Closed", count: "1,240", percent: 10, color: "bg-[#16A34A]" },
+            ].map((step, idx) => (
+              <div key={idx} className="space-y-1.5">
+                <div className="flex justify-between items-center text-xs font-semibold">
+                  <span className="text-[#64748B]">{step.stage}</span>
+                  <span className="text-[#0F172A] font-bold">{step.count} ({step.percent}%)</span>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-white/90">{activity.text}</p>
-                  <p className="text-xs text-white/40 mt-1">{activity.time}</p>
+                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                  <div className={`h-full rounded-full ${step.color}`} style={{ width: `${step.percent}%` }} />
                 </div>
               </div>
             ))}
           </div>
-        </motion.div>
-      </div>
-    </div>
-  );
-}
+        </div>
 
-function StatCard({ title, value, icon: Icon, trend }: { title: string, value: string, icon: any, trend: string }) {
-  return (
-    <div className="glass-card p-6 rounded-3xl relative overflow-hidden group border border-purple-500/10">
-      <div className="absolute top-0 right-0 p-6 opacity-20 group-hover:opacity-40 transition-opacity">
-        <Icon className="w-12 h-12 text-purple-400" />
       </div>
-      <p className="text-sm font-bold text-white/50 uppercase tracking-widest mb-2">{title}</p>
-      <h3 className="text-3xl font-black text-white font-sora mb-2">{value}</h3>
-      <p className="text-xs text-purple-400 font-medium">{trend}</p>
+
+      {/* Lists Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* Recent Activities */}
+        <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6 flex flex-col gap-4">
+          <div className="flex justify-between items-center border-b border-[#E5E7EB] pb-2">
+            <h3 className="text-sm font-bold font-sora text-[#0F172A]">Recent Activities</h3>
+            <span className="text-[10px] text-[#0EA5A4] font-bold hover:underline cursor-pointer">View log</span>
+          </div>
+
+          <div className="space-y-3.5 flex-1 overflow-y-auto max-h-[260px] pr-1">
+            {[
+              { icon: Users, text: "New customer profile created: Anil Verma", time: "3m ago", bg: "bg-sky-50", textCol: "text-sky-600" },
+              { icon: Building2, text: "Agency 'Mumbai Travels' verified successfully", time: "18m ago", bg: "bg-emerald-50", textCol: "text-emerald-600" },
+              { icon: Send, text: "API Dispatch: meta template message sent", time: "45m ago", bg: "bg-[#0EA5A4]/10", textCol: "text-[#0EA5A4]" },
+              { icon: ShieldAlert, text: "Razorpay payment failure: Order #2841", time: "1h ago", bg: "bg-red-50", textCol: "text-red-600" },
+            ].map((item, idx) => (
+              <div key={idx} className="flex gap-3 items-start text-xs font-medium">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${item.bg}`}>
+                  <item.icon className={`w-4 h-4 ${item.textCol}`} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[#0F172A] leading-tight font-semibold">{item.text}</p>
+                  <span className="text-[10px] text-[#94A3B8] mt-1 block">{item.time}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Latest Registrations */}
+        <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6 flex flex-col gap-4">
+          <div className="flex justify-between items-center border-b border-[#E5E7EB] pb-2">
+            <h3 className="text-sm font-bold font-sora text-[#0F172A]">Latest Registrations</h3>
+            <span className="text-[10px] text-[#0EA5A4] font-bold hover:underline cursor-pointer">See all</span>
+          </div>
+
+          <div className="space-y-3.5 flex-1 overflow-y-auto max-h-[260px] pr-1">
+            {[
+              { name: "Deccan Expeditions", location: "Pune, Maharashtra", status: "Premium Plan" },
+              { name: "Himalayan Stays", location: "Manali, HP", status: "Growth Plan" },
+              { name: "Kerala Heritage Tours", location: "Kochi, Kerala", status: "Base Plan" },
+              { name: "Wanderlust India", location: "New Delhi", status: "Premium Plan" },
+            ].map((reg, idx) => (
+              <div key={idx} className="flex items-center justify-between text-xs font-medium">
+                <div>
+                  <p className="text-[#0F172A] font-bold">{reg.name}</p>
+                  <p className="text-[10px] text-[#94A3B8]">{reg.location}</p>
+                </div>
+                <span className="px-2 py-0.5 bg-slate-100 border border-slate-200 text-[#0F172A] text-[9px] font-bold rounded">
+                  {reg.status}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Pending Verifications */}
+        <div className="bg-white border border-[#E5E7EB] rounded-2xl p-6 flex flex-col gap-4">
+          <div className="flex justify-between items-center border-b border-[#E5E7EB] pb-2">
+            <h3 className="text-sm font-bold font-sora text-[#0F172A]">Pending Verifications</h3>
+            <span className="text-[10px] text-[#0EA5A4] font-bold hover:underline cursor-pointer">Review</span>
+          </div>
+
+          <div className="space-y-3.5 flex-1 overflow-y-auto max-h-[260px] pr-1">
+            {[
+              { name: "Taj Safaris India", gst: "27AAAAA1111A1Z1", date: "Today" },
+              { name: "Goa Shore Trips", gst: "30BBBBB2222B2Z2", date: "Yesterday" },
+              { name: "Jaipur Palace Guides", gst: "08CCCCC3333C3Z3", date: "2 days ago" },
+              { name: "Indus Cruises", gst: "09DDDDD4444D4Z4", date: "3 days ago" },
+            ].map((v, idx) => (
+              <div key={idx} className="flex items-center justify-between text-xs font-medium">
+                <div>
+                  <p className="text-[#0F172A] font-bold">{v.name}</p>
+                  <p className="text-[10px] text-[#94A3B8] font-mono">GST: {v.gst}</p>
+                </div>
+                <button className="text-[10px] font-bold text-[#0EA5A4] hover:bg-[#0EA5A4]/10 px-2.5 py-1 rounded-md border border-[#0EA5A4]/20 transition-all">
+                  Approve
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+      </div>
+
     </div>
   );
 }

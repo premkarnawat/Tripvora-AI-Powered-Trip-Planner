@@ -4,174 +4,335 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { 
-  LayoutDashboard, Users, Building, ShieldCheck, Activity, Menu, X, LogOut, 
-  DollarSign, Settings, LifeBuoy, MessageSquare, FileText, Video, Image, 
-  FileSignature, LayoutTemplate, Megaphone, HelpCircle 
+  LayoutDashboard, Users, Building2, Store, Megaphone, Percent, Compass, 
+  Coins, CreditCard, Send, LifeBuoy, LayoutTemplate, Settings, Menu, X, 
+  Bell, MessageSquare, Search, Plus, ChevronRight, LogOut
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const sidebarGroups = [
-  {
-    title: "CORE OPERATIONS",
-    links: [
-      { name: "Overview", href: "/admin", icon: LayoutDashboard },
-      { name: "Platform Users", href: "/admin/users", icon: Users },
-      { name: "Agencies (B2B)", href: "/admin/agencies", icon: Building },
-      { name: "Revenue", href: "/admin/revenue", icon: DollarSign },
-    ]
-  },
-  {
-    title: "CUSTOMER SUCCESS",
-    links: [
-      { name: "Support Tickets", href: "/admin/support", icon: LifeBuoy },
-      { name: "Live Chat", href: "/admin/chat", icon: MessageSquare },
-    ]
-  },
-  {
-    title: "PLATFORM CONFIG",
-    links: [
-      { name: "Platform Settings", href: "/admin/settings", icon: Settings },
-      { name: "Audit Logs", href: "/admin/audit", icon: ShieldCheck },
-    ]
-  },
-  {
-    title: "KNOWLEDGE BASE",
-    links: [
-      { name: "Help Center", href: "/admin/help-center", icon: HelpCircle },
-      { name: "Documentation", href: "/admin/docs", icon: FileText },
-      { name: "Video Library", href: "/admin/videos", icon: Video },
-    ]
-  },
-  {
-    title: "CONTENT & ASSETS",
-    links: [
-      { name: "Pages CMS", href: "/admin/cms", icon: LayoutTemplate },
-      { name: "Media Library", href: "/admin/media", icon: Image },
-      { name: "Legal Pages", href: "/admin/legal", icon: FileSignature },
-      { name: "Promotions", href: "/admin/promotions", icon: Megaphone },
-    ]
-  }
+const sidebarLinks = [
+  { name: "Overview", href: "/admin", icon: LayoutDashboard },
+  { name: "Agencies", href: "/admin/agencies", icon: Building2 },
+  { name: "Marketplace", href: "/admin/marketplace", icon: Store },
+  { name: "Advertisements", href: "/admin/advertisements", icon: Megaphone },
+  { name: "Offers", href: "/admin/offers", icon: Percent },
+  { name: "Destinations", href: "/admin/destinations", icon: Compass },
+  { name: "Revenue", href: "/admin/revenue", icon: Coins },
+  { name: "Users", href: "/admin/users", icon: Users },
+  { name: "Subscriptions", href: "/admin/subscriptions", icon: CreditCard },
+  { name: "Leads", href: "/admin/leads", icon: Send },
+  { name: "Support Center", href: "/admin/support", icon: LifeBuoy },
+  { name: "CMS", href: "/admin/cms", icon: LayoutTemplate },
+  { name: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isMessagesOpen, setIsMessagesOpen] = useState(false);
+  
+  // Dummy data for dropdowns
+  const notifications = [
+    { id: 1, text: "New agency registration: 'Delhi Horizons'", time: "5m ago", type: "info" },
+    { id: 2, text: "High revenue alert: ₹2.4L package booked", time: "1h ago", type: "success" },
+    { id: 3, text: "API quota threshold reached (90%)", time: "2h ago", type: "warning" },
+  ];
+
+  const messages = [
+    { id: 1, sender: "Karan Johar", snippet: "GST verification document uploaded...", time: "10m ago" },
+    { id: 2, sender: "Sunita Travel", snippet: "Query regarding Razorpay split payments...", time: "30m ago" },
+    { id: 3, sender: "Rajesh (Traveler)", snippet: "Is Viator integration down?", time: "1h ago" },
+  ];
 
   return (
-    <div className="pt-24 pb-20 min-h-screen max-w-[1500px] mx-auto flex flex-col xl:flex-row">
+    <div className="admin-theme min-h-screen bg-[#F8FAFC] text-[#0F172A] font-sans antialiased relative z-50">
       
-      {/* Desktop Sidebar */}
-      <aside className="hidden xl:flex w-72 flex-col gap-6 px-6 border-r border-white/5 sticky top-24 h-[calc(100vh-6rem)] py-6 overflow-y-auto custom-scrollbar">
-        <div className="mb-2 px-4 flex items-center gap-2 shrink-0">
-          <ShieldCheck className="w-6 h-6 text-purple-400" />
-          <div>
-            <p className="text-[10px] font-bold text-purple-400 uppercase tracking-widest leading-none mb-1">Super Admin</p>
-            <h2 className="text-lg font-sora font-bold text-white leading-none">TripPilot OS</h2>
+      {/* Desktop Fixed Sidebar */}
+      <aside className="hidden lg:flex w-64 flex-col bg-white border-r border-[#E5E7EB] fixed top-0 bottom-0 left-0 z-30">
+        
+        {/* Logo and Tagline */}
+        <div className="p-6 border-b border-[#E5E7EB] shrink-0">
+          <div className="flex items-center gap-2">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M2 22L12 2L22 22H2Z" fill="#0EA5A4" />
+              <path d="M12 2L2 22H12V2Z" fill="#14B8A6" />
+            </svg>
+            <h1 className="text-lg font-bold font-sora tracking-tight text-[#0F172A]">TripPilot Admin</h1>
+          </div>
+          <p className="text-[10px] font-bold text-[#64748B] uppercase tracking-widest mt-1">Travel OS</p>
+        </div>
+
+        {/* Sidebar Links */}
+        <nav className="flex-1 overflow-y-auto p-4 space-y-1 custom-scrollbar">
+          {sidebarLinks.map((link) => {
+            const Icon = link.icon;
+            const isActive = pathname === link.href || (link.href !== "/admin" && pathname?.startsWith(link.href));
+            
+            return (
+              <Link 
+                key={link.name} 
+                href={link.href}
+                className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-all group ${
+                  isActive 
+                    ? "bg-[#0EA5A4]/10 text-[#0EA5A4] font-semibold" 
+                    : "text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9]"
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Icon className={`w-4 h-4 shrink-0 transition-colors ${
+                    isActive ? "text-[#0EA5A4]" : "text-[#64748B] group-hover:text-[#0F172A]"
+                  }`} />
+                  <span>{link.name}</span>
+                </div>
+                {isActive && <ChevronRight className="w-3.5 h-3.5 text-[#0EA5A4]" />}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Profile Card Bottom */}
+        <div className="p-4 border-t border-[#E5E7EB] shrink-0 bg-white">
+          <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-[#F1F5F9] transition-colors cursor-pointer group">
+            <div className="w-10 h-10 rounded-full overflow-hidden border border-[#E5E7EB] shrink-0 bg-slate-100">
+              <img 
+                src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=100&auto=format&fit=crop" 
+                alt="Admin Avatar"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold text-[#0F172A] truncate">Prem Karnawat</p>
+              <p className="text-[10px] text-[#64748B] font-medium truncate">Lead Architect</p>
+            </div>
+            <LogOut className="w-4 h-4 text-[#64748B] group-hover:text-red-500 transition-colors shrink-0" />
           </div>
         </div>
-        
-        <div className="flex flex-col gap-6 flex-1">
-          {sidebarGroups.map((group, idx) => (
-            <div key={idx} className="flex flex-col gap-1">
-              <span className="px-4 text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest mb-1">{group.title}</span>
-              {group.links.map((link) => {
-                const Icon = link.icon;
-                const isActive = pathname === link.href || pathname?.startsWith(link.href + "/");
-                return (
-                  <Link 
-                    key={link.name} 
-                    href={link.href}
-                    className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${
-                      isActive 
-                        ? "bg-purple-500/20 text-purple-400 font-bold shadow-[0_0_15px_rgba(168,85,247,0.15)]" 
-                        : "text-white/60 hover:text-white hover:bg-white/5 font-medium"
-                    }`}
-                  >
-                    <Icon className="w-4 h-4 shrink-0" />
-                    <span className="text-sm">{link.name}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          ))}
-        </div>
-
-        <button className="flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-400/10 font-medium transition-all shrink-0 mt-4">
-          <LogOut className="w-5 h-5 shrink-0" />
-          Secure Logout
-        </button>
       </aside>
 
-      {/* Mobile Header / Menu Toggle */}
-      <div className="xl:hidden fixed top-16 left-0 right-0 z-40 bg-[#04060E]/90 backdrop-blur-xl border-b border-white/5 px-4 py-4 flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <ShieldCheck className="w-5 h-5 text-purple-400" />
-          <span className="font-sora font-bold text-purple-400 tracking-widest uppercase text-sm">TripPilot OS</span>
-        </div>
-        <button onClick={() => setIsMobileMenuOpen(true)} className="text-white p-2 bg-white/5 rounded-lg border border-white/10">
-          <Menu className="w-5 h-5" />
-        </button>
+      {/* Main Container */}
+      <div className="lg:pl-64 flex flex-col min-h-screen">
+        
+        {/* Sticky Header */}
+        <header className="sticky top-0 right-0 left-0 lg:left-64 z-20 h-16 bg-white/90 backdrop-blur-md border-b border-[#E5E7EB] px-6 flex items-center justify-between">
+          
+          {/* Menu Toggle (Mobile only) */}
+          <div className="flex items-center gap-3 lg:hidden">
+            <button 
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="p-1.5 rounded-lg border border-[#E5E7EB] hover:bg-[#F1F5F9] transition-colors"
+            >
+              <Menu className="w-5 h-5 text-[#0F172A]" />
+            </button>
+            <div className="flex items-center gap-1.5">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2 22L12 2L22 22H2Z" fill="#0EA5A4" />
+              </svg>
+              <span className="font-bold font-sora text-sm text-[#0F172A]">TripPilot</span>
+            </div>
+          </div>
+
+          {/* Global Search */}
+          <div className="hidden md:flex relative w-80">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B]" />
+            <input 
+              type="text" 
+              placeholder="Search bookings, agencies, tickets..." 
+              className="w-full bg-[#F1F5F9] border border-transparent rounded-full py-1.5 pl-9 pr-4 text-xs text-[#0F172A] placeholder-[#64748B] focus:outline-none focus:bg-white focus:border-[#0EA5A4] transition-all"
+            />
+          </div>
+
+          {/* Quick Actions & Profile Dropdowns */}
+          <div className="flex items-center gap-4">
+            
+            {/* Quick Actions CTA */}
+            <button className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 bg-[#0EA5A4] hover:bg-[#0EA5A4]/90 text-white rounded-full text-xs font-semibold shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all">
+              <Plus className="w-3.5 h-3.5" />
+              <span>Quick Actions</span>
+            </button>
+
+            {/* Messages Panel Toggle */}
+            <div className="relative">
+              <button 
+                onClick={() => { setIsMessagesOpen(!isMessagesOpen); setIsNotificationsOpen(false); }}
+                className={`p-2 rounded-full border transition-colors ${
+                  isMessagesOpen ? "bg-[#F1F5F9] border-[#0EA5A4]/30" : "hover:bg-[#F1F5F9] border-[#E5E7EB]"
+                }`}
+              >
+                <MessageSquare className="w-4 h-4 text-[#0F172A]" />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-[#0EA5A4] rounded-full border border-white"></span>
+              </button>
+
+              <AnimatePresence>
+                {isMessagesOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setIsMessagesOpen(false)} />
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
+                      className="absolute right-0 mt-2 w-72 bg-white rounded-xl border border-[#E5E7EB] shadow-xl z-50 p-4"
+                    >
+                      <h4 className="text-xs font-bold text-[#0F172A] border-b border-[#E5E7EB] pb-2 mb-2 flex items-center justify-between">
+                        <span>Recent Messages</span>
+                        <span className="text-[10px] text-[#0EA5A4] hover:underline cursor-pointer">Mark all read</span>
+                      </h4>
+                      <div className="space-y-2">
+                        {messages.map(msg => (
+                          <div key={msg.id} className="p-2 rounded-lg hover:bg-[#F1F5F9] transition-colors cursor-pointer">
+                            <p className="text-xs font-bold text-[#0F172A]">{msg.sender}</p>
+                            <p className="text-[10px] text-[#64748B] truncate mt-0.5">{msg.snippet}</p>
+                            <span className="text-[9px] text-[#94A3B8] block mt-1">{msg.time}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Notifications Panel Toggle */}
+            <div className="relative">
+              <button 
+                onClick={() => { setIsNotificationsOpen(!isNotificationsOpen); setIsMessagesOpen(false); }}
+                className={`p-2 rounded-full border transition-colors ${
+                  isNotificationsOpen ? "bg-[#F1F5F9] border-[#0EA5A4]/30" : "hover:bg-[#F1F5F9] border-[#E5E7EB]"
+                }`}
+              >
+                <Bell className="w-4 h-4 text-[#0F172A]" />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-[#14B8A6] rounded-full border border-white"></span>
+              </button>
+
+              <AnimatePresence>
+                {isNotificationsOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setIsNotificationsOpen(false)} />
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
+                      className="absolute right-0 mt-2 w-72 bg-white rounded-xl border border-[#E5E7EB] shadow-xl z-50 p-4"
+                    >
+                      <h4 className="text-xs font-bold text-[#0F172A] border-b border-[#E5E7EB] pb-2 mb-2 flex items-center justify-between">
+                        <span>Platform Alerts</span>
+                        <span className="text-[10px] text-[#0EA5A4] hover:underline cursor-pointer">View all</span>
+                      </h4>
+                      <div className="space-y-2">
+                        {notifications.map(notif => (
+                          <div key={notif.id} className="p-2 rounded-lg hover:bg-[#F1F5F9] transition-colors cursor-pointer flex gap-2">
+                            <div className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${
+                              notif.type === "success" ? "bg-green-500" :
+                              notif.type === "warning" ? "bg-amber-500" : "bg-[#0EA5A4]"
+                            }`} />
+                            <div>
+                              <p className="text-xs font-medium text-[#0F172A]">{notif.text}</p>
+                              <span className="text-[9px] text-[#94A3B8]">{notif.time}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Admin Avatar Circle */}
+            <div className="w-8 h-8 rounded-full overflow-hidden border border-[#E5E7EB] shrink-0 bg-slate-100 cursor-pointer">
+              <img 
+                src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=100&auto=format&fit=crop" 
+                alt="Profile"
+                className="w-full h-full object-cover"
+              />
+            </div>
+
+          </div>
+        </header>
+
+        {/* Dynamic Main Page Content */}
+        <main className="flex-1 p-6 md:p-8 lg:p-10 relative">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={pathname}
+              initial={{ opacity: 0, y: 5 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -5 }}
+              transition={{ duration: 0.15 }}
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
+        </main>
       </div>
 
-      {/* Mobile Drawer */}
+      {/* Responsive Mobile Drawer */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <>
             <motion.div 
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setIsMobileMenuOpen(false)}
-              className="fixed inset-0 bg-black/60 z-[60] xl:hidden backdrop-blur-sm"
+              className="fixed inset-0 bg-[#0F172A]/40 backdrop-blur-sm z-[60] lg:hidden"
             />
             <motion.aside 
-              initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
-              transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-              className="fixed top-0 right-0 bottom-0 w-72 bg-[#0A0F1D] z-[70] p-6 flex flex-col gap-6 shadow-2xl border-l border-white/10 overflow-y-auto custom-scrollbar"
+              initial={{ x: "-100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }}
+              transition={{ type: "spring", bounce: 0, duration: 0.3 }}
+              className="fixed top-0 bottom-0 left-0 w-72 bg-white z-[70] p-6 flex flex-col gap-6 shadow-2xl border-r border-[#E5E7EB] lg:hidden overflow-y-auto custom-scrollbar"
             >
               <div className="flex justify-between items-center shrink-0">
-                <span className="font-sora font-bold text-xl text-white">Menu</span>
-                <button onClick={() => setIsMobileMenuOpen(false)} className="w-8 h-8 flex items-center justify-center bg-white/5 border border-white/10 rounded-full">
-                  <X className="w-5 h-5 text-white" />
+                <div className="flex items-center gap-2">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M2 22L12 2L22 22H2Z" fill="#0EA5A4" />
+                  </svg>
+                  <span className="font-sora font-bold text-[#0F172A]">TripPilot Admin</span>
+                </div>
+                <button onClick={() => setIsMobileMenuOpen(false)} className="w-8 h-8 flex items-center justify-center bg-slate-100 hover:bg-slate-200 border border-[#E5E7EB] rounded-full">
+                  <X className="w-4 h-4 text-[#0F172A]" />
                 </button>
               </div>
 
-              <div className="flex flex-col gap-6 flex-1">
-                {sidebarGroups.map((group, idx) => (
-                  <div key={idx} className="flex flex-col gap-1">
-                    <span className="px-4 text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest mb-1">{group.title}</span>
-                    {group.links.map((link) => {
-                      const Icon = link.icon;
-                      const isActive = pathname === link.href || pathname?.startsWith(link.href + "/");
-                      return (
-                        <Link 
-                          key={link.name} 
-                          href={link.href}
-                          onClick={() => setIsMobileMenuOpen(false)}
-                          className={`flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${
-                            isActive ? "bg-purple-500/20 text-purple-400 font-bold" : "text-white/60 hover:text-white hover:bg-white/5 font-medium"
-                          }`}
-                        >
-                          <Icon className="w-4 h-4 shrink-0" />
-                          <span className="text-sm">{link.name}</span>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                ))}
-              </div>
+              <nav className="flex-1 space-y-1">
+                {sidebarLinks.map((link) => {
+                  const Icon = link.icon;
+                  const isActive = pathname === link.href || (link.href !== "/admin" && pathname?.startsWith(link.href));
+                  
+                  return (
+                    <Link 
+                      key={link.name} 
+                      href={link.href}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                        isActive 
+                          ? "bg-[#0EA5A4]/10 text-[#0EA5A4] font-semibold" 
+                          : "text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9]"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Icon className="w-4 h-4 shrink-0" />
+                        <span>{link.name}</span>
+                      </div>
+                      {isActive && <ChevronRight className="w-3.5 h-3.5 text-[#0EA5A4]" />}
+                    </Link>
+                  );
+                })}
+              </nav>
 
-              <button className="flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-400/10 font-medium transition-all shrink-0">
-                <LogOut className="w-5 h-5 shrink-0" />
-                Secure Logout
-              </button>
+              <div className="border-t border-[#E5E7EB] pt-4 shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full overflow-hidden border border-[#E5E7EB]">
+                    <img 
+                      src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=100&auto=format&fit=crop" 
+                      alt="Avatar"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-[#0F172A]">Prem Karnawat</p>
+                    <p className="text-[10px] text-[#64748B]">Lead Architect</p>
+                  </div>
+                </div>
+              </div>
             </motion.aside>
           </>
         )}
       </AnimatePresence>
-
-      {/* Main Content Area */}
-      <main className="flex-1 w-full relative z-10 px-4 xl:px-8 pt-20 xl:pt-6">
-        {children}
-      </main>
 
     </div>
   );
