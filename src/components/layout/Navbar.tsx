@@ -25,7 +25,7 @@ export function Navbar() {
     return null;
   }
 
-  const isHiddenPage = pathname ? (pathname.startsWith("/login") || pathname.startsWith("/signup") || pathname.startsWith("/agency") || pathname.startsWith("/admin")) : false;
+  const isHiddenPage = pathname ? (pathname.startsWith("/login") || pathname.startsWith("/signup") || pathname.startsWith("/agency") || pathname.startsWith("/admin") || pathname.startsWith("/dashboard") || pathname.startsWith("/trips")) : false;
   if (isHiddenPage) {
     return null;
   }

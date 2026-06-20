@@ -1,160 +1,263 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { Search, Bell, Map, Calendar, Users, Star } from "lucide-react";
-import Image from "next/image";
+import { useState } from "react";
+import Link from "next/link";
+import { 
+  Sparkles, Calendar, MapPin, ShieldAlert, 
+  Play, Plus, ArrowUpRight, Compass, Settings, 
+  CloudSun, Shield, Coins, FileText, PhoneCall, Star
+} from "lucide-react";
 
 export default function Dashboard() {
+  const [showAddSpend, setShowAddSpend] = useState(false);
+
+  // Mock Budget Stats
+  const budget = {
+    total: 60000,
+    used: 32000,
+    remaining: 28000,
+    percent: 46,
+    stay: 14200,
+    food: 6400,
+    transport: 4200,
+    activities: 7200
+  };
+
   return (
-    <div className="w-full">
+    <div className="space-y-8 animate-in fade-in duration-200">
       
-      {/* Header Area */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
-        <motion.div 
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <h2 className="text-xl text-white/60 mb-1 font-medium">Dashboard</h2>
-          <h1 className="text-3xl md:text-4xl font-bold text-white font-sora">
-            Welcome back, Arjun 👋
-          </h1>
-        </motion.div>
-
-        <motion.div 
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5 }}
-          className="flex items-center gap-4"
-        >
-          <div className="relative w-full md:w-64 group">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 group-focus-within:text-primary transition-colors" />
-            <input 
-              type="text" 
-              placeholder="Search trips, experiences..." 
-              className="w-full bg-white/5 border border-white/10 rounded-full py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-primary/50 focus:bg-white/10 transition-all"
-            />
+      {/* Dynamic Hero Countdown Banner */}
+      <div className="relative rounded-[32px] overflow-hidden border border-[#E5E7EB] bg-white p-8 shadow-[0_4px_25px_rgba(0,0,0,0.03)] flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold text-[#14B8A6] uppercase tracking-widest bg-[#14B8A6]/10 px-2.5 py-0.5 rounded-full border border-[#14B8A6]/20 flex items-center gap-1">
+              <Sparkles className="w-3.5 h-3.5" /> AI Assistant Active
+            </span>
           </div>
-          <Button variant="ghost" size="icon" className="relative rounded-full glass hover:bg-white/10 shrink-0">
-            <Bell className="w-5 h-5 text-white/80" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-primary rounded-full"></span>
-          </Button>
-          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-primary to-secondary shrink-0 overflow-hidden border-2 border-white/10 flex items-center justify-center font-bold text-white shadow-lg">
-            A
-          </div>
-        </motion.div>
-      </div>
+          <h1 className="text-3xl font-black font-sora text-[#0F172A]">Welcome to Goa, Prem</h1>
+          <p className="text-xs font-semibold text-[#64748B] flex items-center gap-1">
+            <MapPin className="w-3.5 h-3.5 text-[#14B8A6]" /> Upcoming Journey: <strong>Goa Trip</strong>
+          </p>
+        </div>
 
-      {/* Stats Cards */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-        className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10"
-      >
-        <StatCard icon={Map} value="12" label="Trips Planned" />
-        <StatCard icon={Calendar} value="08" label="Bookings" />
-        <StatCard icon={Map} value="05" label="Upcoming Trips" />
-        <StatCard icon={Star} value="02" label="Wishlist" />
-      </motion.div>
-
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        {/* Upcoming Trip Card */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="glass-card rounded-3xl p-6"
-        >
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-semibold text-white">Upcoming Trip</h3>
-            <button className="text-sm font-medium text-primary hover:text-primary/80 transition-colors">View Details</button>
+        {/* Action / Countdown details */}
+        <div className="flex gap-4">
+          <div className="bg-[#F8FAFC] border border-[#E5E7EB] p-4 px-6 rounded-2xl text-center shrink-0">
+            <span className="block text-[8px] font-bold text-[#94A3B8] uppercase tracking-widest mb-0.5">Countdown</span>
+            <span className="text-xl font-bold font-sora text-[#0F172A]">4 Days Left</span>
           </div>
           
-          <div className="flex flex-col md:flex-row gap-6">
-            <div className="w-full md:w-32 h-32 rounded-2xl overflow-hidden relative shrink-0">
-              {/* Fallback color if image is missing */}
-              <div className="absolute inset-0 bg-gradient-to-tr from-teal-900 to-slate-800" />
-            </div>
-            
-            <div className="flex flex-col justify-center flex-1">
-              <h4 className="text-xl font-bold text-white mb-2">Goa Getaway</h4>
-              <p className="text-sm text-white/60 mb-4">May 20 - May 25, 2024</p>
-              
-              <div className="inline-flex items-center px-3 py-1 rounded-full bg-primary/20 border border-primary/30 w-fit mb-4">
-                <span className="text-xs font-medium text-primary">Upcoming</span>
-              </div>
-              
-              <div className="flex items-center gap-6 mt-auto">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-white/40" />
-                  <span className="text-sm text-white/70">5 Days</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-white/40" />
-                  <span className="text-sm text-white/70">2 People</span>
-                </div>
-              </div>
-            </div>
+          <div className="bg-[#F8FAFC] border border-[#E5E7EB] p-4 px-6 rounded-2xl text-center shrink-0">
+            <span className="block text-[8px] font-bold text-[#94A3B8] uppercase tracking-widest mb-0.5">AI Travel Score</span>
+            <span className="text-xl font-bold font-sora text-[#14B8A6]">92%</span>
           </div>
-        </motion.div>
+        </div>
+      </div>
 
-        {/* AI Recommendations */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-          className="glass-card rounded-3xl p-6"
-        >
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-semibold text-white">AI Recommendations for You</h3>
-            <button className="text-sm font-medium text-primary hover:text-primary/80 transition-colors">View All</button>
-          </div>
-          
-          <div className="flex flex-col md:flex-row gap-6">
-            <div className="w-full md:w-32 h-32 rounded-2xl overflow-hidden relative shrink-0">
-              <div className="absolute inset-0 bg-gradient-to-tr from-emerald-900 to-slate-800" />
-            </div>
-            
-            <div className="flex flex-col justify-center flex-1">
-              <h4 className="text-xl font-bold text-white mb-1">Kerala Backwaters</h4>
-              <div className="flex items-center gap-1 mb-3">
-                <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
-                <span className="text-xs font-medium text-white/80">4.8</span>
-                <span className="text-xs text-white/40">(230 reviews)</span>
-              </div>
-              
-              <p className="text-sm text-white/60 mb-4">5 Days / 4 Nights</p>
-              
-              <div className="flex items-center justify-between mt-auto">
-                <div>
-                  <span className="text-xl font-bold text-white">₹18,999</span>
-                  <span className="text-xs text-white/40 line-through ml-2">₹24,999</span>
-                </div>
-                <Button className="h-9 px-6 rounded-full bg-primary hover:bg-primary/90 text-white font-medium text-sm border-none shadow-[0_0_10px_rgba(20,184,166,0.3)] hover:shadow-[0_0_15px_rgba(20,184,166,0.5)] transition-all">
-                  Explore
-                </Button>
-              </div>
-            </div>
-          </div>
-        </motion.div>
+      {/* Quick Actions Grid */}
+      <div className="space-y-3">
+        <h3 className="text-xs font-bold text-[#64748B] uppercase tracking-widest px-1">Quick Planner Shortcuts</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+          <Link href="/plan" className="block text-center p-4 bg-white border border-[#E5E7EB] rounded-2xl hover:border-[#14B8A6] hover:translate-y-[-2px] transition-all">
+            <Sparkles className="w-5 h-5 mx-auto text-[#14B8A6]" />
+            <span className="text-[10px] font-bold text-[#0F172A] mt-2 block">Generate Itinerary</span>
+          </Link>
+          <Link href="/trips" className="block text-center p-4 bg-white border border-[#E5E7EB] rounded-2xl hover:border-[#14B8A6] hover:translate-y-[-2px] transition-all">
+            <Calendar className="w-5 h-5 mx-auto text-[#14B8A6]" />
+            <span className="text-[10px] font-bold text-[#0F172A] mt-2 block">Continue Planning</span>
+          </Link>
+          <Link href="/partner" className="block text-center p-4 bg-white border border-[#E5E7EB] rounded-2xl hover:border-[#14B8A6] hover:translate-y-[-2px] transition-all">
+            <Compass className="w-5 h-5 mx-auto text-[#14B8A6]" />
+            <span className="text-[10px] font-bold text-[#0F172A] mt-2 block">Find Travel Expert</span>
+          </Link>
+          <Link href="/offers" className="block text-center p-4 bg-white border border-[#E5E7EB] rounded-2xl hover:border-[#14B8A6] hover:translate-y-[-2px] transition-all">
+            <Coins className="w-5 h-5 mx-auto text-[#14B8A6]" />
+            <span className="text-[10px] font-bold text-[#0F172A] mt-2 block">Browse Offers</span>
+          </Link>
+          <Link href="/marketplace" className="block text-center p-4 bg-white border border-[#E5E7EB] rounded-2xl hover:border-[#14B8A6] hover:translate-y-[-2px] transition-all">
+            <Plus className="w-5 h-5 mx-auto text-[#14B8A6]" />
+            <span className="text-[10px] font-bold text-[#0F172A] mt-2 block">Explore Marketplace</span>
+          </Link>
+        </div>
+      </div>
+
+      {/* Main Grid Widgets - exact mapping from image 1 */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-      </div>
-    </div>
-  );
-}
+        {/* Left Column: Remaining Budget & Spends */}
+        <div className="lg:col-span-2 space-y-6">
+          
+          {/* Budget Widget Card */}
+          <div className="bg-white border border-[#E5E7EB] rounded-[28px] p-6 space-y-6 shadow-sm">
+            <div className="flex justify-between items-start">
+              <div>
+                <span className="text-[9px] font-bold text-[#64748B] uppercase tracking-widest">Remaining Budget</span>
+                <h3 className="text-4xl font-bold font-sora text-[#0F172A] mt-1">₹{budget.remaining.toLocaleString()}</h3>
+              </div>
+              <div className="text-right text-xs font-semibold text-[#64748B]">
+                <span>Total Budget: ₹{budget.total.toLocaleString()}</span>
+                <span className="block text-[#14B8A6] font-bold mt-1">{budget.percent}% Spent</span>
+              </div>
+            </div>
 
-function StatCard({ icon: Icon, value, label }: { icon: any, value: string, label: string }) {
-  return (
-    <div className="glass-card p-5 rounded-3xl flex flex-col items-start hover:bg-white/10 transition-colors group cursor-pointer">
-      <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 group-hover:border-primary/30 transition-colors">
-        <Icon className="w-5 h-5 text-primary" />
+            {/* Spent progress bar */}
+            <div className="space-y-1.5">
+              <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                <div className="h-full bg-[#0F172A] rounded-full" style={{ width: `${budget.percent}%` }} />
+              </div>
+              <div className="flex justify-between text-[10px] text-[#94A3B8] font-bold">
+                <span>Spent: ₹{budget.used.toLocaleString()}</span>
+                <span>Trip Ends in 4 days</span>
+              </div>
+            </div>
+
+            {/* Stay, Food, Transport, Activities grids */}
+            <div className="grid grid-cols-4 gap-3 text-center">
+              <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl">
+                <span className="text-[8px] font-bold text-[#94A3B8] uppercase block">Stay</span>
+                <p className="text-xs font-bold text-[#0F172A] mt-1">₹{budget.stay.toLocaleString()}</p>
+              </div>
+              <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl">
+                <span className="text-[8px] font-bold text-[#94A3B8] uppercase block">Food</span>
+                <p className="text-xs font-bold text-[#0F172A] mt-1">₹{budget.food.toLocaleString()}</p>
+              </div>
+              <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl">
+                <span className="text-[8px] font-bold text-[#94A3B8] uppercase block">Transport</span>
+                <p className="text-xs font-bold text-[#0F172A] mt-1">₹{budget.transport.toLocaleString()}</p>
+              </div>
+              <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl">
+                <span className="text-[8px] font-bold text-[#94A3B8] uppercase block">Activities</span>
+                <p className="text-xs font-bold text-[#0F172A] mt-1">₹{budget.activities.toLocaleString()}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Recent Spends ledger */}
+          <div className="bg-white border border-[#E5E7EB] rounded-[28px] p-6 space-y-4 shadow-sm">
+            <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+              <h3 className="text-sm font-bold font-sora text-[#0F172A]">Recent Spends</h3>
+              <span className="text-[10px] text-[#14B8A6] font-bold hover:underline cursor-pointer">View All</span>
+            </div>
+
+            <div className="divide-y divide-slate-100 text-xs font-semibold text-[#0F172A]">
+              {[
+                { name: "Airport Transfer", category: "Oct 12 • Uber Premium", amount: "₹850" },
+                { name: "The Leela Goa", category: "Oct 11 • Accommodation", amount: "₹7,200" },
+                { name: "Fisherman's Wharf", category: "Oct 11 • Fine Dining", amount: "₹3,450" },
+                { name: "Kayaking Tour", category: "Oct 10 • Activities", amount: "₹2,100" }
+              ].map((spend, idx) => (
+                <div key={idx} className="flex justify-between items-center py-3">
+                  <div>
+                    <p className="text-[#0F172A] font-bold">{spend.name}</p>
+                    <p className="text-[9px] text-[#94A3B8]">{spend.category}</p>
+                  </div>
+                  <span className="font-bold text-[#0F172A]">{spend.amount}</span>
+                </div>
+              ))}
+            </div>
+
+            <button className="w-full py-2.5 bg-[#0F172A] hover:bg-[#0F172A]/90 text-white rounded-xl text-xs font-bold transition-all mt-4">
+              + Add New Expense
+            </button>
+          </div>
+
+          {/* Group travel banner */}
+          <div className="bg-black text-white rounded-[28px] p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 relative overflow-hidden">
+            <div className="space-y-1">
+              <h4 className="text-base font-bold font-sora">Traveling with a group?</h4>
+              <p className="text-xs text-slate-400">Split expenses easily with friends and track individual balances in real-time.</p>
+            </div>
+            <button className="px-5 py-2.5 bg-white hover:bg-slate-100 text-black rounded-full text-xs font-bold shrink-0 transition-all">
+              Get Started
+            </button>
+          </div>
+
+        </div>
+
+        {/* Right Column: AI Budget insights & Documents */}
+        <div className="space-y-6">
+          
+          {/* AI Budget Insights */}
+          <div className="bg-white border border-[#E5E7EB] rounded-[28px] p-6 space-y-4 shadow-sm">
+            <h4 className="text-xs font-bold text-[#14B8A6] uppercase tracking-widest flex items-center gap-1.5">
+              <Sparkles className="w-4 h-4 text-[#14B8A6]" />
+              <span>AI Budget Insights</span>
+            </h4>
+
+            <div className="space-y-3.5 text-xs text-[#64748B] leading-relaxed">
+              <div className="p-3 bg-[#14B8A6]/5 border border-[#14B8A6]/10 rounded-xl font-semibold">
+                &ldquo;You've saved <strong className="text-[#14B8A6]">₹2,400</strong> on transport by using scooters instead of private cabs. Keep it up!&rdquo;
+              </div>
+              <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl font-semibold">
+                &ldquo;Dining costs are 12% higher than planned. Try some local eateries tonight to balance the budget.&ldquo;
+              </div>
+            </div>
+          </div>
+
+          {/* Projected total card */}
+          <div className="bg-white border border-[#E5E7EB] rounded-[28px] p-5 shadow-sm space-y-4">
+            <div>
+              <span className="text-[9px] font-bold text-[#64748B] uppercase block">Projected Total Cost</span>
+              <h3 className="text-2xl font-bold font-sora text-[#0F172A] mt-0.5">₹46,500</h3>
+              <p className="text-[10px] text-[#94A3B8] font-medium">Estimated end-of-trip spend</p>
+            </div>
+
+            <div className="space-y-1.5 border-t border-slate-100 pt-3">
+              <div className="flex justify-between text-[10px] text-[#64748B] font-bold">
+                <span>Confidence Level</span>
+                <span className="text-[#16A34A]">High (92%)</span>
+              </div>
+              <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                <div className="h-full bg-[#16A34A] rounded-full" style={{ width: "92%" }} />
+              </div>
+            </div>
+          </div>
+
+          {/* Travel Vault Widget */}
+          <div className="bg-white border border-[#E5E7EB] rounded-[28px] p-5 shadow-sm space-y-4">
+            <h4 className="text-xs font-bold text-[#0F172A] uppercase tracking-widest flex items-center justify-between">
+              <span>Travel Vault Status</span>
+              <Shield className="w-4.5 h-4.5 text-[#14B8A6]" />
+            </h4>
+
+            <div className="space-y-2.5 text-xs font-semibold text-[#64748B]">
+              <div className="flex justify-between border-b border-slate-100 pb-2">
+                <span>Boarding Pass</span>
+                <span className="text-[#16A34A]">Verified</span>
+              </div>
+              <div className="flex justify-between border-b border-slate-100 pb-2">
+                <span>Hotel Voucher</span>
+                <span className="text-[#16A34A]">Verified</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Travel Insurance</span>
+                <span className="text-amber-600">Pending Review</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Emergency Helpline contacts */}
+          <div className="bg-white border border-[#E5E7EB] rounded-[28px] p-5 shadow-sm space-y-3">
+            <h4 className="text-xs font-bold text-[#DC2626] uppercase tracking-widest flex items-center justify-between">
+              <span>Emergency helpline</span>
+              <PhoneCall className="w-4.5 h-4.5 text-[#DC2626] animate-pulse" />
+            </h4>
+            <div className="space-y-2 text-xs font-semibold">
+              <a href="tel:112" className="flex justify-between items-center p-2.5 border border-slate-100 rounded-xl hover:bg-slate-50">
+                <span>Police / Distress Helpline</span>
+                <span className="text-[#DC2626]">Dial 112</span>
+              </a>
+              <a href="tel:108" className="flex justify-between items-center p-2.5 border border-slate-100 rounded-xl hover:bg-slate-50">
+                <span>Medical Ambulance Emergency</span>
+                <span className="text-[#DC2626]">Dial 108</span>
+              </a>
+            </div>
+          </div>
+
+        </div>
+
       </div>
-      <h3 className="text-3xl font-bold text-white font-sora mb-1">{value}</h3>
-      <p className="text-sm text-white/50">{label}</p>
+
     </div>
   );
 }
