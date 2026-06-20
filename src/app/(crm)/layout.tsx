@@ -285,7 +285,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
                          <span className="text-[9px] text-[#94A3B8]">You • 10:45 AM</span>
                        </div>
                        <div className="flex flex-col gap-1 items-start">
-                         <div className="bg-white/5 text-white text-xs p-2 rounded-r-md rounded-bl-md border border-white/10">Hi! Go to Operations > Vendor Library and click '+ Add Vendor' in the top right.</div>
+                         <div className="bg-white/5 text-white text-xs p-2 rounded-r-md rounded-bl-md border border-white/10">Hi! Go to Operations &gt; Vendor Library and click '+ Add Vendor' in the top right.</div>
                          <span className="text-[9px] text-[#94A3B8]">Admin • 10:48 AM</span>
                        </div>
                     </div>

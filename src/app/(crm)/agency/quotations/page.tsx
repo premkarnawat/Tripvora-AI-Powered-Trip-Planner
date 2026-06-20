@@ -191,28 +191,6 @@ export default function QuotationBuilderPage() {
 
       </div>
     </div>
-  );
-}
-
-function ComponentSection({ title, total, items }: any) {
-  return (
-    <div className="bg-[#0B1220] border border-white/5 rounded-md overflow-hidden">
-      <div className="flex justify-between items-center bg-white/[0.02] p-3 border-b border-white/5">
-        <h3 className="text-xs font-bold text-white">{title}</h3>
-        <span className="text-xs font-mono font-bold text-[#14B8A6]">{total}</span>
-      </div>
-      <div className="p-2 space-y-1">
-        {items.map((item: any, i: number) => (
-          <div key={i} className="flex justify-between items-center p-2 hover:bg-white/[0.02] rounded-md transition-colors group">
-            <div className="flex items-center gap-3">
-              <button className="text-white/20 hover:text-[#EF4444] transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
-              <span className="text-xs text-white/90">{item.name}</span>
-            </div>
-            <span className="text-xs font-mono text-[#94A3B8] group-hover:text-white transition-colors">{item.cost}</span>
-          </div>
-        ))}
-      </div>
-    </div>
 
     {/* New Quotation Modal */}
     {isNewModalOpen && (
@@ -267,5 +245,27 @@ function ComponentSection({ title, total, items }: any) {
       </div>
     )}
     </>
+  );
+}
+
+function ComponentSection({ title, total, items }: any) {
+  return (
+    <div className="bg-[#0B1220] border border-white/5 rounded-md overflow-hidden">
+      <div className="flex justify-between items-center bg-white/[0.02] p-3 border-b border-white/5">
+        <h3 className="text-xs font-bold text-white">{title}</h3>
+        <span className="text-xs font-mono font-bold text-[#14B8A6]">{total}</span>
+      </div>
+      <div className="p-2 space-y-1">
+        {items.map((item: any, i: number) => (
+          <div key={i} className="flex justify-between items-center p-2 hover:bg-white/[0.02] rounded-md transition-colors group">
+            <div className="flex items-center gap-3">
+              <button className="text-white/20 hover:text-[#EF4444] transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
+              <span className="text-xs text-white/90">{item.name}</span>
+            </div>
+            <span className="text-xs font-mono text-[#94A3B8] group-hover:text-white transition-colors">{item.cost}</span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
