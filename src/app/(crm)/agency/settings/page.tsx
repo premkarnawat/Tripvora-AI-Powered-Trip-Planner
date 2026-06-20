@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { User, Phone, MapPin, Briefcase, Mail, Shield, Key, FileText, ArrowRight, CheckCircle2, DollarSign, BellRing } from "lucide-react";
+import { User, Phone, MapPin, Briefcase, Mail, Shield, Key, FileText, ArrowRight, CheckCircle2, DollarSign, BellRing, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function SettingsPage() {
