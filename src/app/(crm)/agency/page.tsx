@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { DollarSign, Users, FileText, CalendarCheck, Clock, ArrowRight, Activity, PlaneTakeoff, Plus, TrendingUp } from "lucide-react";
+import { DollarSign, Users, FileText, CalendarCheck, Clock, ArrowRight, Activity, PlaneTakeoff, Plus, TrendingUp, Package, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function AgencyDashboard() {
@@ -13,23 +13,28 @@ export default function AgencyDashboard() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/5 pb-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#14B8A6] animate-pulse" />
-            <span className="text-[10px] font-bold text-[#14B8A6] uppercase tracking-widest">Business Operations</span>
-          </div>
-          <h1 className="text-2xl font-bold text-white">
-            Overview
+          <h1 className="text-3xl font-bold text-white mb-2">
+            Welcome Back, Elite Travels 👋
           </h1>
+          <p className="text-sm text-[#94A3B8]">
+            Today you have: <span className="font-bold text-white">12 New Leads</span>, <span className="font-bold text-white">4 Pending Quotations</span>, <span className="font-bold text-white">3 Upcoming Trips</span>, and <span className="font-bold text-[#EF4444]">₹85,000 Pending Payments</span>
+          </p>
         </div>
-        <div className="flex gap-2">
-          <Button className="h-8 text-xs font-bold bg-[#38BDF8]/10 hover:bg-[#38BDF8]/20 text-[#38BDF8] border border-[#38BDF8]/20 shadow-sm transition-colors">
-            Generate Package
+        <div className="flex flex-wrap gap-2 mt-4 md:mt-0">
+          <Button className="h-9 text-xs font-bold bg-[#38BDF8]/10 hover:bg-[#38BDF8]/20 text-[#38BDF8] border border-[#38BDF8]/20 shadow-sm transition-colors">
+            <Users className="w-3.5 h-3.5 mr-1.5" /> New Lead
           </Button>
-          <Button className="h-8 text-xs font-bold bg-[#14B8A6]/10 hover:bg-[#14B8A6]/20 text-[#14B8A6] border border-[#14B8A6]/20 shadow-sm transition-colors">
-            Generate Quotation
+          <Button className="h-9 text-xs font-bold bg-[#14B8A6]/10 hover:bg-[#14B8A6]/20 text-[#14B8A6] border border-[#14B8A6]/20 shadow-sm transition-colors">
+            <Package className="w-3.5 h-3.5 mr-1.5" /> Generate Package
           </Button>
-          <Button className="h-8 text-xs font-bold bg-[#10B981] hover:bg-[#10B981]/90 text-[#0F172A] border-none shadow-sm transition-colors">
-            Send WhatsApp
+          <Button className="h-9 text-xs font-bold bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/20 shadow-sm transition-colors">
+            <FileText className="w-3.5 h-3.5 mr-1.5" /> Create Quotation
+          </Button>
+          <Button className="h-9 text-xs font-bold bg-[#10B981] hover:bg-[#10B981]/90 text-[#0F172A] border-none shadow-sm transition-colors">
+            <MessageSquare className="w-3.5 h-3.5 mr-1.5" /> Send WhatsApp
+          </Button>
+          <Button className="h-9 text-xs font-bold bg-white/5 hover:bg-white/10 text-white border border-white/10 shadow-sm transition-colors">
+            <Plus className="w-3.5 h-3.5 mr-1.5" /> Add Vendor
           </Button>
         </div>
       </div>

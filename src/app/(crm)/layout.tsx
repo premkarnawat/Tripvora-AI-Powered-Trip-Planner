@@ -41,7 +41,7 @@ const sidebarGroups = [
     title: "ACCOUNT",
     links: [
       { name: "Revenue Dashboard", href: "/agency/revenue", icon: DollarSign },
-      { name: "Subscription & Settings", href: "/agency/subscription", icon: Settings },
+      { name: "Business Settings", href: "/agency/settings", icon: Settings },
     ]
   }
 ];
@@ -49,6 +49,8 @@ const sidebarGroups = [
 export default function CRMLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
 
   return (
     <div className="bg-[#020817] min-h-screen w-full flex font-sans text-white relative">
@@ -197,15 +199,104 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
             />
           </div>
           
-          <div className="flex items-center gap-3">
-            <button className="relative w-8 h-8 rounded-md flex items-center justify-center text-[#94A3B8] hover:text-white hover:bg-white/5 transition-colors">
+          <div className="flex items-center gap-3 relative">
+            <button 
+              onClick={() => { setIsNotificationsOpen(!isNotificationsOpen); setIsHelpOpen(false); }}
+              className={`relative w-8 h-8 rounded-md flex items-center justify-center transition-colors ${isNotificationsOpen ? 'text-white bg-white/10' : 'text-[#94A3B8] hover:text-white hover:bg-white/5'}`}
+            >
               <Bell className="w-4 h-4" />
               <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-[#EF4444] rounded-full border border-[#020817]" />
             </button>
-            <button className="w-8 h-8 rounded-md flex items-center justify-center text-[#94A3B8] hover:text-white hover:bg-white/5 transition-colors">
+            <button 
+              onClick={() => { setIsHelpOpen(!isHelpOpen); setIsNotificationsOpen(false); }}
+              className={`w-8 h-8 rounded-md flex items-center justify-center transition-colors ${isHelpOpen ? 'text-white bg-white/10' : 'text-[#94A3B8] hover:text-white hover:bg-white/5'}`}
+            >
               <HelpCircle className="w-4 h-4" />
             </button>
             <div className="h-4 w-px bg-white/10 mx-1" />
+            
+            {/* Notification Dropdown */}
+            <AnimatePresence>
+              {isNotificationsOpen && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  className="absolute top-full right-16 mt-2 w-80 bg-[#0B1220] border border-white/10 rounded-md shadow-2xl overflow-hidden z-50"
+                >
+                  <div className="p-3 border-b border-white/5 flex justify-between items-center bg-[#020817]">
+                    <span className="text-sm font-bold text-white">Notifications</span>
+                    <span className="text-[10px] text-[#14B8A6] font-bold cursor-pointer">Mark all read</span>
+                  </div>
+                  <div className="max-h-96 overflow-y-auto custom-scrollbar flex flex-col">
+                    {/* Admin Broadcast Notification */}
+                    <div className="p-3 border-b border-[#EF4444]/20 bg-[#EF4444]/5 hover:bg-[#EF4444]/10 cursor-pointer flex gap-3 transition-colors">
+                      <div className="w-8 h-8 rounded bg-[#EF4444]/20 flex items-center justify-center shrink-0">
+                        <Bell className="w-4 h-4 text-[#EF4444]" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-white uppercase tracking-widest text-[#EF4444] mb-0.5">Admin Broadcast</p>
+                        <p className="text-xs text-white/90">System Maintenance scheduled for Nov 20th, 02:00 AM IST. Expect 15 mins downtime.</p>
+                        <p className="text-[10px] text-[#94A3B8] mt-1">10 mins ago</p>
+                      </div>
+                    </div>
+                    {/* Normal Notifications */}
+                    <NotificationItem title="New Lead Received" desc="Priya Sharma (Maldives Honeymoon)" time="Just now" />
+                    <NotificationItem title="Quotation Viewed" desc="David Smith viewed Tokyo Package" time="2h ago" />
+                    <NotificationItem title="Customer Replied" desc="Acme Corp: 'Looks good, let's proceed'" time="5h ago" />
+                    <NotificationItem title="Trip Starting Tomorrow" desc="Jenkins Honeymoon (Maldives)" time="1d ago" />
+                    <NotificationItem title="Payment Received" desc="₹45,000 from Jenkins" time="1d ago" />
+                    <NotificationItem title="Subscription Renewal" desc="Your Pro plan renews in 3 days" time="2d ago" />
+                    <NotificationItem title="Admin Message" desc="Your Vendor Library has been verified." time="3d ago" />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Help Center Dropdown */}
+            <AnimatePresence>
+              {isHelpOpen && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  className="absolute top-full right-8 mt-2 w-80 bg-[#0B1220] border border-white/10 rounded-md shadow-2xl overflow-hidden z-50 flex flex-col"
+                >
+                  <div className="p-4 border-b border-white/5 bg-[#020817]">
+                    <h3 className="text-sm font-bold text-white mb-1">Support Center</h3>
+                    <p className="text-xs text-[#94A3B8]">How can we help you today?</p>
+                  </div>
+                  <div className="p-2 grid grid-cols-2 gap-2 border-b border-white/5">
+                    <HelpQuickLink icon={HelpCircle} title="FAQs" />
+                    <HelpQuickLink icon={FileText} title="Documentation" />
+                    <HelpQuickLink icon={Search} title="Video Tutorials" />
+                    <HelpQuickLink icon={MessageSquare} title="Raise Ticket" />
+                  </div>
+                  <div className="p-4 flex flex-col gap-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs font-bold text-white flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse" /> Live Admin Chat
+                      </span>
+                      <span className="text-[10px] bg-[#38BDF8] text-[#0F172A] font-bold px-1.5 py-0.5 rounded">2 New</span>
+                    </div>
+                    <div className="bg-[#020817] border border-white/5 rounded-md p-3 flex flex-col gap-3 h-32 overflow-y-auto custom-scrollbar">
+                       <div className="flex flex-col gap-1 items-end">
+                         <div className="bg-[#14B8A6]/10 text-white text-xs p-2 rounded-l-md rounded-br-md border border-[#14B8A6]/20">How do I add a new vendor?</div>
+                         <span className="text-[9px] text-[#94A3B8]">You • 10:45 AM</span>
+                       </div>
+                       <div className="flex flex-col gap-1 items-start">
+                         <div className="bg-white/5 text-white text-xs p-2 rounded-r-md rounded-bl-md border border-white/10">Hi! Go to Operations > Vendor Library and click '+ Add Vendor' in the top right.</div>
+                         <span className="text-[9px] text-[#94A3B8]">Admin • 10:48 AM</span>
+                       </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <input type="text" placeholder="Type a message..." className="flex-1 bg-[#020817] border border-white/10 rounded px-2 py-1.5 text-xs text-white focus:outline-none" />
+                      <button className="bg-[#14B8A6] text-[#0F172A] px-3 py-1.5 rounded text-xs font-bold">Send</button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
             <div className="flex items-center gap-2 cursor-pointer hover:bg-white/5 p-1 rounded-md transition-colors">
               <div className="w-6 h-6 rounded bg-[#14B8A6]/20 flex items-center justify-center border border-[#14B8A6]/30">
                 <Users className="w-3 h-3 text-[#14B8A6]" />
@@ -224,5 +315,27 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
       <AICopilotSidebar />
 
     </div>
+  );
+}
+
+function NotificationItem({ title, desc, time }: any) {
+  return (
+    <div className="p-3 border-b border-white/5 hover:bg-white/[0.02] cursor-pointer flex gap-3 transition-colors">
+      <div className="w-2 h-2 rounded-full bg-[#14B8A6] mt-1.5 shrink-0" />
+      <div>
+        <p className="text-xs font-bold text-white mb-0.5">{title}</p>
+        <p className="text-[10px] text-[#94A3B8] leading-snug">{desc}</p>
+        <p className="text-[9px] text-[#94A3B8] mt-1">{time}</p>
+      </div>
+    </div>
+  );
+}
+
+function HelpQuickLink({ icon: Icon, title }: any) {
+  return (
+    <button className="flex items-center gap-2 p-2 rounded hover:bg-white/5 text-left transition-colors group">
+      <Icon className="w-3.5 h-3.5 text-[#94A3B8] group-hover:text-[#38BDF8]" />
+      <span className="text-[10px] font-bold text-white/80 group-hover:text-white">{title}</span>
+    </button>
   );
 }

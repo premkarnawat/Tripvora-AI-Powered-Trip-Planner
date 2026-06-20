@@ -9,12 +9,15 @@ export default function QuotationBuilderPage() {
   const [baseCost, setBaseCost] = useState(195000);
   const [gst, setGst] = useState(5);
 
+  const [isNewModalOpen, setIsNewModalOpen] = useState(false);
+
   const markupAmount = (baseCost * markup) / 100;
   const subtotal = baseCost + markupAmount;
   const gstAmount = (subtotal * gst) / 100;
   const finalPrice = subtotal + gstAmount;
 
   return (
+    <>
     <div className="w-full max-w-[1400px] mx-auto space-y-6 pb-10 flex flex-col xl:flex-row gap-6">
       
       {/* Main Builder Area */}
@@ -30,8 +33,14 @@ export default function QuotationBuilderPage() {
             <Button className="h-8 text-xs font-bold bg-[#020817] hover:bg-white/5 text-white border border-white/10">
               Save Draft
             </Button>
-            <Button className="h-8 text-xs font-bold bg-[#14B8A6] hover:bg-[#14B8A6]/90 text-[#0F172A] border-none shadow-sm">
+            <Button className="h-8 text-xs font-bold bg-[#38BDF8]/10 hover:bg-[#38BDF8]/20 text-[#38BDF8] border border-[#38BDF8]/20 transition-colors">
               <Download className="w-3.5 h-3.5 mr-1" /> Generate PDF
+            </Button>
+            <Button 
+              onClick={() => setIsNewModalOpen(true)}
+              className="h-8 text-xs font-bold bg-[#14B8A6] hover:bg-[#14B8A6]/90 text-[#0F172A] border-none shadow-[0_0_15px_rgba(20,184,166,0.3)] transition-all hover:scale-[1.02]"
+            >
+              <Plus className="w-3.5 h-3.5 mr-1" /> New Quotation
             </Button>
           </div>
         </div>
@@ -204,5 +213,59 @@ function ComponentSection({ title, total, items }: any) {
         ))}
       </div>
     </div>
+
+    {/* New Quotation Modal */}
+    {isNewModalOpen && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+        <div className="bg-[#0B1220] border border-white/10 rounded-lg w-full max-w-md shadow-2xl overflow-hidden flex flex-col">
+          <div className="p-4 border-b border-white/5 flex justify-between items-center bg-[#020817]">
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <PlusCircle className="w-5 h-5 text-[#14B8A6]" />
+              Start New Quotation
+            </h2>
+            <button onClick={() => setIsNewModalOpen(false)} className="text-[#94A3B8] hover:text-white transition-colors">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <div className="p-6 space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest">Select Customer / Lead</label>
+              <select className="w-full bg-[#020817] border border-white/10 rounded-md py-2 px-3 text-sm text-white focus:outline-none focus:border-[#38BDF8]">
+                <option>David Smith (L-4092)</option>
+                <option>Priya Sharma (L-4095)</option>
+                <option>Acme Corp (L-4089)</option>
+              </select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest">Destination</label>
+                <input type="text" placeholder="e.g. Maldives" className="w-full bg-[#020817] border border-white/10 rounded-md py-2 px-3 text-sm text-white focus:outline-none focus:border-[#38BDF8]" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest">Budget (₹)</label>
+                <input type="number" placeholder="e.g. 150000" className="w-full bg-[#020817] border border-white/10 rounded-md py-2 px-3 text-sm text-white focus:outline-none focus:border-[#38BDF8]" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest">Days</label>
+                <input type="number" placeholder="e.g. 5" className="w-full bg-[#020817] border border-white/10 rounded-md py-2 px-3 text-sm text-white focus:outline-none focus:border-[#38BDF8]" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest">Members</label>
+                <input type="number" placeholder="e.g. 2" className="w-full bg-[#020817] border border-white/10 rounded-md py-2 px-3 text-sm text-white focus:outline-none focus:border-[#38BDF8]" />
+              </div>
+            </div>
+          </div>
+          <div className="p-4 border-t border-white/5 bg-[#020817] flex gap-3">
+            <Button className="flex-1 font-bold bg-[#38BDF8]/10 hover:bg-[#38BDF8]/20 text-[#38BDF8] border border-[#38BDF8]/20 transition-colors">
+              Generate Package
+            </Button>
+            <Button onClick={() => setIsNewModalOpen(false)} className="flex-1 font-bold bg-[#14B8A6] hover:bg-[#14B8A6]/90 text-[#0F172A] border-none shadow-[0_0_15px_rgba(20,184,166,0.3)] transition-colors">
+              Create Quotation
+            </Button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
