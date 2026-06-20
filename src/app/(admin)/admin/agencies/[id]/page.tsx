@@ -8,7 +8,9 @@ import {
   DollarSign, Clock, ShieldCheck, ExternalLink, Calendar
 } from "lucide-react";
 
-export default function AgencyProfilePage({ params }: { params: { id: string } }) {
+export default function AgencyProfilePage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = React.use(params);
+  const id = resolvedParams.id;
   const [activeTab, setActiveTab] = useState("Overview");
 
   // Mock agency data based on params or fallback
