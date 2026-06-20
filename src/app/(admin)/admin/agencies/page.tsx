@@ -238,7 +238,7 @@ export default function AdminAgenciesPage() {
         {filteredAgencies.map((agency) => (
           <Link href={`/admin/agencies/${agency.id}`} key={agency.id} className="block">
             <div 
-              className="bg-white border border-[#E5E7EB] rounded-2xl overflow-hidden hover:translate-y-[-2px] hover:shadow-[0_4px_25px_rgba(0,0,0,0.05)] transition-all cursor-pointer flex flex-col justify-between h-[250px]"
+              className="bg-white border border-[#E5E7EB] rounded-2xl overflow-hidden hover:translate-y-[-2px] hover:shadow-[0_4px_25px_rgba(0,0,0,0.05)] transition-all cursor-pointer flex flex-col justify-between min-h-[275px]"
             >
               {/* Card Header */}
               <div className="p-5 flex items-start justify-between border-b border-[#E5E7EB]/50">
