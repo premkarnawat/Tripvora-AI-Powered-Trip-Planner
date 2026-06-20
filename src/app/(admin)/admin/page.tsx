@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "react-use"; // Wait, lucide-react and standard react hooks are preferred
 import { useState } from "react";
 import { 
   TrendingUp, Users, Building2, Store, Compass, Send, ShieldAlert, 
