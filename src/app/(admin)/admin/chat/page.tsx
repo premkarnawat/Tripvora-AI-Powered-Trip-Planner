@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Search, Filter, Paperclip, Send, Image as ImageIcon, FileText, CheckCheck, MoreVertical, Pin, User, Building, Archive, UserPlus, Forward } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
 
 const conversations = [
   { id: "C-1", name: "David Smith", type: "Traveler", active: true, unread: 2, lastMsg: "Can you change my hotel?", time: "10:45 AM" },
