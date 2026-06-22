@@ -5,10 +5,11 @@ import { motion, useScroll } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Menu, Heart, Bell } from "lucide-react";
 import { useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 export function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { scrollY } = useScroll();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -25,10 +26,34 @@ export function Navbar() {
     return null;
   }
 
-  const isHiddenPage = pathname ? (pathname.startsWith("/login") || pathname.startsWith("/signup") || pathname.startsWith("/agency") || pathname.startsWith("/admin") || pathname.startsWith("/dashboard") || pathname.startsWith("/trips")) : false;
+  const isHiddenPage = pathname ? (
+    pathname.startsWith("/login") || 
+    pathname.startsWith("/signup") || 
+    pathname.startsWith("/agency") || 
+    pathname.startsWith("/admin") || 
+    pathname.startsWith("/dashboard") || 
+    pathname.startsWith("/trips") || 
+    pathname.startsWith("/trip-planner") ||
+    pathname.startsWith("/saved-trips") ||
+    pathname.startsWith("/bookmarks") ||
+    pathname.startsWith("/billing") ||
+    pathname.startsWith("/settings") ||
+    pathname.startsWith("/help")
+  ) : false;
+
   if (isHiddenPage) {
     return null;
   }
+
+  const handleAvatarClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const isAuthed = localStorage.getItem("traveler_auth") === "true";
+    if (isAuthed) {
+      router.push("/dashboard");
+    } else {
+      router.push("/login");
+    }
+  };
 
   return (
     <motion.header 
@@ -37,9 +62,10 @@ export function Navbar() {
       transition={{ duration: 0.6, ease: "easeOut" }}
       className={`fixed top-0 left-0 right-0 z-50 px-4 md:px-8 transition-all duration-300 ${
         isScrolled 
-          ? 'bg-[#04060E]/98 backdrop-blur-2xl border-b border-white/[0.08] py-3 shadow-[0_10px_30px_rgba(0,0,0,0.5)]' 
-          : 'bg-[#04060E]/95 backdrop-blur-xl border-b border-white/5 py-4'
+          ? 'border-b border-white/[0.08] py-3 shadow-[0_10px_30px_rgba(0,0,0,0.5)]' 
+          : 'border-b border-white/5 py-4'
       }`}
+      style={{ backgroundColor: "#04060E" }}
     >
       <div className="max-w-[1400px] mx-auto flex items-center justify-between">
         
@@ -93,28 +119,24 @@ export function Navbar() {
 
 
           {/* User Profile Avatar Link */}
-          <Link href="/dashboard">
-            <div className="w-9 h-9 rounded-full border border-white/10 overflow-hidden cursor-pointer hover:opacity-80 transition-opacity">
-              <img 
-                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=100&auto=format&fit=crop" 
-                alt="Profile"
-                className="w-full h-full object-cover"
-              />
-            </div>
-          </Link>
+          <div onClick={handleAvatarClick} className="w-9 h-9 rounded-full border border-white/10 overflow-hidden cursor-pointer hover:opacity-80 transition-opacity">
+            <img 
+              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=100&auto=format&fit=crop" 
+              alt="Profile"
+              className="w-full h-full object-cover"
+            />
+          </div>
         </div>
 
         {/* Mobile Menu Button */}
         <div className="lg:hidden flex items-center gap-3">
-          <Link href="/dashboard">
-            <div className="w-8 h-8 rounded-full border border-white/10 overflow-hidden">
-              <img 
-                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=100&auto=format&fit=crop" 
-                alt="Profile"
-                className="w-full h-full object-cover"
-              />
-            </div>
-          </Link>
+          <div onClick={handleAvatarClick} className="w-8 h-8 rounded-full border border-white/10 overflow-hidden cursor-pointer hover:opacity-80 transition-opacity">
+            <img 
+              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=100&auto=format&fit=crop" 
+              alt="Profile"
+              className="w-full h-full object-cover"
+            />
+          </div>
           <Button variant="ghost" size="icon" className="text-white hover:bg-white/5" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
             <Menu className="w-6 h-6" />
           </Button>

@@ -23,7 +23,8 @@ export default function LoginPage() {
     // Simulate authentication
     setTimeout(() => {
       setLoading(false);
-      router.push("/");
+      localStorage.setItem("traveler_auth", "true");
+      router.push("/dashboard");
     }, 1000);
   };
 

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { 
   LayoutDashboard, Compass, Map, Bookmark, Store, Percent, MapPin, 
   UserCheck, BookOpen, Shield, CreditCard, LifeBuoy, Settings, LogOut,
@@ -27,8 +27,25 @@ const sidebarLinks = [
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    const isAuthed = localStorage.getItem("traveler_auth") === "true";
+    if (!isAuthed) {
+      router.push("/login");
+    } else {
+      setCheckingAuth(false);
+    }
+  }, [router]);
+
+  const handleSignOut = (e: React.MouseEvent) => {
+    e.preventDefault();
+    localStorage.removeItem("traveler_auth");
+    router.push("/login");
+  };
 
   // Mock Notifications for traveler
   const notifications = [
@@ -36,6 +53,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { id: 2, text: "Hotel voucher for 'The Leela Goa' uploaded", time: "1h ago" },
     { id: 3, text: "Flight prices for Delhi -> Goa dropped 8%", time: "3h ago" }
   ];
+
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center font-sans">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-slate-200 border-t-[#14B8A6] rounded-full animate-spin" />
+          <p className="text-xs text-slate-500 font-bold">Verifying Session...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="traveler-theme min-h-screen bg-[#F8FAFC] text-[#0F172A] font-sans antialiased relative z-50">
@@ -201,7 +229,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
 
           {/* Logout Action at bottom */}
-          <button className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold text-[#DC2626] hover:bg-red-50 transition-all shrink-0 mt-4 border-t border-[#E5E7EB] pt-4 w-full text-left">
+          <button onClick={handleSignOut} className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold text-[#DC2626] hover:bg-red-50 transition-all shrink-0 mt-4 border-t border-[#E5E7EB] pt-4 w-full text-left">
             <LogOut className="w-4 h-4 shrink-0" />
             <span>Sign Out</span>
           </button>
@@ -278,7 +306,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </nav>
               </div>
 
-              <button className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold text-[#DC2626] hover:bg-red-50 transition-all shrink-0 mt-4 border-t border-[#E5E7EB] pt-4 w-full text-left">
+              <button onClick={handleSignOut} className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold text-[#DC2626] hover:bg-red-50 transition-all shrink-0 mt-4 border-t border-[#E5E7EB] pt-4 w-full text-left">
                 <LogOut className="w-4 h-4 shrink-0" />
                 <span>Sign Out</span>
               </button>

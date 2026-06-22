@@ -8,7 +8,20 @@ import { cn } from "@/lib/utils";
 
 export function MobileNav() {
   const pathname = usePathname();
-  const isAuthPage = pathname ? (pathname.startsWith("/login") || pathname.startsWith("/signup") || pathname.startsWith("/agency") || pathname.startsWith("/admin") || pathname.startsWith("/dashboard") || pathname.startsWith("/trips")) : false;
+  const isAuthPage = pathname ? (
+    pathname.startsWith("/login") || 
+    pathname.startsWith("/signup") || 
+    pathname.startsWith("/agency") || 
+    pathname.startsWith("/admin") || 
+    pathname.startsWith("/dashboard") || 
+    pathname.startsWith("/trips") || 
+    pathname.startsWith("/trip-planner") ||
+    pathname.startsWith("/saved-trips") ||
+    pathname.startsWith("/bookmarks") ||
+    pathname.startsWith("/billing") ||
+    pathname.startsWith("/settings") ||
+    pathname.startsWith("/help")
+  ) : false;
   
   if (isAuthPage) return null;
   
