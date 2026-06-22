@@ -53,7 +53,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
   const [isHelpOpen, setIsHelpOpen] = useState(false);
 
   return (
-    <div className="bg-[#020817] min-h-screen w-full flex font-sans text-white relative">
+    <div className="admin-theme bg-[#020817] min-h-screen w-full flex font-sans text-white relative">
       
       {/* 1. Desktop Left Sidebar (260px) - Denser Width */}
       <aside className="hidden xl:flex w-[260px] flex-col bg-[#020817] border-r border-white/10 h-screen shrink-0 sticky top-0 z-20">

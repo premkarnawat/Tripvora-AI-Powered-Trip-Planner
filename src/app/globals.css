@@ -48,6 +48,73 @@
     --ring: 173.4 84% 35%;
   }
 
+  /* Utility overrides to transition other CRM pages and widgets to luxury light mode */
+  .admin-theme .bg-\[\#020817\] {
+    background-color: #FAFBFD !important; /* Premium light luxury off-white */
+  }
+  .admin-theme .bg-\[\#020817\]\/95 {
+    background-color: rgba(250, 251, 253, 0.95) !important;
+  }
+  .admin-theme .bg-\[\#0B1220\] {
+    background-color: #ffffff !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02), 0 4px 12px rgba(0, 0, 0, 0.01) !important;
+  }
+  .admin-theme .border-white\/10 {
+    border-color: #E2E8F0 !important;
+  }
+  .admin-theme .border-white\/5 {
+    border-color: #F1F5F9 !important;
+  }
+  .admin-theme .text-white {
+    color: #0F172A !important;
+  }
+  .admin-theme .text-white\/90 {
+    color: #1E293B !important;
+  }
+  .admin-theme .text-white\/80 {
+    color: #334155 !important;
+  }
+  .admin-theme .text-white\/60 {
+    color: #475569 !important;
+  }
+  .admin-theme .text-white\/40 {
+    color: #64748B !important;
+  }
+  .admin-theme .text-\[\#94A3B8\] {
+    color: #64748B !important;
+  }
+  .admin-theme .bg-white\/5 {
+    background-color: #F1F5F9 !important;
+  }
+  .admin-theme .hover\:bg-white\/5:hover {
+    background-color: #F1F5F9 !important;
+  }
+  .admin-theme .bg-white\/10 {
+    background-color: #E2E8F0 !important;
+  }
+  .admin-theme .hover\:bg-white\/10:hover {
+    background-color: #E2E8F0 !important;
+  }
+  .admin-theme .bg-white\/\[0\.02\] {
+    background-color: #FAFAFA !important;
+  }
+  .admin-theme .hover\:bg-white\/\[0\.02\]:hover {
+    background-color: #F5F5F5 !important;
+  }
+  .admin-theme .bg-white\/\[0\.03\] {
+    background-color: #F1F5F9 !important;
+  }
+  .admin-theme .bg-white\/\[0\.05\] {
+    background-color: #F1F5F9 !important;
+  }
+  .admin-theme .hover\:bg-white\/\[0\.05\]:hover {
+    background-color: #E2E8F0 !important;
+  }
+  .admin-theme input::placeholder {
+    color: #94A3B8 !important;
+  }
+
+
   .traveler-theme {
     --background: 210 40% 98%; /* #F8FAFC */
     --foreground: 222.2 84% 4.9%; /* #0F172A */
