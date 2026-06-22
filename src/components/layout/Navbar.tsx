@@ -88,7 +88,8 @@ export function Navbar() {
           {[
             { name: "Marketplace", href: "/marketplace" },
             { name: "Destinations", href: "/destinations" },
-            { name: "Journal", href: "/community" }
+            { name: "Journal", href: "/community" },
+            { name: "Pricing", href: "/pricing" }
           ].map((item) => {
             const isActive = pathname === item.href;
             return (
@@ -153,7 +154,8 @@ export function Navbar() {
           {[
             { name: "Marketplace", href: "/marketplace" },
             { name: "Destinations", href: "/destinations" },
-            { name: "Journal", href: "/community" }
+            { name: "Journal", href: "/community" },
+            { name: "Pricing", href: "/pricing" }
           ].map((item) => (
             <Link 
               key={item.name} 
