@@ -304,6 +304,8 @@ export function TrustAndPricing() {
                 Save 20%
               </span>
             </div>
+          </div>
+        </div>
         {/* ---------------------------------------------------- */}
         {/* UNIFIED SIDE-BY-SIDE LAYOUT (Mockup + Feature Details) */}
         {/* ---------------------------------------------------- */}

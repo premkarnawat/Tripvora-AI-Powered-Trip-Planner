@@ -261,6 +261,8 @@ export default function PricingPage() {
                 Save 20%
               </span>
             </div>
+          </div>
+        </div>
         {/* ---------------------------------------------------- */}
         {/* UNIFIED SIDE-BY-SIDE LAYOUT (Mockup + Feature Details) */}
         {/* ---------------------------------------------------- */}
