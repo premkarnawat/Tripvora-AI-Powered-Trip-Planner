@@ -6,23 +6,22 @@ import { usePathname } from "next/navigation";
 import { 
   LayoutDashboard, Compass, Map, Bookmark, Store, Percent, MapPin, 
   UserCheck, BookOpen, Shield, CreditCard, LifeBuoy, Settings, LogOut,
-  Menu, X, Bell, Search, Plus, Sparkles, ChevronRight
+  Menu, X, Bell, Search, Plus, Sparkles, ChevronRight, History
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const sidebarLinks = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "My Trips", href: "/saved-trips", icon: Compass },
-  { name: "Itineraries", href: "/trips", icon: Map },
-  { name: "Saved Places", href: "/bookmarks", icon: Bookmark },
+  { name: "Saved Trips", href: "/bookmarks", icon: Bookmark },
+  { name: "Destinations", href: "/destinations", icon: MapPin },
   { name: "Marketplace", href: "/marketplace", icon: Store },
   { name: "Offers", href: "/offers", icon: Percent },
-  { name: "Destinations", href: "/destinations", icon: MapPin },
-  { name: "Travel Experts", href: "/partner", icon: UserCheck },
   { name: "Travel Journal", href: "/community", icon: BookOpen },
-  { name: "Travel Vault", href: "/dashboard/vault", icon: Shield },
-  { name: "Subscription & Billing", href: "/billing", icon: CreditCard },
-  { name: "Support Center", href: "/help", icon: LifeBuoy },
+  { name: "Trip History", href: "/dashboard/history", icon: History },
+  { name: "Notifications", href: "/dashboard/notifications", icon: Bell },
+  { name: "Support", href: "/help", icon: LifeBuoy },
+  { name: "Billing", href: "/billing", icon: CreditCard },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 
@@ -128,7 +127,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </Link>
 
           {/* Plan Trip CTA */}
-          <Link href="/plan" className="hidden sm:block">
+          <Link href="/trip-planner" className="hidden sm:block">
             <button className="flex items-center gap-1 px-4 py-2 bg-[#0F172A] hover:bg-[#0F172A]/90 text-white rounded-full text-xs font-bold shadow-sm transition-all">
               <Plus className="w-3.5 h-3.5" />
               <span>Plan Trip</span>

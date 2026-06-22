@@ -91,13 +91,6 @@ export function Navbar() {
             <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#04060E]"></span>
           </button>
 
-          <Link href="/plan">
-            <Button 
-              className="rounded-full px-6 h-10 font-bold transition-all duration-300 border-none bg-[#E2FF00] hover:bg-[#E2FF00]/90 text-black shadow-[0_0_15px_rgba(226,255,0,0.3)] hover:scale-[1.02]"
-            >
-              Plan Trip
-            </Button>
-          </Link>
 
           {/* User Profile Avatar Link */}
           <Link href="/dashboard">
@@ -149,11 +142,6 @@ export function Navbar() {
               {item.name}
             </Link>
           ))}
-          <Link href="/plan" onClick={() => setIsMobileMenuOpen(false)} className="mt-2">
-            <Button className="w-full h-12 font-bold bg-[#E2FF00] text-black hover:bg-[#E2FF00]/90">
-              Plan Trip
-            </Button>
-          </Link>
         </motion.div>
       )}
     </motion.header>

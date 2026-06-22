@@ -1,8 +1,8 @@
 "use client";
 
 import { motion, useScroll, useTransform } from "framer-motion";
-import { Sparkles } from "lucide-react";
-import { GlassSearchCard } from "./GlassSearchCard";
+import { Sparkles, ArrowRight } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import Particles, { initParticlesEngine } from "@tsparticles/react";
 import { loadSlim } from "@tsparticles/slim";
@@ -121,29 +121,45 @@ export function CinematicHero() {
           transition={{ duration: 1, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
           className="text-5xl md:text-7xl lg:text-[84px] font-extrabold text-white mb-6 font-sora tracking-tighter leading-[1.05]"
         >
-          Plan Your Perfect Trip<br/>
-          In Minutes, <span className="text-gradient">Not Hours.</span>
+          AI Travel Planning<br/>
+          Made <span className="text-gradient">Effortless.</span>
         </motion.h1>
 
         <motion.p 
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-          className="text-lg md:text-xl text-white/70 max-w-2xl mx-auto font-light leading-relaxed mb-12"
+          className="text-lg md:text-xl text-white/70 max-w-3xl mx-auto font-light leading-relaxed mb-12"
         >
-          AI creates personalized itineraries, finds flights, hotels, experiences, and helps you travel smarter.
+          Generate intelligent travel itineraries, discover experiences, compare hotels and transport, and manage your entire trip in one place.
         </motion.p>
 
-        {/* Backdrop Blur 20px Glass Search Card */}
+        {/* Dual Luxury CTAs and showcase */}
         <motion.div 
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          className="w-full max-w-5xl mx-auto relative group"
+          className="relative group z-10 mt-6 w-full"
         >
-          <div className="absolute -inset-[1px] bg-gradient-to-r from-white/15 to-white/5 rounded-xl opacity-100 transition duration-500"></div>
-          <div className="backdrop-blur-[20px] relative z-10">
-            <GlassSearchCard />
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link href="/trip-planner">
+              <button className="h-16 px-10 rounded-full bg-[#14B8A6] hover:bg-[#14B8A6]/90 text-white font-extrabold text-lg shadow-[0_0_30px_rgba(20,184,166,0.4)] hover:scale-[1.03] active:scale-[0.99] transition-all duration-300 flex items-center gap-2">
+                Plan My Trip <ArrowRight className="w-5 h-5" />
+              </button>
+            </Link>
+            <Link href="/destinations">
+              <button className="h-16 px-10 rounded-full bg-transparent border-2 border-white/20 hover:border-white/40 text-white font-bold text-lg hover:scale-[1.03] active:scale-[0.99] transition-all duration-300">
+                Explore Destinations
+              </button>
+            </Link>
+          </div>
+          
+          <div className="mt-12 flex flex-wrap justify-center gap-3">
+            {["Bali", "Goa", "Maldives", "Tokyo", "Paris", "London"].map((dest) => (
+              <span key={dest} className="px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/60 text-xs font-bold hover:text-white hover:bg-white/10 transition-all cursor-pointer">
+                ✦ {dest}
+              </span>
+            ))}
           </div>
         </motion.div>
         
