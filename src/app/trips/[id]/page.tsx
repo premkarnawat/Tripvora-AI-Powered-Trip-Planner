@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AnimatePresence } from "framer-motion";
 import { useParams, useRouter } from "next/navigation";
 import { 
   Sparkles, Calendar, Users, Wallet, Plane, Bed, 
