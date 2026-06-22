@@ -1,189 +1,812 @@
 "use client";
 
-import { useState } from "react";
-import { Check, HelpCircle, X, ShieldAlert, Award } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { 
+  Check, ArrowRight, Sparkles, Lock, Clock, Navigation, 
+  Map, Wallet, Activity, PhoneCall, HelpCircle, ShieldAlert
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
+
+// Features detail list (10 slides)
+const rotateFeatures = [
+  {
+    id: "itinerary",
+    title: "AI Itinerary Engine",
+    desc: "Generate complete day-by-day roadmap in under 30 seconds.",
+    bullets: [
+      "Complete day-by-day roadmap",
+      "Flights, trains, and buses routing",
+      "UNESCO sights & local guidelines",
+      "Weather-aware timing allocations",
+      "Offline PDF itinerary export"
+    ],
+    icon: "🤖",
+    includedIn: [0, 1, 2, 3] // starter, growth, pro, enterprise
+  },
+  {
+    id: "copilot",
+    title: "Trip Copilot AI",
+    desc: "Your personal chat assistant for instant travel advice and adjustments.",
+    bullets: [
+      "24/7 AI chat support assistant",
+      "Automated rescheduling advice",
+      "Live budget optimization suggestions",
+      "Instant weather alert warnings"
+    ],
+    icon: "💬",
+    includedIn: [0, 1, 2, 3]
+  },
+  {
+    id: "compare",
+    title: "Price Comparison Engine",
+    desc: "Compare hotel stays and flight rates across leading partners.",
+    bullets: [
+      "Real-time comparative rates checker",
+      "Agoda vs Booking.com live lists",
+      "Skyscanner direct flights tracking",
+      "Best Deal system badges highlight"
+    ],
+    icon: "📊",
+    includedIn: [1, 2, 3] // growth, pro, enterprise
+  },
+  {
+    id: "booking",
+    title: "Affiliate Travel Booking",
+    desc: "Direct zero-commission booking via Skyscanner and Booking.com.",
+    bullets: [
+      "Skyscanner flights redirects integration",
+      "Zero commission partner checkout links",
+      "Ad-free premium interface browsing",
+      "Direct Booking.com affiliate portals"
+    ],
+    icon: "✈️",
+    includedIn: [1, 2, 3]
+  },
+  {
+    id: "intel",
+    title: "Destination Intelligence",
+    desc: "Live local insights, weather alerts, and packing checklist guides.",
+    bullets: [
+      "Real-time weather forecast details",
+      "Local cultural guidelines alerts",
+      "Pre-departure packing checklist generator",
+      "Local guidelines & rules lookup"
+    ],
+    icon: "🌍",
+    includedIn: [1, 2, 3]
+  },
+  {
+    id: "deals",
+    title: "Marketplace Deals & Offers",
+    desc: "Exclusive discounts and vouchers on partner resorts and tours.",
+    bullets: [
+      "Up to 30% off partner stay offers",
+      "Activity discount booking vouchers",
+      "Premium resort coupons unlocked",
+      "Featured listings discount keys"
+    ],
+    icon: "🎁",
+    includedIn: [2, 3] // pro, enterprise
+  },
+  {
+    id: "wallet",
+    title: "Trip Wallet & Budget Tracking",
+    desc: "Track and log every travel expense in real-time with charts.",
+    bullets: [
+      "Interactive spend ledger tracker",
+      "Budget limit warning alerts",
+      "Group expense splitting logs",
+      "Expense allocation graph layouts"
+    ],
+    icon: "💰",
+    includedIn: [0, 1, 2, 3]
+  },
+  {
+    id: "journal",
+    title: "Travel Journal & Reviews",
+    desc: "Record daily photo-rich logs and verified reviews of your trip.",
+    bullets: [
+      "Daily photo-rich journal logging",
+      "Custom rating & reviews portals",
+      "Public community posts generator",
+      "Verified travel footprint history"
+    ],
+    icon: "📓",
+    includedIn: [2, 3]
+  },
+  {
+    id: "safety",
+    title: "Emergency & Safety Toolkit",
+    desc: "Immediate emergency helplines, hospital search, and ATM finders.",
+    bullets: [
+      "Direct dialable police & medical numbers",
+      "Nearest emergency hospital finder",
+      "Union pharmacies and ATMs locator",
+      "Foreign embassy emergency helpline list"
+    ],
+    icon: "🚨",
+    includedIn: [2, 3]
+  },
+  {
+    id: "support",
+    title: "Premium Support",
+    desc: "Skip the queue with 24/7 dedicated customer assistance.",
+    bullets: [
+      "Response times under 2 minutes",
+      "Dedicated human concierge manager",
+      "Manual itinerary revisions assistance",
+      "Priority API ticket processing"
+    ],
+    icon: "👑",
+    includedIn: [2, 3]
+  }
+];
+
+const plans = [
+  {
+    id: "starter",
+    name: "Starter",
+    desc: "Perfect for casual solo travelers.",
+    monthlyPrice: 499,
+    yearlyPrice: 399,
+    ctaText: "Start Free Trial",
+    features: "Includes AI Itinerary, Copilot Chat, Trip Wallet, and 5 active saved trips."
+  },
+  {
+    id: "growth",
+    name: "Growth",
+    desc: "For frequent explorers & travel lovers.",
+    monthlyPrice: 999,
+    yearlyPrice: 799,
+    ctaText: "Start Free Trial",
+    features: "Includes Starter + Price Comparator, Skyscanner Flights, and Destination Intel."
+  },
+  {
+    id: "professional",
+    name: "Professional",
+    desc: "Everything you need for bespoke trips.",
+    monthlyPrice: 1999,
+    yearlyPrice: 1599,
+    popular: true,
+    ctaText: "Start 7-Day Free Trial",
+    features: "Includes Growth + Marketplace Vouchers, Travel Journal, Emergency Toolkit, & Premium Support."
+  },
+  {
+    id: "enterprise",
+    name: "Enterprise",
+    desc: "For corporate travel & travel agencies.",
+    monthlyPrice: "Custom",
+    yearlyPrice: "Custom",
+    ctaText: "Contact Sales",
+    features: "Includes Pro + Multi-staff accounts, Custom AI concierge models, and White-label PDFs."
+  }
+];
 
 export default function PricingPage() {
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">("monthly");
-  const [activeTab, setActiveTab] = useState<"traveler" | "agency">("traveler");
+  const [selectedPlan, setSelectedPlan] = useState<number>(2); // Default Professional
+  const [activeFeatureIndex, setActiveFeatureIndex] = useState<number>(0);
+  const [isAutoPlaying, setIsAutoPlaying] = useState<boolean>(true);
+  const autoPlayTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const travelerPlans = [
-    {
-      name: "Free",
-      price: "$0",
-      desc: "For solo explorers planning their next quick getaway.",
-      features: ["5 AI trip generations per month", "Standard itinerary exports", "Community forum access", "Basic maps integration"]
-    },
-    {
-      name: "Plus",
-      price: "$9",
-      desc: "For frequent travelers seeking unlimited options and customization.",
-      features: ["Unlimited AI trip generations", "Premium PDF exports", "Save up to 15 active itineraries", "Offline maps support", "Ad-free experience"],
-      popular: true
-    },
-    {
-      name: "Pro",
-      price: "$19",
-      desc: "For luxury explorers seeking bespoke recommendations and priorities.",
-      features: ["Everything in Plus", "Priority AI processing speed", "Uncapped active saved trips", "24/7 concierge chat access", "Exclusive partner discounts", "Custom route optimization"]
+  // Auto-playing carousel effect
+  useEffect(() => {
+    if (isAutoPlaying) {
+      autoPlayTimerRef.current = setInterval(() => {
+        setActiveFeatureIndex((prev) => (prev + 1) % rotateFeatures.length);
+      }, 4000);
     }
-  ];
+    return () => {
+      if (autoPlayTimerRef.current) clearInterval(autoPlayTimerRef.current);
+    };
+  }, [isAutoPlaying]);
 
-  const agencyPlans = [
-    {
-      name: "Growth",
-      price: "$99",
-      desc: "For boutique agencies getting started with CRM & AI.",
-      features: ["Up to 3 staff seats", "100 AI package generations / mo", "Lead management CRM pipeline", "Standard WhatsApp templates", "Email support"]
-    },
-    {
-      name: "Pro",
-      price: "$249",
-      desc: "For growing teams seeking advanced integrations & APIs.",
-      features: ["Up to 10 staff seats", "Unlimited AI package generations", "Advanced WhatsApp Business API integration", "Quotation PDF white-labeling", "Custom API access", "24/7 Priority support"],
-      popular: true
-    },
-    {
-      name: "Enterprise",
-      price: "Custom",
-      desc: "For global travel networks and large agencies.",
-      features: ["Unlimited staff accounts", "Dedicated server instance", "Custom AI training on your data", "Dedicated account manager", "SLA guarantees", "Custom CRM integrations"]
+  const handleFeatureClick = (index: number) => {
+    setIsAutoPlaying(false); // Stop autoplay on interaction
+    if (autoPlayTimerRef.current) clearInterval(autoPlayTimerRef.current);
+    setActiveFeatureIndex(index);
+  };
+
+  const currentFeature = rotateFeatures[activeFeatureIndex];
+  const activePlanInfo = plans[selectedPlan];
+  const isFeatureIncluded = currentFeature.includedIn.includes(selectedPlan);
+
+  const getPriceDisplay = (plan: typeof plans[0]) => {
+    if (typeof plan.monthlyPrice === "string" || typeof plan.yearlyPrice === "string") {
+      return "Custom";
     }
-  ];
-
-  const plans = activeTab === "traveler" ? travelerPlans : agencyPlans;
-
-  const comparisonFeatures = [
-    { name: "AI Trip Generations", free: "5/mo", plus: "Unlimited", pro: "Unlimited" },
-    { name: "Premium PDF Exporters", free: false, plus: true, pro: true },
-    { name: "Offline Maps & Navigation", free: false, plus: true, pro: true },
-    { name: "Ad-free Interface", free: false, plus: true, pro: true },
-    { name: "Priority AI Speeds", free: false, plus: false, pro: true },
-    { name: "Live Concierge Chat Support", free: false, plus: false, pro: true }
-  ];
+    const price = billingPeriod === "monthly" ? plan.monthlyPrice : plan.yearlyPrice;
+    return `₹${price.toLocaleString("en-IN")}`;
+  };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] text-slate-800 pt-28 pb-20 font-sans">
-      <div className="max-w-[1200px] mx-auto px-4 md:px-6">
+    <div className="min-h-screen bg-[#050816] text-[#FAFBFD] pt-28 pb-32 font-sans relative overflow-x-hidden selection:bg-teal-500/30 selection:text-teal-200">
+      
+      {/* Background soft glowing ambient layers */}
+      <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-teal-500/5 rounded-full blur-[150px] pointer-events-none z-0" />
+      <div className="absolute bottom-1/3 right-1/4 w-[600px] h-[600px] bg-cyan-500/5 rounded-full blur-[180px] pointer-events-none z-0" />
+
+      <div className="max-w-[1400px] mx-auto px-4 md:px-8 space-y-16 relative z-10">
         
         {/* Header */}
-        <div className="text-center max-w-2xl mx-auto mb-12">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-50 text-teal-700 text-xs font-black tracking-widest uppercase mb-4">
-            Pricing Plans
-          </span>
-          <h1 className="text-4xl md:text-5xl font-black text-black tracking-tight font-sora mb-3">
-            Honest, Transparent Plans
+        <div className="text-center max-w-3xl mx-auto space-y-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-[10px] font-black tracking-widest uppercase">
+            <Sparkles className="w-3.5 h-3.5" /> Premium Memberships
+          </div>
+          <h1 className="text-4xl md:text-6xl font-black font-sora tracking-tight leading-none text-white">
+            Choose the <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#14B8A6] to-[#06B6D4]">Perfect Plan</span>
           </h1>
-          <p className="text-slate-500 text-sm font-medium leading-relaxed">
-            Choose the plan that matches your travel frequency or agency size. No hidden fees. Cancel anytime.
+          <p className="text-slate-400 text-xs md:text-sm font-semibold max-w-xl mx-auto leading-relaxed">
+            Unlock the ultimate Travel Planner OS. Generate intelligent itineraries, compare rates, track spends, and get 24/7 concierge assistance.
           </p>
-        </div>
 
-        {/* Tab switcher */}
-        <div className="flex justify-center mb-10">
-          <div className="bg-white border border-slate-200/60 p-1 rounded-full flex gap-1">
+          {/* Premium Billing Selector / Calculator */}
+          <div className="flex items-center justify-center gap-3 pt-6">
+            <span className={`text-xs font-bold transition-all ${billingPeriod === "monthly" ? "text-white" : "text-slate-500"}`}>Monthly Billing</span>
             <button 
-              onClick={() => setActiveTab("traveler")}
-              className={`px-8 py-2.5 rounded-full text-xs font-black uppercase tracking-wider transition-all ${
-                activeTab === "traveler" ? 'bg-black text-white shadow-sm' : 'text-slate-400 hover:text-slate-700'
-              }`}
+              onClick={() => setBillingPeriod((prev) => (prev === "monthly" ? "yearly" : "monthly"))}
+              className="w-12 h-6 rounded-full bg-slate-800 border border-white/10 p-0.5 relative transition-all duration-300"
             >
-              Traveler Plans
+              <div 
+                className={`w-4.5 h-4.5 rounded-full bg-[#14B8A6] shadow transition-all duration-300 ${
+                  billingPeriod === "yearly" ? "translate-x-6" : "translate-x-0"
+                }`}
+              />
             </button>
-            <button 
-              onClick={() => setActiveTab("agency")}
-              className={`px-8 py-2.5 rounded-full text-xs font-black uppercase tracking-wider transition-all ${
-                activeTab === "agency" ? 'bg-black text-white shadow-sm' : 'text-slate-400 hover:text-slate-700'
-              }`}
-            >
-              Agency Plans
-            </button>
+            <div className="flex items-center gap-1.5">
+              <span className={`text-xs font-bold transition-all ${billingPeriod === "yearly" ? "text-[#14B8A6]" : "text-slate-500"}`}>Yearly Discount</span>
+              <span className="bg-teal-500/10 border border-teal-500/20 text-teal-400 text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full">
+                Save 20%
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-24">
-          {plans.map((plan, i) => (
-            <div 
-              key={i} 
-              className={`bg-white rounded-[32px] p-8 md:p-10 border flex flex-col justify-between relative ${
-                plan.popular 
-                  ? 'border-black shadow-[0_15px_40px_rgba(0,0,0,0.06)]' 
-                  : 'border-slate-100 shadow-[0_4px_25px_rgba(15,23,42,0.01)]'
-              }`}
-            >
-              {plan.popular && (
-                <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-black text-white text-[9px] font-black uppercase tracking-wider px-3.5 py-1.5 rounded-full">
-                  Most Popular
-                </span>
-              )}
-
-              <div>
-                <h3 className="text-lg font-black text-black tracking-wider uppercase mb-1">{plan.name}</h3>
-                <p className="text-slate-400 text-xs font-semibold leading-relaxed mb-6">{plan.desc}</p>
-                
-                <div className="flex items-baseline gap-1 mb-8">
-                  <span className="text-4xl font-extrabold text-black font-sora">{plan.price}</span>
-                  {plan.price !== "Custom" && <span className="text-slate-400 text-xs font-semibold">/month</span>}
+        {/* ---------------------------------------------------- */}
+        {/* DESKTOP LAYOUT (Mockup + Feature Details Side-by-Side) */}
+        {/* ---------------------------------------------------- */}
+        <div className="hidden lg:grid grid-cols-12 gap-8 items-stretch pt-6">
+          
+          {/* Left Side (40% width / 5 Cols): Interactive Mockup Showcase */}
+          <div className="col-span-5 flex items-center justify-center">
+            <div className="relative group">
+              {/* Outer Glow behind mockup */}
+              <div className="absolute -inset-4 bg-teal-500/10 rounded-[44px] blur-xl opacity-80 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+              
+              {/* Phone Mockup Frame */}
+              <div className="w-[280px] h-[550px] border-8 border-slate-900 bg-slate-950 rounded-[40px] shadow-[0_25px_60px_rgba(0,0,0,0.8)] relative overflow-hidden flex flex-col p-4 border-t-slate-800 border-b-slate-900">
+                {/* Speaker Grill & Island */}
+                <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-28 h-5 bg-black rounded-full flex items-center justify-center z-30">
+                  <div className="w-1.5 h-1.5 rounded-full bg-slate-800/80 mr-12" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#14B8A6]/40" />
                 </div>
+                
+                {/* Mockup Screen Content */}
+                <div className="flex-1 bg-[#090E1A] rounded-[28px] overflow-hidden p-3 relative flex flex-col justify-between pt-8 border border-white/5">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={activeFeatureIndex}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{ duration: 0.3 }}
+                      className="flex-grow flex flex-col justify-between"
+                    >
+                      {activeFeatureIndex === 0 && (
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-center bg-[#14B8A6]/10 p-2.5 rounded-xl border border-[#14B8A6]/20">
+                            <span className="text-[9px] text-[#14B8A6] font-bold">Goa Trip • 4 Days</span>
+                            <span className="text-[7px] bg-[#E2FF00] text-black px-1.5 py-0.2 rounded font-black uppercase">AI Gen</span>
+                          </div>
+                          <div className="space-y-2.5 text-[8px] text-white/70">
+                            <p className="text-[9px] font-extrabold text-white">Timeline Road Map</p>
+                            <div className="border-l border-slate-700 pl-3.5 ml-2 space-y-3">
+                              <div className="relative"><span className="absolute -left-[18px] top-1 w-1.5 h-1.5 rounded-full bg-[#14B8A6] shadow-[0_0_8px_#14B8A6]" />✈️ Flight BOM-GOI (Indigo)</div>
+                              <div className="relative"><span className="absolute -left-[18px] top-1 w-1.5 h-1.5 rounded-full bg-[#14B8A6] shadow-[0_0_8px_#14B8A6]" />🏨 Hotel Hyatt Goa Check-in</div>
+                              <div className="relative"><span className="absolute -left-[18px] top-1 w-1.5 h-1.5 rounded-full bg-[#14B8A6] shadow-[0_0_8px_#14B8A6]" />🌅 Vagator Sunset Point</div>
+                            </div>
+                          </div>
+                          <div className="p-2.5 bg-white/5 border border-white/10 rounded-xl text-[8px] text-white/50">
+                            💰 Estimated Budget: <strong>₹24,500</strong>
+                          </div>
+                        </div>
+                      )}
 
-                <ul className="space-y-4 mb-8">
-                  {plan.features.map((f, idx) => (
-                    <li key={idx} className="flex items-start gap-2.5 text-xs text-slate-700 font-semibold">
-                      <Check className="w-4 h-4 text-teal-600 shrink-0 mt-0.5" />
-                      <span>{f}</span>
-                    </li>
-                  ))}
-                </ul>
+                      {activeFeatureIndex === 1 && (
+                        <div className="space-y-3 flex flex-col h-[400px] justify-between">
+                          <div className="bg-[#14B8A6]/15 p-2 rounded-xl text-[8px] text-[#14B8A6] font-bold flex items-center gap-1.5">
+                            💬 Trip Copilot Active
+                          </div>
+                          <div className="space-y-2 flex-grow mt-3">
+                            <div className="bg-teal-900/40 text-teal-400 text-[8px] p-2.5 rounded-xl border border-teal-500/10 self-start max-w-[80%] leading-relaxed">
+                              I found a way to save ₹2,400 on your Grand Hyatt booking. Should I switch stay?
+                            </div>
+                            <div className="bg-white/5 text-white/95 text-[8px] p-2.5 rounded-xl self-end text-right border border-white/5 mt-1 max-w-[80%] ml-auto">
+                              Yes, switch it now.
+                            </div>
+                          </div>
+                          <div className="bg-[#14B8A6] text-black font-extrabold py-2 rounded-xl text-[8px] text-center shadow-lg uppercase tracking-wider">
+                            Optimized: Saved ₹2,400
+                          </div>
+                        </div>
+                      )}
+
+                      {activeFeatureIndex === 2 && (
+                        <div className="space-y-2.5">
+                          <span className="text-[8px] text-slate-400 font-extrabold uppercase tracking-wider block">Stay Comparators</span>
+                          <div className="bg-white/5 border border-white/10 p-2.5 rounded-xl flex justify-between items-center text-[8px]">
+                            <span className="text-white font-medium">Booking.com</span>
+                            <span className="font-mono text-slate-400">₹6,800/N</span>
+                          </div>
+                          <div className="bg-[#14B8A6]/10 border border-[#14B8A6]/20 p-2.5 rounded-xl flex justify-between items-center text-[8px]">
+                            <span className="text-[#14B8A6] font-black flex items-center gap-1">Agoda <span className="bg-teal-500 text-black text-[6px] px-1 rounded font-bold">Best</span></span>
+                            <span className="font-mono text-[#14B8A6] font-black">₹6,200/N</span>
+                          </div>
+                          <div className="bg-white/5 border border-white/10 p-2.5 rounded-xl flex justify-between items-center text-[8px]">
+                            <span className="text-white font-medium">MakeMyTrip</span>
+                            <span className="font-mono text-slate-400">₹6,900/N</span>
+                          </div>
+                        </div>
+                      )}
+
+                      {activeFeatureIndex === 3 && (
+                        <div className="space-y-3">
+                          <span className="text-[8px] text-slate-400 font-extrabold uppercase tracking-wider block">Skyscanner Rates</span>
+                          <div className="bg-white/5 border border-white/10 p-3 rounded-xl space-y-1">
+                            <div className="flex justify-between items-center text-[8px]">
+                              <span className="text-white font-black">Indigo 6E-242</span>
+                              <span className="font-mono text-teal-400">₹4,500</span>
+                            </div>
+                            <p className="text-[7px] text-slate-400">BOM-GOI • Direct flight • 1h 15m</p>
+                          </div>
+                          <div className="p-2 bg-[#006CFF] text-white rounded-xl text-center text-[8px] font-black shadow-md uppercase tracking-wider">
+                            Book via Skyscanner ↗
+                          </div>
+                        </div>
+                      )}
+
+                      {activeFeatureIndex === 4 && (
+                        <div className="space-y-3">
+                          <div className="bg-white/5 border border-white/10 p-3 rounded-xl space-y-1.5">
+                            <p className="text-[8px] text-[#38BDF8] font-bold uppercase tracking-wider">☀️ Weather Forecast</p>
+                            <h4 className="text-xl font-bold text-white font-mono leading-none">30°C</h4>
+                            <p className="text-[7px] text-slate-400">Goa, India • Clear skies • Low rain index</p>
+                          </div>
+                          <div className="bg-white/5 border border-white/10 p-2.5 rounded-xl text-[8px] text-white/60 leading-relaxed">
+                            📌 UNESCO guidelines: Old Goa Basilica is open till 06:30 PM. Photography allowed.
+                          </div>
+                        </div>
+                      )}
+
+                      {activeFeatureIndex === 5 && (
+                        <div className="space-y-2">
+                          <span className="text-[8px] text-slate-400 font-extrabold uppercase tracking-wider block">Marketplace Vouchers</span>
+                          <div className="bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/30 p-2.5 rounded-xl text-left space-y-1">
+                            <span className="text-[7px] bg-amber-500 text-black px-1.5 py-0.2 rounded font-black uppercase">Spa Deal</span>
+                            <h5 className="text-[8px] font-bold text-white">20% Off Spa at W Bali</h5>
+                            <p className="text-[7px] text-slate-400 font-mono">Promo Code: WBALISPA20</p>
+                          </div>
+                          <div className="bg-gradient-to-br from-teal-500/20 to-cyan-500/20 border border-teal-500/30 p-2.5 rounded-xl text-left space-y-1">
+                            <span className="text-[7px] bg-teal-500 text-black px-1.5 py-0.2 rounded font-black uppercase">Adventure</span>
+                            <h5 className="text-[8px] font-bold text-white">Free Snorkeling in Maldives</h5>
+                            <p className="text-[7px] text-slate-400 font-mono">Promo Code: MALDIVESFREE</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {activeFeatureIndex === 6 && (
+                        <div className="space-y-3">
+                          <div className="bg-white/5 border border-white/10 p-3 rounded-xl space-y-2.5">
+                            <p className="text-[8px] text-slate-400 font-extrabold uppercase tracking-wider">Budget Tracker</p>
+                            <div className="flex justify-between text-[10px] font-bold text-white font-mono">
+                              <span>Spent: ₹34,200</span>
+                              <span className="text-teal-400">Limit: ₹50,000</span>
+                            </div>
+                            <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                              <div className="bg-teal-500 h-full" style={{ width: "68.4%" }} />
+                            </div>
+                          </div>
+                          <div className="p-2 border border-slate-800 rounded-xl bg-slate-900/40 text-[7px] text-slate-400">
+                            📝 Food: ₹6,200 | Stays: ₹20,000 | Transport: ₹8,000
+                          </div>
+                        </div>
+                      )}
+
+                      {activeFeatureIndex === 7 && (
+                        <div className="space-y-2">
+                          <span className="text-[8px] text-slate-400 font-extrabold uppercase tracking-wider block">Travel Logs</span>
+                          <div className="bg-white/5 border border-white/10 p-3 rounded-xl text-[8px] text-white/80 italic leading-relaxed">
+                            “Day 2 in Assagao: Woke up early to catch the mist over the tea plantations. Absolute magic...”
+                          </div>
+                          <div className="bg-white/5 border border-white/10 p-2.5 rounded-xl text-[8px] space-y-1">
+                            <span className="text-teal-400 font-bold">★ ★ ★ ★ ★ Rating</span>
+                            <p className="text-white/60">Goa Sunset Escape verified footprint.</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {activeFeatureIndex === 8 && (
+                        <div className="space-y-2">
+                          <div className="bg-red-500/10 border border-red-500/20 p-2.5 rounded-xl text-left space-y-1">
+                            <p className="text-[9px] text-red-500 font-bold uppercase tracking-wider">🚨 Emergency Helplines</p>
+                            <p className="text-[8px] text-white/90">Police Assistance: 112 / +91-832-2428787</p>
+                          </div>
+                          <div className="bg-white/5 border border-white/10 p-2 rounded-xl text-[7px] text-slate-400 space-y-1">
+                            <p className="text-white font-bold">🏥 Manipal Hospital Bambolim</p>
+                            <p className="text-white font-bold">🏦 SBI ATM (150m)</p>
+                            <p className="text-white font-bold">💊 Union Pharmacy (300m)</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {activeFeatureIndex === 9 && (
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2 bg-[#14B8A6]/10 p-2 rounded-xl border border-[#14B8A6]/20">
+                            <div className="w-6 h-6 rounded-full bg-teal-500 flex items-center justify-center font-black text-[8px] text-black">PT</div>
+                            <div>
+                              <p className="text-[8px] text-white font-bold leading-none">Elite Support Desk</p>
+                              <p className="text-[7px] text-[#14B8A6] mt-0.5">Agent Priya • Connected</p>
+                            </div>
+                          </div>
+                          <div className="bg-white/5 border border-white/10 p-2.5 rounded-xl text-[8px] text-white/70 leading-relaxed">
+                            Support response time is &lt; 2 minutes. A dedicated concierge manager is assigned to review your manual requests.
+                          </div>
+                        </div>
+                      )}
+                    </motion.div>
+                  </AnimatePresence>
+
+                  {/* Device Bottom Indicator Line */}
+                  <div className="w-20 h-1 bg-slate-800 rounded-full mx-auto mt-2" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Side (35% width / 7 Cols): Feature Explanation Panel */}
+          <div className="col-span-7 flex flex-col justify-between p-6 bg-slate-900/40 border border-white/5 rounded-[32px] backdrop-blur-md relative">
+            <div className="space-y-6">
+              
+              {/* Feature Category header */}
+              <div className="flex justify-between items-center border-b border-white/5 pb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">{currentFeature.icon}</span>
+                  <h3 className="text-lg font-bold text-white font-sora">{currentFeature.title}</h3>
+                </div>
+                
+                {isFeatureIncluded ? (
+                  <span className="bg-teal-500/10 border border-teal-500/20 text-teal-400 text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded">
+                    Included in selected plan
+                  </span>
+                ) : (
+                  <span className="bg-slate-800 border border-white/5 text-slate-400 text-[8px] font-bold uppercase tracking-wider px-2 py-0.5 rounded flex items-center gap-1">
+                    <Lock className="w-2.5 h-2.5" /> Requires Upgrade
+                  </span>
+                )}
               </div>
 
-              <Button 
-                className={`w-full rounded-xl py-3 text-xs font-bold transition-all h-11 border-none shadow-sm ${
-                  plan.popular ? 'bg-black text-white hover:bg-black/90' : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
-                }`}
-              >
-                {plan.price === "Custom" ? "Contact Support" : "Get Started"}
-              </Button>
+              {/* Feature Description & checklist */}
+              <div className="space-y-4">
+                <p className="text-sm text-slate-300 font-semibold leading-relaxed">
+                  {currentFeature.desc}
+                </p>
+
+                <div className="grid grid-cols-2 gap-3 pt-2">
+                  {currentFeature.bullets.map((bullet, idx) => (
+                    <div key={idx} className="flex items-start gap-2.5 text-xs text-slate-300">
+                      <div className="w-4 h-4 rounded-full bg-teal-500/10 flex items-center justify-center text-teal-400 shrink-0 mt-0.5">
+                        <Check className="w-2.5 h-2.5" />
+                      </div>
+                      <span>{bullet}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-          ))}
+
+            {/* Feature selector list (CricHeroes PRO screen style list selectors) */}
+            <div className="pt-8 border-t border-white/5 mt-8">
+              <p className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider mb-3">Explore Product Features</p>
+              <div className="grid grid-cols-2 gap-2">
+                {rotateFeatures.map((ft, idx) => {
+                  const isActive = activeFeatureIndex === idx;
+                  const isIncludedInCurrent = ft.includedIn.includes(selectedPlan);
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => handleFeatureClick(idx)}
+                      className={`flex items-center gap-2 p-2.5 rounded-xl border text-left text-xs transition-all ${
+                        isActive 
+                          ? "bg-teal-500/10 border-[#14B8A6] text-white font-bold" 
+                          : "bg-white/[0.01] border-white/5 text-slate-400 hover:text-white hover:bg-white/[0.03]"
+                      }`}
+                    >
+                      <span className="text-xs">{ft.icon}</span>
+                      <span className="truncate flex-1">{ft.title}</span>
+                      {!isIncludedInCurrent && <Lock className="w-3 h-3 text-slate-500 shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Feature Comparison Table (Only shown for traveler plans) */}
-        {activeTab === "traveler" && (
-          <div className="bg-white rounded-[32px] p-8 border border-slate-100 shadow-sm overflow-x-auto">
-            <h3 className="text-xl font-bold font-sora text-black mb-6">Compare Traveler Features</h3>
+        {/* ---------------------------------------------------- */}
+        {/* MOBILE LAYOUT (Section 1 -> 2 -> 3 Stacked structure) */}
+        {/* ---------------------------------------------------- */}
+        <div className="flex lg:hidden flex-col gap-8">
+          
+          {/* Section 1: Feature Animation (top mockup) */}
+          <div className="flex flex-col items-center justify-center p-4 bg-slate-900/20 border border-white/5 rounded-3xl relative">
+            <div className="absolute -inset-2 bg-teal-500/5 rounded-[40px] blur-xl opacity-80 pointer-events-none" />
             
-            <table className="w-full text-left border-collapse min-w-[600px]">
-              <thead>
-                <tr className="border-b border-slate-100 text-slate-400 text-[10px] font-black tracking-widest uppercase">
-                  <th className="py-4">Features</th>
-                  <th className="py-4 text-center">Free</th>
-                  <th className="py-4 text-center">Plus</th>
-                  <th className="py-4 text-center">Pro</th>
-                </tr>
-              </thead>
-              <tbody>
-                {comparisonFeatures.map((f, i) => (
-                  <tr key={i} className="border-b border-slate-50 text-slate-700 text-xs font-semibold last:border-0">
-                    <td className="py-4 font-bold text-slate-800">{f.name}</td>
-                    <td className="py-4 text-center">
-                      {typeof f.free === "string" ? f.free : f.free ? <Check className="w-4 h-4 text-teal-600 mx-auto" /> : <X className="w-4 h-4 text-slate-300 mx-auto" />}
-                    </td>
-                    <td className="py-4 text-center">
-                      {typeof f.plus === "string" ? f.plus : f.plus ? <Check className="w-4 h-4 text-teal-600 mx-auto" /> : <X className="w-4 h-4 text-slate-300 mx-auto" />}
-                    </td>
-                    <td className="py-4 text-center">
-                      {typeof f.pro === "string" ? f.pro : f.pro ? <Check className="w-4 h-4 text-teal-600 mx-auto" /> : <X className="w-4 h-4 text-slate-300 mx-auto" />}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            {/* Phone Mockup (Slightly smaller for mobile) */}
+            <div className="w-[240px] h-[460px] border-8 border-slate-900 bg-slate-950 rounded-[36px] shadow-2xl relative overflow-hidden flex flex-col p-3 border-t-slate-800">
+              <div className="absolute top-2 left-1/2 -translate-x-1/2 w-24 h-4.5 bg-black rounded-full flex items-center justify-center z-30">
+                <div className="w-1.5 h-1.5 rounded-full bg-[#14B8A6]/40" />
+              </div>
+              
+              <div className="flex-1 bg-[#090E1A] rounded-[24px] overflow-hidden p-2.5 relative flex flex-col justify-between pt-6 border border-white/5">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeFeatureIndex}
+                    initial={{ opacity: 0, x: 15 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -15 }}
+                    className="flex-grow flex flex-col justify-between"
+                  >
+                    {activeFeatureIndex === 0 && (
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center bg-[#14B8A6]/10 p-2 rounded-lg border border-[#14B8A6]/20 text-[8px] text-[#14B8A6] font-bold">
+                          <span>Goa Trip • 4 Days</span>
+                          <span className="bg-[#E2FF00] text-black px-1 rounded text-[6px]">AI</span>
+                        </div>
+                        <div className="border-l border-slate-700 pl-3 ml-2 space-y-2 text-[7px] text-white/70">
+                          <div>✈️ Flight BOM-GOI</div>
+                          <div>🏨 Hyatt Check-in</div>
+                          <div>🌅 Beach Sunset</div>
+                        </div>
+                      </div>
+                    )}
+                    {activeFeatureIndex === 1 && (
+                      <div className="space-y-2 flex flex-col h-full justify-between text-[7px]">
+                        <div className="bg-teal-900/40 text-teal-400 p-2 rounded-lg border border-teal-500/10 leading-relaxed">
+                          I found a way to save ₹2,400. Swap stay?
+                        </div>
+                        <div className="bg-[#14B8A6] text-black font-extrabold py-1.5 rounded-lg text-center uppercase tracking-wider">
+                          Saved ₹2,400
+                        </div>
+                      </div>
+                    )}
+                    {activeFeatureIndex === 2 && (
+                      <div className="space-y-1.5 text-[7px]">
+                        <div className="bg-white/5 border border-white/10 p-2 rounded-lg flex justify-between">
+                          <span>Booking.com</span>
+                          <span className="font-mono text-slate-400">₹6,800/N</span>
+                        </div>
+                        <div className="bg-[#14B8A6]/10 border border-[#14B8A6]/20 p-2 rounded-lg flex justify-between text-[#14B8A6] font-bold">
+                          <span>Agoda</span>
+                          <span className="font-mono font-bold">₹6,200/N</span>
+                        </div>
+                      </div>
+                    )}
+                    {activeFeatureIndex === 3 && (
+                      <div className="space-y-2">
+                        <div className="bg-white/5 border border-white/10 p-2 rounded-lg text-[7px] space-y-0.5">
+                          <p className="text-white font-bold">Indigo 6E-242</p>
+                          <p className="text-teal-400 font-mono">₹4,500</p>
+                        </div>
+                        <div className="p-1.5 bg-[#006CFF] text-white rounded-lg text-center text-[7px] font-bold">
+                          Book ↗
+                        </div>
+                      </div>
+                    )}
+                    {activeFeatureIndex === 4 && (
+                      <div className="space-y-2 text-[7px]">
+                        <div className="bg-white/5 border border-white/10 p-2 rounded-lg">
+                          <p className="text-[#38BDF8] font-bold">☀️ Weather</p>
+                          <h4 className="text-sm font-bold text-white font-mono">30°C</h4>
+                        </div>
+                        <p className="text-white/60">Basilica open till 06:30 PM.</p>
+                      </div>
+                    )}
+                    {activeFeatureIndex === 5 && (
+                      <div className="space-y-1.5 text-[7px]">
+                        <div className="bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/30 p-2 rounded-lg">
+                          <p className="font-bold text-white">20% Off Spa W Bali</p>
+                        </div>
+                        <div className="bg-gradient-to-br from-teal-500/20 to-cyan-500/20 border border-teal-500/30 p-2 rounded-lg">
+                          <p className="font-bold text-white">Free Maldives Snorkel</p>
+                        </div>
+                      </div>
+                    )}
+                    {activeFeatureIndex === 6 && (
+                      <div className="space-y-2 text-[7px]">
+                        <div className="bg-white/5 border border-white/10 p-2 rounded-lg">
+                          <div className="flex justify-between font-bold text-white">
+                            <span>Spent: ₹34,200</span>
+                            <span className="text-teal-400">Limit: ₹50k</span>
+                          </div>
+                          <div className="w-full bg-slate-800 h-1 rounded-full overflow-hidden mt-1">
+                            <div className="bg-teal-500 h-full" style={{ width: "68.4%" }} />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    {activeFeatureIndex === 7 && (
+                      <div className="space-y-2 text-[7px]">
+                        <div className="bg-white/5 border border-white/10 p-2 rounded-lg text-white/80 italic leading-snug">
+                          “Day 2: Woke up early to catch the mist...”
+                        </div>
+                      </div>
+                    )}
+                    {activeFeatureIndex === 8 && (
+                      <div className="space-y-1.5 text-[7px]">
+                        <div className="bg-red-500/10 border border-red-500/20 p-2 rounded-lg text-red-500">
+                          🚨 Emergency: 112
+                        </div>
+                        <div className="bg-white/5 border border-white/10 p-1.5 rounded-lg text-slate-400">
+                          Manipal Hospital Bambolim
+                        </div>
+                      </div>
+                    )}
+                    {activeFeatureIndex === 9 && (
+                      <div className="space-y-2 text-[7px]">
+                        <div className="flex items-center gap-1.5 bg-[#14B8A6]/10 p-1.5 rounded-lg border border-[#14B8A6]/20">
+                          <div className="w-4.5 h-4.5 rounded-full bg-teal-500" />
+                          <span className="text-white font-bold">Elite Support Active</span>
+                        </div>
+                        <p className="text-white/60">Response in &lt; 2 mins</p>
+                      </div>
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+                <div className="w-16 h-0.5 bg-slate-800 rounded-full mx-auto mt-1.5" />
+              </div>
+            </div>
           </div>
-        )}
+
+          {/* Section 2: Feature Explanation (middle text) */}
+          <div className="bg-slate-900/40 border border-white/5 p-5 rounded-3xl space-y-4">
+            <div className="flex justify-between items-center border-b border-white/5 pb-2">
+              <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
+                <span>{currentFeature.icon}</span>
+                <span>{currentFeature.title}</span>
+              </h3>
+              {isFeatureIncluded ? (
+                <span className="bg-teal-500/10 border border-teal-500/20 text-teal-400 text-[7px] font-black uppercase px-1.5 py-0.2 rounded">
+                  Included
+                </span>
+              ) : (
+                <span className="bg-slate-800 text-slate-400 text-[7px] font-bold uppercase px-1.5 py-0.2 rounded flex items-center gap-0.5">
+                  <Lock className="w-2.5 h-2.5" /> Upgrade
+                </span>
+              )}
+            </div>
+            
+            <p className="text-xs text-slate-300 font-semibold">{currentFeature.desc}</p>
+            
+            <div className="grid grid-cols-1 gap-2 pt-1">
+              {currentFeature.bullets.map((bullet, idx) => (
+                <div key={idx} className="flex items-start gap-2 text-[10px] text-slate-400">
+                  <Check className="w-3.5 h-3.5 text-teal-400 shrink-0 mt-0.5" />
+                  <span>{bullet}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Horizontal features slider indicator */}
+            <div className="flex justify-center gap-1.5 pt-3">
+              {rotateFeatures.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleFeatureClick(idx)}
+                  className={`w-2 h-2 rounded-full transition-all ${
+                    activeFeatureIndex === idx ? "bg-[#14B8A6] w-4" : "bg-slate-700"
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+
+        </div>
+
+        {/* ---------------------------------------------------- */}
+        {/* BOTTOM SECTION: Pricing Selector Cards */}
+        {/* ---------------------------------------------------- */}
+        <div className="space-y-6 pt-6">
+          <div className="text-center">
+            <p className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">Select Subscription Plan</p>
+          </div>
+
+          {/* Pricing cards grid (Horizontally on desktop, horizontally scrollable on mobile!) */}
+          <div className="flex gap-4 overflow-x-auto pb-4 snap-x lg:grid lg:grid-cols-4 lg:overflow-x-visible scrollbar-none px-2">
+            {plans.map((plan, i) => {
+              const isSelected = selectedPlan === i;
+              const priceDisplay = getPriceDisplay(plan);
+              
+              return (
+                <div 
+                  key={i}
+                  onClick={() => setSelectedPlan(i)}
+                  className={`snap-start shrink-0 w-[270px] lg:w-auto rounded-3xl p-6 border transition-all duration-300 cursor-pointer flex flex-col justify-between h-[250px] relative ${
+                    isSelected 
+                      ? "bg-slate-900 border-[#14B8A6] shadow-[0_0_30px_rgba(20,184,166,0.2)] scale-[1.02] -translate-y-1" 
+                      : "bg-[#090E1A]/40 border-white/5 hover:border-white/10 hover:bg-slate-900/30"
+                  }`}
+                >
+                  {plan.popular && (
+                    <span className="absolute -top-3 left-6 bg-[#14B8A6] text-black text-[7px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full shadow">
+                      🔥 Most Popular
+                    </span>
+                  )}
+                  
+                  {isSelected && (
+                    <span className="absolute top-4 right-4 w-5 h-5 rounded-full bg-teal-50 text-black flex items-center justify-center text-xs font-bold">
+                      ✓
+                    </span>
+                  )}
+
+                  <div>
+                    <h3 className="text-sm font-black uppercase tracking-wider text-white">{plan.name}</h3>
+                    <p className="text-[10px] text-slate-500 font-semibold mt-1 leading-snug">{plan.desc}</p>
+                    
+                    <div className="mt-4 flex items-baseline gap-1">
+                      <span className="text-2xl font-black text-white font-sora">{priceDisplay}</span>
+                      {plan.monthlyPrice !== "Custom" && (
+                        <span className="text-slate-500 text-[10px] font-semibold">/month</span>
+                      )}
+                    </div>
+
+                    {/* Billed info */}
+                    {billingPeriod === "yearly" && typeof plan.yearlyPrice === "number" && (
+                      <span className="text-[8px] font-bold text-teal-400 mt-1 block">
+                        Billed ₹{(plan.yearlyPrice * 12).toLocaleString("en-IN")} yearly (Save 20%)
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="pt-4 border-t border-white/5 text-[9px] text-slate-400 font-semibold leading-normal">
+                    {plan.features}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
 
       </div>
+
+      {/* ---------------------------------------------------- */}
+      {/* STICKY BOTTOM CONVERSIONS CTA BAR */}
+      {/* ---------------------------------------------------- */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#050816]/90 backdrop-blur-md border-t border-white/10 py-4 px-6 shadow-[0_-10px_35px_rgba(0,0,0,0.5)]">
+        <div className="max-w-[1200px] mx-auto flex flex-col sm:flex-row justify-between items-center gap-3">
+          <div className="text-center sm:text-left">
+            <p className="text-[10px] font-extrabold text-[#14B8A6] uppercase tracking-widest leading-none mb-1">Active Plan Selection</p>
+            <h4 className="text-sm font-black text-white">
+              TripPilot {activePlanInfo.name} • <span className="font-mono text-teal-400">{getPriceDisplay(activePlanInfo)}</span>
+              {billingPeriod === "yearly" && activePlanInfo.monthlyPrice !== "Custom" && (
+                <span className="text-[9px] text-[#06B6D4] ml-2">Billed Annually</span>
+              )}
+            </h4>
+          </div>
+
+          <div className="flex items-center gap-4 w-full sm:w-auto">
+            <button 
+              onClick={() => alert(`Subscribing to ${activePlanInfo.name} plan...`)}
+              className="w-full sm:w-max h-12 px-8 rounded-full bg-gradient-to-r from-[#14B8A6] to-[#06B6D4] hover:from-[#14B8A6]/90 hover:to-[#06B6D4]/90 text-[#050816] font-extrabold text-sm shadow-[0_0_20px_rgba(20,184,166,0.3)] hover:scale-[1.02] active:scale-[0.99] transition-all flex items-center justify-center gap-2 border-none"
+            >
+              <span>{activePlanInfo.ctaText}</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+
     </div>
   );
 }
