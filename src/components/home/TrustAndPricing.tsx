@@ -572,13 +572,6 @@ export function TrustAndPricing() {
               </div>
             </div>
           </div>
-        </div>reIndex === idx ? "bg-[#14B8A6] w-4" : "bg-slate-700"
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
-
         </div>
 
         {/* ---------------------------------------------------- */}
