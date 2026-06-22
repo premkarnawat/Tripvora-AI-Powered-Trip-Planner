@@ -53,12 +53,12 @@ const plans = [
 ];
 
 const logoColors: Record<string, string> = {
-  "Airbnb": "hover:text-[#FF5A5F]",
-  "Expedia": "hover:text-[#FFB700]",
-  "Booking.com": "hover:text-[#003580]",
-  "MakeMyTrip": "hover:text-[#DF1A22]",
-  "Agoda": "hover:text-[#EC4899]",
-  "TripAdvisor": "hover:text-[#00AF87]"
+  "Airbnb": "text-[#FF5A5F] hover:opacity-90",
+  "Expedia": "text-[#FFB700] hover:opacity-90",
+  "Booking.com": "text-[#38BDF8] hover:opacity-90",
+  "MakeMyTrip": "text-[#DF1A22] hover:opacity-90",
+  "Agoda": "text-[#EC4899] hover:opacity-90",
+  "TripAdvisor": "text-[#00AF87] hover:opacity-90"
 };
 
 function PricingCard({ plan }: { plan: any }) {
@@ -160,7 +160,7 @@ export function TrustAndPricing() {
             {[...Array(2)].fill(["Airbnb", "Expedia", "Booking.com", "MakeMyTrip", "Agoda", "TripAdvisor"]).flat().map((logo, i) => (
               <span 
                 key={i} 
-                className={`text-3xl font-bold font-sora mx-8 text-white/20 transition-all duration-300 cursor-pointer ${logoColors[logo] || 'hover:text-white'}`}
+                className={`text-3xl font-bold font-sora mx-8 transition-all duration-300 cursor-pointer hover:scale-105 ${logoColors[logo] || 'text-white'}`}
               >
                 {logo}
               </span>
