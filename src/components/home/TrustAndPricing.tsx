@@ -304,90 +304,87 @@ export function TrustAndPricing() {
                 Save 20%
               </span>
             </div>
-          </div>
-        </div>
-
         {/* ---------------------------------------------------- */}
-        {/* DESKTOP LAYOUT (Mockup + Feature Details Side-by-Side) */}
+        {/* UNIFIED SIDE-BY-SIDE LAYOUT (Mockup + Feature Details) */}
         {/* ---------------------------------------------------- */}
-        <div className="hidden lg:grid grid-cols-12 gap-8 items-stretch pt-6">
+        <div className="grid grid-cols-12 gap-3 sm:gap-8 items-stretch pt-6">
           
-          {/* Left Side (40% width / 5 Cols): Interactive Mockup Showcase */}
+          {/* Left Side (Mockup Showcase) - Takes 5 cols on mobile, 5 cols on desktop */}
           <div className="col-span-5 flex items-center justify-center">
-            <div className="relative group">
+            <div className="relative group w-full max-w-[280px]">
               {/* Outer Glow behind mockup */}
-              <div className="absolute -inset-4 bg-teal-500/10 rounded-[44px] blur-xl opacity-80 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+              <div className="absolute -inset-2 sm:-inset-4 bg-teal-500/10 rounded-[20px] sm:rounded-[44px] blur-xl opacity-80 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
               
               {/* Phone Mockup Frame */}
-              <div className="w-[280px] h-[550px] border-8 border-slate-900 bg-slate-950 rounded-[40px] shadow-[0_25px_60px_rgba(0,0,0,0.8)] relative overflow-hidden flex flex-col p-4 border-t-slate-800 border-b-slate-900">
+              <div className="w-full h-[320px] sm:h-[550px] border-4 sm:border-8 border-slate-900 bg-slate-950 rounded-[20px] sm:rounded-[40px] shadow-[0_15px_40px_rgba(0,0,0,0.8)] relative overflow-hidden flex flex-col p-2 sm:p-4 border-t-slate-800 border-b-slate-900">
                 {/* Speaker Island */}
-                <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-28 h-5 bg-black rounded-full flex items-center justify-center z-30">
-                  <div className="w-1.5 h-1.5 rounded-full bg-slate-800/80 mr-12" />
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#14B8A6]/40" />
+                <div className="absolute top-1.5 sm:top-2.5 left-1/2 -translate-x-1/2 w-16 sm:w-28 h-3 sm:h-5 bg-black rounded-full flex items-center justify-center z-30">
+                  <div className="w-1 h-1 rounded-full bg-slate-800/80 mr-6 sm:mr-12" />
+                  <div className="w-1 h-1 rounded-full bg-[#14B8A6]/40" />
                 </div>
                 
                 {/* Mockup Screen Content */}
-                <div className="flex-1 bg-[#090E1A] rounded-[28px] overflow-hidden p-3 relative flex flex-col justify-between pt-8 border border-white/5">
+                <div className="flex-1 bg-[#090E1A] rounded-[14px] sm:rounded-[28px] overflow-hidden p-2 sm:p-3 relative flex flex-col justify-between pt-6 sm:pt-8 border border-white/5">
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={activeFeatureIndex}
-                      initial={{ opacity: 0, x: 20 }}
+                      initial={{ opacity: 0, x: 15 }}
                       animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
+                      exit={{ opacity: 0, x: -15 }}
                       transition={{ duration: 0.3 }}
                       className="flex-grow flex flex-col justify-between"
                     >
                       {activeFeatureIndex === 0 && (
-                        <div className="space-y-3">
-                          <div className="flex justify-between items-center bg-[#14B8A6]/10 p-2.5 rounded-xl border border-[#14B8A6]/20">
-                            <span className="text-[9px] text-[#14B8A6] font-bold">Goa Trip • 4 Days</span>
-                            <span className="text-[7px] bg-[#E2FF00] text-black px-1.5 py-0.2 rounded font-black uppercase">AI Gen</span>
+                        <div className="space-y-1.5 sm:space-y-3">
+                          <div className="flex justify-between items-center bg-[#14B8A6]/10 p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl border border-[#14B8A6]/20">
+                            <span className="text-[6px] sm:text-[9px] text-[#14B8A6] font-bold">Goa Trip • 4 Days</span>
+                            <span className="text-[5px] sm:text-[7px] bg-[#E2FF00] text-black px-1 sm:px-1.5 py-0.2 rounded font-black uppercase">AI Gen</span>
                           </div>
-                          <div className="space-y-2.5 text-[8px] text-white/70">
-                            <p className="text-[9px] font-extrabold text-white">Timeline Road Map</p>
-                            <div className="border-l border-slate-700 pl-3.5 ml-2 space-y-3">
-                              <div className="relative"><span className="absolute -left-[18px] top-1 w-1.5 h-1.5 rounded-full bg-[#14B8A6] shadow-[0_0_8px_#14B8A6]" />✈️ Flight BOM-GOI (Indigo)</div>
-                              <div className="relative"><span className="absolute -left-[18px] top-1 w-1.5 h-1.5 rounded-full bg-[#14B8A6] shadow-[0_0_8px_#14B8A6]" />🏨 Hotel Hyatt Goa Check-in</div>
-                              <div className="relative"><span className="absolute -left-[18px] top-1 w-1.5 h-1.5 rounded-full bg-[#14B8A6] shadow-[0_0_8px_#14B8A6]" />🌅 Vagator Sunset Point</div>
+                          <div className="space-y-1.5 sm:space-y-2.5 text-[6px] sm:text-[8px] text-white/70">
+                            <p className="text-[7px] sm:text-[9px] font-extrabold text-white">Timeline Road Map</p>
+                            <div className="border-l border-slate-700 pl-2 sm:pl-3.5 ml-1 sm:ml-2 space-y-1.5 sm:space-y-3">
+                              <div className="relative"><span className="absolute -left-[12px] sm:-left-[18px] top-0.5 sm:top-1 w-1 sm:w-1.5 h-1 sm:h-1.5 rounded-full bg-[#14B8A6] shadow-[0_0_8px_#14B8A6]" />✈️ Flight BOM-GOI (Indigo)</div>
+                              <div className="relative"><span className="absolute -left-[12px] sm:-left-[18px] top-0.5 sm:top-1 w-1 sm:w-1.5 h-1 sm:h-1.5 rounded-full bg-[#14B8A6] shadow-[0_0_8px_#14B8A6]" />🏨 Hotel Hyatt Goa Check-in</div>
+                              <div className="relative"><span className="absolute -left-[12px] sm:-left-[18px] top-0.5 sm:top-1 w-1 sm:w-1.5 h-1 sm:h-1.5 rounded-full bg-[#14B8A6] shadow-[0_0_8px_#14B8A6]" />🌅 Vagator Sunset Point</div>
                             </div>
                           </div>
-                          <div className="p-2.5 bg-white/5 border border-white/10 rounded-xl text-[8px] text-white/50">
+                          <div className="p-1.5 sm:p-2.5 bg-white/5 border border-white/10 rounded-lg sm:rounded-xl text-[6px] sm:text-[8px] text-white/50">
                             💰 Estimated Budget: <strong>₹24,500</strong>
                           </div>
                         </div>
                       )}
 
                       {activeFeatureIndex === 1 && (
-                        <div className="space-y-3 flex flex-col h-[400px] justify-between">
-                          <div className="bg-[#14B8A6]/15 p-2 rounded-xl text-[8px] text-[#14B8A6] font-bold flex items-center gap-1.5">
+                        <div className="space-y-1.5 sm:space-y-3 flex flex-col h-full justify-between">
+                          <div className="bg-[#14B8A6]/15 p-1.5 sm:p-2 rounded-lg sm:rounded-xl text-[6px] sm:text-[8px] text-[#14B8A6] font-bold flex items-center gap-1">
                             💬 Trip Copilot Active
                           </div>
-                          <div className="space-y-2 flex-grow mt-3">
-                            <div className="bg-teal-900/40 text-teal-400 text-[8px] p-2.5 rounded-xl border border-teal-500/10 self-start max-w-[80%] leading-relaxed">
+                          <div className="space-y-1.5 flex-grow mt-2">
+                            <div className="bg-teal-900/40 text-teal-400 text-[6px] sm:text-[8px] p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl border border-teal-500/10 self-start max-w-[85%] leading-normal">
                               I found a way to save ₹2,400 on your Grand Hyatt booking. Should I switch stay?
                             </div>
-                            <div className="bg-white/5 text-white/95 text-[8px] p-2.5 rounded-xl self-end text-right border border-white/5 mt-1 max-w-[80%] ml-auto">
+                            <div className="bg-white/5 text-white/95 text-[6px] sm:text-[8px] p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl self-end text-right border border-white/5 mt-1 max-w-[85%] ml-auto">
                               Yes, switch it now.
                             </div>
                           </div>
-                          <div className="bg-[#14B8A6] text-black font-extrabold py-2 rounded-xl text-[8px] text-center shadow-lg uppercase tracking-wider">
+                          <div className="bg-[#14B8A6] text-black font-extrabold py-1 sm:py-2 rounded-lg sm:rounded-xl text-[6px] sm:text-[8px] text-center shadow-lg uppercase tracking-wider">
                             Optimized: Saved ₹2,400
                           </div>
                         </div>
                       )}
 
                       {activeFeatureIndex === 2 && (
-                        <div className="space-y-2.5">
-                          <span className="text-[8px] text-slate-400 font-extrabold uppercase tracking-wider block">Stay Comparators</span>
-                          <div className="bg-white/5 border border-white/10 p-2.5 rounded-xl flex justify-between items-center text-[8px]">
+                        <div className="space-y-1.5 sm:space-y-2.5">
+                          <span className="text-[6px] sm:text-[8px] text-slate-400 font-extrabold uppercase tracking-wider block">Stay Comparators</span>
+                          <div className="bg-white/5 border border-white/10 p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl flex justify-between items-center text-[6px] sm:text-[8px]">
                             <span className="text-white font-medium">Booking.com</span>
                             <span className="font-mono text-slate-400">₹6,800/N</span>
                           </div>
-                          <div className="bg-[#14B8A6]/10 border border-[#14B8A6]/20 p-2.5 rounded-xl flex justify-between items-center text-[8px]">
-                            <span className="text-[#14B8A6] font-black flex items-center gap-1">Agoda <span className="bg-teal-500 text-black text-[6px] px-1 rounded font-bold">Best</span></span>
+                          <div className="bg-[#14B8A6]/10 border border-[#14B8A6]/20 p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl flex justify-between items-center text-[6px] sm:text-[8px]">
+                            <span className="text-[#14B8A6] font-black flex items-center gap-1">Agoda <span className="bg-teal-500 text-black text-[5px] sm:text-[6px] px-1 rounded font-bold">Best</span></span>
                             <span className="font-mono text-[#14B8A6] font-black">₹6,200/N</span>
                           </div>
-                          <div className="bg-white/5 border border-white/10 p-2.5 rounded-xl flex justify-between items-center text-[8px]">
+                          <div className="bg-white/5 border border-white/10 p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl flex justify-between items-center text-[6px] sm:text-[8px]">
                             <span className="text-white font-medium">MakeMyTrip</span>
                             <span className="font-mono text-slate-400">₹6,900/N</span>
                           </div>
@@ -395,89 +392,89 @@ export function TrustAndPricing() {
                       )}
 
                       {activeFeatureIndex === 3 && (
-                        <div className="space-y-3">
-                          <span className="text-[8px] text-slate-400 font-extrabold uppercase tracking-wider block">Skyscanner Rates</span>
-                          <div className="bg-white/5 border border-white/10 p-3 rounded-xl space-y-1">
-                            <div className="flex justify-between items-center text-[8px]">
+                        <div className="space-y-1.5 sm:space-y-3">
+                          <span className="text-[6px] sm:text-[8px] text-slate-400 font-extrabold uppercase tracking-wider block">Skyscanner Rates</span>
+                          <div className="bg-white/5 border border-white/10 p-1.5 sm:p-3 rounded-lg sm:rounded-xl space-y-0.5 sm:space-y-1">
+                            <div className="flex justify-between items-center text-[6px] sm:text-[8px]">
                               <span className="text-white font-black">Indigo 6E-242</span>
                               <span className="font-mono text-teal-400">₹4,500</span>
                             </div>
-                            <p className="text-[7px] text-slate-400">BOM-GOI • Direct flight • 1h 15m</p>
+                            <p className="text-[5px] sm:text-[7px] text-slate-400">BOM-GOI • Direct flight • 1h 15m</p>
                           </div>
-                          <div className="p-2 bg-[#006CFF] text-white rounded-xl text-center text-[8px] font-black shadow-md uppercase tracking-wider">
+                          <div className="p-1 sm:p-2 bg-[#006CFF] text-white rounded-lg sm:rounded-xl text-center text-[6px] sm:text-[8px] font-black shadow-md uppercase tracking-wider">
                             Book via Skyscanner ↗
                           </div>
                         </div>
                       )}
 
                       {activeFeatureIndex === 4 && (
-                        <div className="space-y-3">
-                          <div className="bg-white/5 border border-white/10 p-3 rounded-xl space-y-1.5">
-                            <p className="text-[8px] text-[#38BDF8] font-bold uppercase tracking-wider">☀️ Weather Forecast</p>
-                            <h4 className="text-xl font-bold text-white font-mono leading-none">30°C</h4>
-                            <p className="text-[7px] text-slate-400">Goa, India • Clear skies • Low rain index</p>
+                        <div className="space-y-1.5 sm:space-y-3">
+                          <div className="bg-white/5 border border-white/10 p-1.5 sm:p-3 rounded-lg sm:rounded-xl space-y-1">
+                            <p className="text-[6px] sm:text-[8px] text-[#38BDF8] font-bold uppercase tracking-wider">☀️ Weather Forecast</p>
+                            <h4 className="text-sm sm:text-xl font-bold text-white font-mono leading-none">30°C</h4>
+                            <p className="text-[5px] sm:text-[7px] text-slate-400">Goa, India • Clear skies • Low rain index</p>
                           </div>
-                          <div className="bg-white/5 border border-white/10 p-2.5 rounded-xl text-[8px] text-white/60 leading-relaxed">
+                          <div className="bg-white/5 border border-white/10 p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl text-[6px] sm:text-[8px] text-white/60 leading-normal">
                             📌 UNESCO guidelines: Old Goa Basilica is open till 06:30 PM. Photography allowed.
                           </div>
                         </div>
                       )}
 
                       {activeFeatureIndex === 5 && (
-                        <div className="space-y-2">
-                          <span className="text-[8px] text-slate-400 font-extrabold uppercase tracking-wider block">Marketplace Vouchers</span>
-                          <div className="bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/30 p-2.5 rounded-xl text-left space-y-1">
-                            <span className="text-[7px] bg-amber-500 text-black px-1.5 py-0.2 rounded font-black uppercase">Spa Deal</span>
-                            <h5 className="text-[8px] font-bold text-white">20% Off Spa at W Bali</h5>
-                            <p className="text-[7px] text-slate-400 font-mono">Promo Code: WBALISPA20</p>
+                        <div className="space-y-1.5 sm:space-y-2">
+                          <span className="text-[6px] sm:text-[8px] text-slate-400 font-extrabold uppercase tracking-wider block">Marketplace Vouchers</span>
+                          <div className="bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/30 p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl text-left space-y-0.5">
+                            <span className="text-[5px] sm:text-[7px] bg-amber-500 text-black px-1.5 py-0.2 rounded font-black uppercase">Spa Deal</span>
+                            <h5 className="text-[6px] sm:text-[8px] font-bold text-white">20% Off Spa at W Bali</h5>
+                            <p className="text-[5px] sm:text-[7px] text-slate-400 font-mono">Promo Code: WBALISPA20</p>
                           </div>
-                          <div className="bg-gradient-to-br from-teal-500/20 to-cyan-500/20 border border-teal-500/30 p-2.5 rounded-xl text-left space-y-1">
-                            <span className="text-[7px] bg-teal-500 text-black px-1.5 py-0.2 rounded font-black uppercase">Adventure</span>
-                            <h5 className="text-[8px] font-bold text-white">Free Snorkeling in Maldives</h5>
-                            <p className="text-[7px] text-slate-400 font-mono">Promo Code: MALDIVESFREE</p>
+                          <div className="bg-gradient-to-br from-teal-500/20 to-cyan-500/20 border border-teal-500/30 p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl text-left space-y-0.5">
+                            <span className="text-[5px] sm:text-[7px] bg-teal-500 text-black px-1.5 py-0.2 rounded font-black uppercase">Adventure</span>
+                            <h5 className="text-[6px] sm:text-[8px] font-bold text-white">Free Snorkeling in Maldives</h5>
+                            <p className="text-[5px] sm:text-[7px] text-slate-400 font-mono">Promo Code: MALDIVESFREE</p>
                           </div>
                         </div>
                       )}
 
                       {activeFeatureIndex === 6 && (
-                        <div className="space-y-3">
-                          <div className="bg-white/5 border border-white/10 p-3 rounded-xl space-y-2.5">
-                            <p className="text-[8px] text-slate-400 font-extrabold uppercase tracking-wider">Budget Tracker</p>
-                            <div className="flex justify-between text-[10px] font-bold text-white font-mono">
+                        <div className="space-y-1.5 sm:space-y-3">
+                          <div className="bg-white/5 border border-white/10 p-1.5 sm:p-3 rounded-lg sm:rounded-xl space-y-1.5 sm:space-y-2.5">
+                            <p className="text-[6px] sm:text-[8px] text-slate-400 font-extrabold uppercase tracking-wider">Budget Tracker</p>
+                            <div className="flex justify-between text-[7px] sm:text-[10px] font-bold text-white font-mono">
                               <span>Spent: ₹34,200</span>
                               <span className="text-teal-400">Limit: ₹50,000</span>
                             </div>
-                            <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                            <div className="w-full bg-slate-800 h-1 sm:h-1.5 rounded-full overflow-hidden">
                               <div className="bg-teal-500 h-full" style={{ width: "68.4%" }} />
                             </div>
                           </div>
-                          <div className="p-2 border border-slate-800 rounded-xl bg-slate-900/40 text-[7px] text-slate-400">
+                          <div className="p-1 sm:p-2 border border-slate-800 rounded-lg sm:rounded-xl bg-slate-900/40 text-[5px] sm:text-[7px] text-slate-400">
                             📝 Food: ₹6,200 | Stays: ₹20,000 | Transport: ₹8,000
                           </div>
                         </div>
                       )}
 
                       {activeFeatureIndex === 7 && (
-                        <div className="space-y-2">
-                          <span className="text-[8px] text-slate-400 font-extrabold uppercase tracking-wider block">Travel Logs</span>
-                          <div className="bg-white/5 border border-white/10 p-3 rounded-xl text-[8px] text-white/80 italic leading-relaxed">
+                        <div className="space-y-1.5 sm:space-y-2">
+                          <span className="text-[6px] sm:text-[8px] text-slate-400 font-extrabold uppercase tracking-wider block">Travel Logs</span>
+                          <div className="bg-white/5 border border-white/10 p-1.5 sm:p-3 rounded-lg sm:rounded-xl text-[6px] sm:text-[8px] text-white/80 italic leading-normal">
                             “Day 2 in Assagao: Woke up early to catch the mist over the tea plantations. Absolute magic...”
                           </div>
-                          <div className="bg-white/5 border border-white/10 p-2.5 rounded-xl text-[8px] space-y-1">
-                            <span className="text-teal-400 font-bold">★ ★ ★ ★ ★ Rating</span>
+                          <div className="bg-white/5 border border-white/10 p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl text-[6px] sm:text-[8px] space-y-0.5">
+                            <span className="text-teal-400 font-bold text-[5px] sm:text-[8px]">★ ★ ★ ★ ★ Rating</span>
                             <p className="text-white/60">Goa Sunset Escape verified footprint.</p>
                           </div>
                         </div>
                       )}
 
                       {activeFeatureIndex === 8 && (
-                        <div className="space-y-2">
-                          <div className="bg-red-500/10 border border-red-500/20 p-2.5 rounded-xl text-left space-y-1">
-                            <p className="text-[9px] text-red-500 font-bold uppercase tracking-wider">🚨 Emergency Helplines</p>
-                            <p className="text-[8px] text-white/90">Police Assistance: 112 / +91-832-2428787</p>
+                        <div className="space-y-1.5 sm:space-y-2">
+                          <div className="bg-red-500/10 border border-red-500/20 p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl text-left space-y-0.5">
+                            <p className="text-[6px] sm:text-[9px] text-red-500 font-bold uppercase tracking-wider">🚨 Emergency Helplines</p>
+                            <p className="text-[5px] sm:text-[8px] text-white/90">Police: 112 / +91-832-2428787</p>
                           </div>
-                          <div className="bg-white/5 border border-white/10 p-2 rounded-xl text-[7px] text-slate-400 space-y-1">
-                            <p className="text-white font-bold">🏥 Manipal Hospital Bambolim</p>
+                          <div className="bg-white/5 border border-white/10 p-1 sm:p-2 rounded-lg sm:rounded-xl text-[5px] sm:text-[7px] text-slate-400 space-y-0.5">
+                            <p className="text-white font-bold">🏥 Manipal Hospital</p>
                             <p className="text-white font-bold">🏦 SBI ATM (150m)</p>
                             <p className="text-white font-bold">💊 Union Pharmacy (300m)</p>
                           </div>
@@ -485,15 +482,15 @@ export function TrustAndPricing() {
                       )}
 
                       {activeFeatureIndex === 9 && (
-                        <div className="space-y-3">
-                          <div className="flex items-center gap-2 bg-[#14B8A6]/10 p-2 rounded-xl border border-[#14B8A6]/20">
-                            <div className="w-6 h-6 rounded-full bg-teal-500 flex items-center justify-center font-black text-[8px] text-black">PT</div>
+                        <div className="space-y-1.5 sm:space-y-3">
+                          <div className="flex items-center gap-1 sm:gap-2 bg-[#14B8A6]/10 p-1.5 sm:p-2 rounded-lg sm:rounded-xl border border-[#14B8A6]/20">
+                            <div className="w-4 sm:w-6 h-4 sm:h-6 rounded-full bg-teal-500 flex items-center justify-center font-black text-[5px] sm:text-[8px] text-black">PT</div>
                             <div>
-                              <p className="text-[8px] text-white font-bold leading-none">Elite Support Desk</p>
-                              <p className="text-[7px] text-[#14B8A6] mt-0.5">Agent Priya • Connected</p>
+                              <p className="text-[5px] sm:text-[8px] text-white font-bold leading-none">Elite Support Desk</p>
+                              <p className="text-[4px] sm:text-[7px] text-[#14B8A6] mt-0.5">Priya • Connected</p>
                             </div>
                           </div>
-                          <div className="bg-white/5 border border-white/10 p-2.5 rounded-xl text-[8px] text-white/70 leading-relaxed">
+                          <div className="bg-white/5 border border-white/10 p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl text-[6px] sm:text-[8px] text-white/70 leading-normal">
                             Support response time is &lt; 2 minutes. A dedicated concierge manager is assigned to review your manual requests.
                           </div>
                         </div>
@@ -501,46 +498,46 @@ export function TrustAndPricing() {
                     </motion.div>
                   </AnimatePresence>
 
-                  {/* Device Bottom Indicator */}
-                  <div className="w-20 h-1 bg-slate-800 rounded-full mx-auto mt-2" />
+                  {/* Device Bottom Indicator Line */}
+                  <div className="w-12 sm:w-20 h-0.5 sm:h-1 bg-slate-800 rounded-full mx-auto mt-1 sm:mt-2" />
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Right Side (35% width / 7 Cols): Feature Explanation Panel */}
-          <div className="col-span-7 flex flex-col justify-between p-6 bg-slate-900/40 border border-white/5 rounded-[32px] backdrop-blur-md relative">
-            <div className="space-y-6">
+          {/* Right Side (Feature Explanation Panel) - Takes 7 cols on mobile, 7 cols on desktop */}
+          <div className="col-span-7 flex flex-col justify-between p-3 sm:p-6 bg-slate-900/40 border border-white/5 rounded-[16px] sm:rounded-[32px] backdrop-blur-md relative">
+            <div className="space-y-3 sm:space-y-6">
               
               {/* Feature Category header */}
-              <div className="flex justify-between items-center border-b border-white/5 pb-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-xl">{currentFeature.icon}</span>
-                  <h3 className="text-lg font-bold text-white font-sora">{currentFeature.title}</h3>
+              <div className="flex justify-between items-center border-b border-white/5 pb-1.5 sm:pb-3">
+                <div className="flex items-center gap-1 sm:gap-2">
+                  <span className="text-sm sm:text-xl">{currentFeature.icon}</span>
+                  <h3 className="text-xs sm:text-lg font-bold text-white font-sora">{currentFeature.title}</h3>
                 </div>
                 
                 {isFeatureIncluded ? (
-                  <span className="bg-teal-500/10 border border-teal-500/20 text-teal-400 text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded">
-                    Included in selected plan
+                  <span className="bg-teal-500/10 border border-teal-500/20 text-teal-400 text-[6px] sm:text-[8px] font-black uppercase tracking-wider px-1 sm:px-2 py-0.2 sm:py-0.5 rounded">
+                    Included
                   </span>
                 ) : (
-                  <span className="bg-slate-800 border border-white/5 text-slate-400 text-[8px] font-bold uppercase tracking-wider px-2 py-0.5 rounded flex items-center gap-1">
-                    <Lock className="w-2.5 h-2.5" /> Requires Upgrade
+                  <span className="bg-slate-800 border border-white/5 text-slate-400 text-[6px] sm:text-[8px] font-bold uppercase tracking-wider px-1 sm:px-2 py-0.2 sm:py-0.5 rounded flex items-center gap-0.5">
+                    <Lock className="w-2 sm:w-2.5 h-2 sm:h-2.5" /> Upgrade
                   </span>
                 )}
               </div>
 
               {/* Feature Description & checklist */}
-              <div className="space-y-4">
-                <p className="text-sm text-slate-300 font-semibold leading-relaxed">
+              <div className="space-y-2 sm:space-y-4">
+                <p className="text-[10px] sm:text-sm text-slate-300 font-semibold leading-relaxed">
                   {currentFeature.desc}
                 </p>
 
-                <div className="grid grid-cols-2 gap-3 pt-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 sm:gap-3 pt-1">
                   {currentFeature.bullets.map((bullet, idx) => (
-                    <div key={idx} className="flex items-start gap-2.5 text-xs text-slate-300">
-                      <div className="w-4 h-4 rounded-full bg-teal-500/10 flex items-center justify-center text-teal-400 shrink-0 mt-0.5">
-                        <Check className="w-2.5 h-2.5" />
+                    <div key={idx} className="flex items-start gap-1 sm:gap-2.5 text-[9px] sm:text-xs text-slate-300">
+                      <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-teal-500/10 flex items-center justify-center text-teal-400 shrink-0 mt-0.5">
+                        <Check className="w-2 sm:w-2.5 h-2 sm:h-2.5" />
                       </div>
                       <span>{bullet}</span>
                     </div>
@@ -550,9 +547,9 @@ export function TrustAndPricing() {
             </div>
 
             {/* Feature selector list (CricHeroes PRO style list selectors) */}
-            <div className="pt-8 border-t border-white/5 mt-8">
-              <p className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider mb-3">Explore Product Features</p>
-              <div className="grid grid-cols-2 gap-2">
+            <div className="pt-4 sm:pt-8 border-t border-white/5 mt-4 sm:mt-8">
+              <p className="text-[8px] sm:text-[10px] font-extrabold uppercase text-slate-400 tracking-wider mb-2">Explore Product Features</p>
+              <div className="grid grid-cols-2 gap-1 sm:gap-2">
                 {rotateFeatures.map((ft, idx) => {
                   const isActive = activeFeatureIndex === idx;
                   const isIncludedInCurrent = ft.includedIn.includes(selectedPlan);
@@ -560,195 +557,22 @@ export function TrustAndPricing() {
                     <button
                       key={idx}
                       onClick={() => handleFeatureClick(idx)}
-                      className={`flex items-center gap-2 p-2.5 rounded-xl border text-left text-xs transition-all ${
+                      className={`flex items-center gap-1 sm:gap-2 p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl border text-left text-[9px] sm:text-xs transition-all ${
                         isActive 
                           ? "bg-teal-500/10 border-[#14B8A6] text-white font-bold" 
                           : "bg-white/[0.01] border-white/5 text-slate-400 hover:text-white hover:bg-white/[0.03]"
                       }`}
                     >
-                      <span className="text-xs">{ft.icon}</span>
+                      <span className="text-[10px] sm:text-xs">{ft.icon}</span>
                       <span className="truncate flex-1">{ft.title}</span>
-                      {!isIncludedInCurrent && <Lock className="w-3 h-3 text-slate-500 shrink-0" />}
+                      {!isIncludedInCurrent && <Lock className="w-2.5 h-2.5 text-slate-500 shrink-0" />}
                     </button>
                   );
                 })}
               </div>
             </div>
           </div>
-        </div>
-
-        {/* ---------------------------------------------------- */}
-        {/* MOBILE LAYOUT (Section 1 -> 2 -> 3 Stacked structure) */}
-        {/* ---------------------------------------------------- */}
-        <div className="flex lg:hidden flex-col gap-8">
-          
-          {/* Section 1: Feature Animation (top mockup) */}
-          <div className="flex flex-col items-center justify-center p-4 bg-slate-900/20 border border-white/5 rounded-3xl relative">
-            <div className="absolute -inset-2 bg-teal-500/5 rounded-[40px] blur-xl opacity-80 pointer-events-none" />
-            
-            {/* Phone Mockup (Slightly smaller for mobile) */}
-            <div className="w-[240px] h-[460px] border-8 border-slate-900 bg-slate-950 rounded-[36px] shadow-2xl relative overflow-hidden flex flex-col p-3 border-t-slate-800">
-              <div className="absolute top-2 left-1/2 -translate-x-1/2 w-24 h-4.5 bg-black rounded-full flex items-center justify-center z-30">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#14B8A6]/40" />
-              </div>
-              
-              <div className="flex-1 bg-[#090E1A] rounded-[24px] overflow-hidden p-2.5 relative flex flex-col justify-between pt-6 border border-white/5">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={activeFeatureIndex}
-                    initial={{ opacity: 0, x: 15 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -15 }}
-                    className="flex-grow flex flex-col justify-between"
-                  >
-                    {activeFeatureIndex === 0 && (
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center bg-[#14B8A6]/10 p-2 rounded-lg border border-[#14B8A6]/20 text-[8px] text-[#14B8A6] font-bold">
-                          <span>Goa Trip • 4 Days</span>
-                          <span className="bg-[#E2FF00] text-black px-1 rounded text-[6px]">AI</span>
-                        </div>
-                        <div className="border-l border-slate-700 pl-3 ml-2 space-y-2 text-[7px] text-white/70">
-                          <div>✈️ Flight BOM-GOI</div>
-                          <div>🏨 Hyatt Check-in</div>
-                          <div>🌅 Beach Sunset</div>
-                        </div>
-                      </div>
-                    )}
-                    {activeFeatureIndex === 1 && (
-                      <div className="space-y-2 flex flex-col h-full justify-between text-[7px]">
-                        <div className="bg-teal-900/40 text-teal-400 p-2 rounded-lg border border-teal-500/10 leading-relaxed">
-                          I found a way to save ₹2,400. Swap stay?
-                        </div>
-                        <div className="bg-[#14B8A6] text-black font-extrabold py-1.5 rounded-lg text-center uppercase tracking-wider">
-                          Saved ₹2,400
-                        </div>
-                      </div>
-                    )}
-                    {activeFeatureIndex === 2 && (
-                      <div className="space-y-1.5 text-[7px]">
-                        <div className="bg-white/5 border border-white/10 p-2 rounded-lg flex justify-between">
-                          <span>Booking.com</span>
-                          <span className="font-mono text-slate-400">₹6,800/N</span>
-                        </div>
-                        <div className="bg-[#14B8A6]/10 border border-[#14B8A6]/20 p-2 rounded-lg flex justify-between text-[#14B8A6] font-bold">
-                          <span>Agoda</span>
-                          <span className="font-mono font-bold">₹6,200/N</span>
-                        </div>
-                      </div>
-                    )}
-                    {activeFeatureIndex === 3 && (
-                      <div className="space-y-2">
-                        <div className="bg-white/5 border border-white/10 p-2 rounded-lg text-[7px] space-y-0.5">
-                          <p className="text-white font-bold">Indigo 6E-242</p>
-                          <p className="text-teal-400 font-mono">₹4,500</p>
-                        </div>
-                        <div className="p-1.5 bg-[#006CFF] text-white rounded-lg text-center text-[7px] font-bold">
-                          Book ↗
-                        </div>
-                      </div>
-                    )}
-                    {activeFeatureIndex === 4 && (
-                      <div className="space-y-2 text-[7px]">
-                        <div className="bg-white/5 border border-white/10 p-2 rounded-lg">
-                          <p className="text-[#38BDF8] font-bold">☀️ Weather</p>
-                          <h4 className="text-sm font-bold text-white font-mono">30°C</h4>
-                        </div>
-                        <p className="text-white/60">Basilica open till 06:30 PM.</p>
-                      </div>
-                    )}
-                    {activeFeatureIndex === 5 && (
-                      <div className="space-y-1.5 text-[7px]">
-                        <div className="bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/30 p-2 rounded-lg">
-                          <p className="font-bold text-white">20% Off Spa W Bali</p>
-                        </div>
-                        <div className="bg-gradient-to-br from-teal-500/20 to-cyan-500/20 border border-teal-500/30 p-2 rounded-lg">
-                          <p className="font-bold text-white">Free Maldives Snorkel</p>
-                        </div>
-                      </div>
-                    )}
-                    {activeFeatureIndex === 6 && (
-                      <div className="space-y-2 text-[7px]">
-                        <div className="bg-white/5 border border-white/10 p-2 rounded-lg">
-                          <div className="flex justify-between font-bold text-white">
-                            <span>Spent: ₹34,200</span>
-                            <span className="text-teal-400">Limit: ₹50k</span>
-                          </div>
-                          <div className="w-full bg-slate-800 h-1 rounded-full overflow-hidden mt-1">
-                            <div className="bg-teal-500 h-full" style={{ width: "68.4%" }} />
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    {activeFeatureIndex === 7 && (
-                      <div className="space-y-2 text-[7px]">
-                        <div className="bg-white/5 border border-white/10 p-2 rounded-lg text-white/80 italic leading-snug">
-                          “Day 2: Woke up early to catch the mist...”
-                        </div>
-                      </div>
-                    )}
-                    {activeFeatureIndex === 8 && (
-                      <div className="space-y-1.5 text-[7px]">
-                        <div className="bg-red-500/10 border border-red-500/20 p-2 rounded-lg text-red-500">
-                          🚨 Emergency: 112
-                        </div>
-                        <div className="bg-white/5 border border-white/10 p-1.5 rounded-lg text-slate-400">
-                          Manipal Hospital Bambolim
-                        </div>
-                      </div>
-                    )}
-                    {activeFeatureIndex === 9 && (
-                      <div className="space-y-2 text-[7px]">
-                        <div className="flex items-center gap-1.5 bg-[#14B8A6]/10 p-1.5 rounded-lg border border-[#14B8A6]/20">
-                          <div className="w-4.5 h-4.5 rounded-full bg-teal-500" />
-                          <span className="text-white font-bold">Elite Support Active</span>
-                        </div>
-                        <p className="text-white/60">Response in &lt; 2 mins</p>
-                      </div>
-                    )}
-                  </motion.div>
-                </AnimatePresence>
-                <div className="w-16 h-0.5 bg-slate-800 rounded-full mx-auto mt-1.5" />
-              </div>
-            </div>
-          </div>
-
-          {/* Section 2: Feature Explanation (middle text) */}
-          <div className="bg-slate-900/40 border border-white/5 p-5 rounded-3xl space-y-4">
-            <div className="flex justify-between items-center border-b border-white/5 pb-2">
-              <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
-                <span>{currentFeature.icon}</span>
-                <span>{currentFeature.title}</span>
-              </h3>
-              {isFeatureIncluded ? (
-                <span className="bg-teal-500/10 border border-teal-500/20 text-teal-400 text-[7px] font-black uppercase px-1.5 py-0.2 rounded">
-                  Included
-                </span>
-              ) : (
-                <span className="bg-slate-800 text-slate-400 text-[7px] font-bold uppercase px-1.5 py-0.2 rounded flex items-center gap-0.5">
-                  <Lock className="w-2.5 h-2.5" /> Upgrade
-                </span>
-              )}
-            </div>
-            
-            <p className="text-xs text-slate-300 font-semibold">{currentFeature.desc}</p>
-            
-            <div className="grid grid-cols-1 gap-2 pt-1">
-              {currentFeature.bullets.map((bullet, idx) => (
-                <div key={idx} className="flex items-start gap-2 text-[10px] text-slate-400">
-                  <Check className="w-3.5 h-3.5 text-teal-400 shrink-0 mt-0.5" />
-                  <span>{bullet}</span>
-                </div>
-              ))}
-            </div>
-
-            {/* Horizontal features slider indicator */}
-            <div className="flex justify-center gap-1.5 pt-3">
-              {rotateFeatures.map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => handleFeatureClick(idx)}
-                  className={`w-2 h-2 rounded-full transition-all ${
-                    activeFeatureIndex === idx ? "bg-[#14B8A6] w-4" : "bg-slate-700"
+        </div>reIndex === idx ? "bg-[#14B8A6] w-4" : "bg-slate-700"
                   }`}
                 />
               ))}
