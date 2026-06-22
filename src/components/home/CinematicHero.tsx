@@ -147,7 +147,7 @@ export function CinematicHero() {
                 Plan My Trip <ArrowRight className="w-5 h-5" />
               </button>
             </Link>
-            <Link href="/destinations">
+            <Link href="/destinations" className="hidden sm:block">
               <button className="h-16 px-10 rounded-full bg-transparent border-2 border-white/20 hover:border-white/40 text-white font-bold text-lg hover:scale-[1.03] active:scale-[0.99] transition-all duration-300">
                 Explore Destinations
               </button>

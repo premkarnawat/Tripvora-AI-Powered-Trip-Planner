@@ -81,7 +81,7 @@ export default function AgencyDashboard() {
             <button className="text-[#14B8A6] text-xs font-bold hover:text-white transition-colors">View Calendar</button>
           </div>
           <div className="overflow-x-auto flex-1">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left border-collapse hidden sm:table">
               <thead>
                 <tr className="border-b border-white/5 text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest">
                   <th className="pb-2 px-2 w-1/3">Trip / Client</th>
@@ -109,6 +109,27 @@ export default function AgencyDashboard() {
                 ))}
               </tbody>
             </table>
+
+            {/* Mobile Card List (hidden on sm and up) */}
+            <div className="sm:hidden space-y-2 mt-2">
+              {[
+                { name: "Smith Family Vacay", dest: "Tokyo, Japan", date: "Tomorrow", pax: "4", client: "David Smith" },
+                { name: "Acme Corp Retreat", dest: "Bali, Indonesia", date: "In 3 days", pax: "24", client: "Acme HR" },
+                { name: "Jenkins Honeymoon", dest: "Maldives", date: "In 5 days", pax: "2", client: "Sarah Jenkins" },
+                { name: "Solo Backpacking", dest: "Vietnam", date: "In 7 days", pax: "1", client: "Mike Ross" },
+              ].map((trip, i) => (
+                <div key={i} className="p-3 bg-white/[0.01] border border-white/5 rounded-md flex justify-between items-center text-xs">
+                  <div>
+                    <p className="font-bold text-white">{trip.name}</p>
+                    <p className="text-[10px] text-[#94A3B8]">{trip.client} • {trip.dest}</p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-[#14B8A6] font-medium">{trip.date}</p>
+                    <p className="text-[10px] text-white/50 font-mono">{trip.pax} pax</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 

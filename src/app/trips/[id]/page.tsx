@@ -21,6 +21,7 @@ export default function TripItineraryPage() {
 
   // Local state for active day summary tabs
   const [activeDay, setActiveDay] = useState(1);
+  const [mobileTab, setMobileTab] = useState<"timeline" | "map" | "intel" | "budget" | "help">("timeline");
   const [isCopilotOpen, setIsCopilotOpen] = useState(false);
   const [copilotActionText, setCopilotActionText] = useState("");
 
@@ -215,8 +216,8 @@ export default function TripItineraryPage() {
         <AnimatePresence>
           {isCopilotOpen && (
             <>
-              <div className="fixed inset-0 z-40" onClick={() => setIsCopilotOpen(false)} />
-              <div className="absolute bottom-16 right-0 w-80 bg-white border border-[#E5E7EB] rounded-[24px] p-5 shadow-2xl space-y-4 z-50 animate-in slide-in-from-bottom-5 duration-200">
+              <div className="fixed inset-0 bg-black/40 md:bg-transparent z-40" onClick={() => setIsCopilotOpen(false)} />
+              <div className="fixed bottom-0 left-0 right-0 w-full rounded-t-[32px] md:absolute md:bottom-16 md:right-0 md:w-80 md:rounded-[24px] bg-white border border-[#E5E7EB] p-6 md:p-5 shadow-2xl space-y-4 z-50 animate-in slide-in-from-bottom-5 duration-200 max-h-[85vh] overflow-y-auto pb-safe">
                 <div className="flex justify-between items-center border-b border-slate-100 pb-2">
                   <h4 className="text-xs font-black text-[#0F172A] flex items-center gap-1.5 font-sora">
                     <Sparkles className="w-4 h-4 text-teal-600" />
@@ -249,7 +250,8 @@ export default function TripItineraryPage() {
         </AnimatePresence>
       </div>
 
-      <div className="max-w-[1400px] mx-auto px-4 md:px-6 space-y-6">
+      {/* DESKTOP VIEW */}
+      <div className="hidden lg:block max-w-[1400px] mx-auto px-4 md:px-6 space-y-6">
         
         {/* Navigation back */}
         <div className="flex justify-between items-center">
@@ -752,6 +754,401 @@ export default function TripItineraryPage() {
 
         </div>
 
+      </div>
+
+      {/* MOBILE-FIRST TRAVEL COMPANION VIEW */}
+      <div className="block lg:hidden max-w-md mx-auto px-4 pb-12 space-y-6">
+        {/* Header Back & Logo bar */}
+        <div className="flex justify-between items-center py-2">
+          <Link href="/dashboard" className="w-9 h-9 flex items-center justify-center bg-white border border-[#E5E7EB] rounded-full shadow-sm">
+            <ArrowLeft className="w-4 h-4 text-[#0F172A]" />
+          </Link>
+          <span className="text-xs font-bold text-[#0F172A] font-sora">Trip Companion</span>
+          <div className="flex gap-2">
+            <button 
+              onClick={() => alert("Copied share link")}
+              className="w-9 h-9 flex items-center justify-center bg-white border border-[#E5E7EB] rounded-full shadow-sm"
+            >
+              <Share2 className="w-4 h-4 text-[#0F172A]" />
+            </button>
+            <button 
+              onClick={() => window.print()}
+              className="w-9 h-9 flex items-center justify-center bg-white border border-[#E5E7EB] rounded-full shadow-sm"
+            >
+              <Download className="w-4 h-4 text-[#0F172A]" />
+            </button>
+          </div>
+        </div>
+
+        {/* Hero Card */}
+        <div className="relative h-60 rounded-[32px] overflow-hidden shadow-md">
+          <img 
+            src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&auto=format&fit=crop" 
+            alt="Goa Sunset" 
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+          <div className="absolute bottom-6 left-6 right-6 text-white space-y-3">
+            <div className="flex gap-1.5 flex-wrap">
+              <span className="text-[8px] font-black uppercase bg-[#E2FF00] text-black px-2 py-0.5 rounded">Active</span>
+              <span className="text-[8px] font-black uppercase bg-white/20 backdrop-blur text-white px-2 py-0.5 rounded">Couple Trip</span>
+            </div>
+            <h2 className="text-2xl font-black font-sora tracking-tight leading-tight">Goa Sunset Escape</h2>
+            <p className="text-[10px] text-white/70 font-semibold flex items-center gap-1">
+              📍 North & South Goa • July 15 - July 20
+            </p>
+          </div>
+        </div>
+
+        {/* Quick Metrics Bar (Thumb-friendly cards) */}
+        <div className="grid grid-cols-3 gap-2 text-center">
+          <div className="bg-white border border-[#E5E7EB] p-3 rounded-2xl shadow-sm">
+            <span className="text-[8px] text-slate-400 block uppercase font-bold tracking-wider">Remaining</span>
+            <span className="text-xs font-black text-emerald-600 font-mono">₹{getRemainingBudget().toLocaleString('en-IN')}</span>
+          </div>
+          <div className="bg-white border border-[#E5E7EB] p-3 rounded-2xl shadow-sm">
+            <span className="text-[8px] text-slate-400 block uppercase font-bold tracking-wider">Spent</span>
+            <span className="text-xs font-black text-slate-800 font-mono">₹{getUsedBudget().toLocaleString('en-IN')}</span>
+          </div>
+          <div className="bg-white border border-[#E5E7EB] p-3 rounded-2xl shadow-sm">
+            <span className="text-[8px] text-slate-400 block uppercase font-bold tracking-wider">Weather</span>
+            <span className="text-xs font-black text-[#0F172A]">☀️ 30°C</span>
+          </div>
+        </div>
+
+        {/* Horizontal Day Tabs */}
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none snap-x">
+          {[1, 2, 3, 4, 5].map(d => (
+            <button
+              key={d}
+              onClick={() => setActiveDay(d)}
+              className={`px-5 py-2.5 rounded-2xl text-xs font-extrabold transition-all shrink-0 snap-start ${
+                activeDay === d 
+                  ? "bg-teal-600 text-white shadow-sm" 
+                  : "bg-white border border-[#E5E7EB] text-[#64748B]"
+              }`}
+            >
+              Day {d}
+            </button>
+          ))}
+        </div>
+
+        {/* Sticky Mobile Sub-navigation Tab Bar */}
+        <div className="bg-white border border-[#E5E7EB] rounded-2xl p-1 flex justify-between shadow-sm sticky top-2 z-20">
+          {[
+            { id: "timeline", label: "Timeline", icon: Clock },
+            { id: "map", label: "Map View", icon: Map },
+            { id: "intel", label: "Transit", icon: Navigation },
+            { id: "budget", label: "Budget", icon: Wallet },
+            { id: "help", label: "Help", icon: ShieldAlert }
+          ].map(tb => {
+            const Icon = tb.icon;
+            const isTabActive = mobileTab === tb.id;
+            return (
+              <button
+                key={tb.id}
+                onClick={() => setMobileTab(tb.id as any)}
+                className={`flex-1 flex flex-col items-center gap-1 py-2.5 rounded-xl transition-all ${
+                  isTabActive ? "bg-teal-50 text-teal-600 font-extrabold" : "text-slate-400 hover:text-slate-800"
+                }`}
+              >
+                <Icon className="w-4 h-4 shrink-0" />
+                <span className="text-[9px] font-bold">{tb.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Mobile View Tab Contents */}
+        <div className="space-y-4">
+          {/* TIMELINE TAB */}
+          {mobileTab === "timeline" && (
+            <div className="bg-white border border-[#E5E7EB] rounded-3xl p-5 shadow-sm space-y-4">
+              <div className="border-b border-slate-100 pb-2">
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Day {activeDay} Route Timeline</span>
+              </div>
+              <div className="border-l border-slate-100 ml-3 pl-5 space-y-4">
+                {dayTimeline.map((step, idx) => (
+                  <div key={idx} className="relative space-y-2 bg-slate-50/50 border border-slate-100 p-3.5 rounded-2xl">
+                    <span className="absolute -left-[27px] top-4 w-2 h-2 rounded-full border border-white shadow bg-teal-600" />
+                    
+                    <div className="flex justify-between items-center text-[8px] text-slate-400 font-bold">
+                      <span>{step.time}</span>
+                      <span>{step.weather}</span>
+                    </div>
+                    
+                    <h4 className="text-xs font-black text-[#0F172A]">{step.title}</h4>
+                    
+                    <div className="flex flex-wrap gap-x-3 gap-y-1 text-[8px] text-[#64748B] font-bold">
+                      {step.distance !== "0 km" && <span>🚘 {step.distance}</span>}
+                      {step.duration !== "Arrived" && <span>⏱️ {step.duration}</span>}
+                      {step.cost > 0 && <span className="font-mono">💵 ₹{step.cost}</span>}
+                      <span>🛠️ {step.transport}</span>
+                    </div>
+
+                    <div className="p-2 bg-white border border-slate-150 rounded-xl text-[8px] text-slate-500 leading-normal">
+                      <strong>AI Tip:</strong> {step.aiTip}
+                    </div>
+
+                    <div className="flex justify-end pt-0.5">
+                      <a 
+                        href={step.mapLink}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[8px] text-teal-600 font-extrabold flex items-center gap-1"
+                      >
+                        <Navigation className="w-2.5 h-2.5" /> Navigate ↗
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* MAP TAB */}
+          {mobileTab === "map" && (
+            <div className="bg-white border border-[#E5E7EB] rounded-3xl p-4 shadow-sm flex flex-col h-[400px]">
+              <div className="border-b border-slate-100 pb-2 mb-2 flex justify-between items-center">
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Google Maps Companion</span>
+                <span className="text-[8px] bg-teal-50 text-teal-700 px-1.5 py-0.5 rounded font-extrabold">{selectedRouteNode} focus</span>
+              </div>
+              <div className="flex-1 rounded-2xl bg-sky-50 relative overflow-hidden border border-slate-100">
+                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-tr from-sky-100 to-teal-50">
+                  <div className="w-full h-full relative">
+                    <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100">
+                      <path d="M15 75 Q 35 45, 55 35 T 85 25" fill="none" stroke="#14B8A6" strokeWidth="3" strokeDasharray="3 3" />
+                      <circle cx="15" cy="75" r="4.5" fill="#14B8A6" />
+                      <circle cx="55" cy="35" r="4.5" fill="#0EA5E9" />
+                      <circle cx="85" cy="25" r="4.5" fill="#10B981" />
+                    </svg>
+
+                    <div className="absolute bottom-6 left-6">
+                      <span className="text-[7px] bg-slate-900 text-white px-2 py-0.5 rounded font-extrabold shadow">Airport</span>
+                    </div>
+
+                    <div className="absolute top-1/3 left-1/3">
+                      <span className="text-[7px] bg-white border border-slate-200 text-[#0F172A] px-2 py-0.5 rounded font-extrabold shadow">Hyatt</span>
+                    </div>
+
+                    <div className="absolute top-6 right-6">
+                      <span className="text-[7px] bg-white border border-slate-200 text-[#0F172A] px-2 py-0.5 rounded font-extrabold shadow">Beach</span>
+                    </div>
+
+                    <div className="absolute bottom-4 left-4 right-4 bg-white/95 border border-teal-500 rounded-xl p-3 shadow text-[8px] font-bold text-[#0F172A] space-y-1">
+                      <p className="text-teal-700 flex items-center gap-1">📍 active node: {selectedRouteNode}</p>
+                      <p className="text-slate-500 leading-snug">Tap nodes along the timeline to sync map routing.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* INTEL TAB */}
+          {mobileTab === "intel" && (
+            <div className="space-y-4 animate-in fade-in duration-200">
+              {/* Transport Intelligence (Compact Cards instead of tables!) */}
+              <div className="bg-white border border-[#E5E7EB] rounded-3xl p-5 shadow-sm space-y-3">
+                <div className="border-b border-slate-100 pb-2">
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Transport Intelligence</span>
+                </div>
+                <div className="space-y-2">
+                  {[
+                    { mode: "🚕 Taxi Cab", cost: "₹450", time: "15 min", comfort: "High", comfortColor: "text-emerald-600 bg-emerald-50" },
+                    { mode: "🛺 Auto Rickshaw", cost: "₹150", time: "20 min", comfort: "Medium", comfortColor: "text-teal-600 bg-teal-50", recommended: true },
+                    { mode: "🚌 AC Bus", cost: "₹30", time: "35 min", comfort: "Low", comfortColor: "text-slate-500 bg-slate-100" },
+                    { mode: "🛵 Scooter Rent", cost: "₹400/d", time: "22 min", comfort: "Medium", comfortColor: "text-amber-600 bg-amber-50" }
+                  ].map((tr, idx) => (
+                    <div key={idx} className={`p-3 border rounded-2xl flex justify-between items-center text-[10px] ${tr.recommended ? 'border-teal-500 bg-teal-50/20' : 'border-slate-100 bg-white'}`}>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-black text-[#0F172A]">{tr.mode}</span>
+                          {tr.recommended && <span className="text-[6px] bg-teal-500 text-white font-extrabold px-1 py-0.2 rounded uppercase">Rec</span>}
+                        </div>
+                        <p className="text-[9px] text-slate-400 font-bold">{tr.time} transit • Comfort: <span className={`px-1 rounded text-[7px] font-bold ${tr.comfortColor}`}>{tr.comfort}</span></p>
+                      </div>
+                      <span className="font-black text-slate-900 font-mono">{tr.cost}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Food Intelligence */}
+              <div className="bg-white border border-[#E5E7EB] rounded-3xl p-5 shadow-sm space-y-3">
+                <div className="border-b border-slate-100 pb-2">
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Local Dining Guide</span>
+                </div>
+                <div className="space-y-2.5">
+                  {[
+                    { name: "Gunpowder Assagao", category: "Best Non-Veg", dist: "12 km", rating: 4.9, cost: "₹₹", label: "Local Favorite" },
+                    { name: "Fisherman's Wharf", category: "Best Seafood", dist: "1.5 km", rating: 4.8, cost: "₹₹₹", label: "Premium Dining" },
+                    { name: "Navtara Veg Panaji", category: "Best Veg", dist: "3 km", rating: 4.4, cost: "₹", label: "Budget Friendly" }
+                  ].map((item, idx) => (
+                    <div key={idx} className="p-3 border border-slate-100 rounded-2xl flex justify-between items-center text-[10px] hover:bg-slate-50 transition-colors bg-white">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-black text-[#0F172A]">{item.name}</span>
+                          <span className="text-[7px] bg-teal-50 text-teal-700 px-1 py-0.2 rounded font-extrabold uppercase">{item.category}</span>
+                        </div>
+                        <p className="text-[8px] text-slate-400 font-bold">{item.dist} away • {item.cost} • <span className="text-teal-600 font-black">{item.label}</span></p>
+                      </div>
+                      <div className="text-right flex flex-col items-end gap-1">
+                        <span className="font-extrabold text-[9px] text-[#0F172A]">★ {item.rating}</span>
+                        <button className="bg-slate-950 text-white rounded-lg px-2 py-0.5 text-[8px] font-bold">Book Table</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* BUDGET TAB */}
+          {mobileTab === "budget" && (
+            <div className="space-y-4 animate-in fade-in duration-200">
+              {/* Budget Breakdown */}
+              <div className="bg-white border border-[#E5E7EB] rounded-3xl p-5 shadow-sm space-y-4">
+                <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Live Budget Allocation</span>
+                  <span className={`text-[7px] font-extrabold px-1.5 py-0.5 rounded uppercase border ${getBudgetHealth().color}`}>
+                    {getBudgetHealth().label}
+                  </span>
+                </div>
+
+                <div className="space-y-2 text-[10px] font-bold text-[#64748B]">
+                  <div className="flex justify-between border-b border-slate-50 pb-1.5">
+                    <span>Limit:</span>
+                    <span className="font-mono text-slate-900 font-black">₹{totalBudget.toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="flex justify-between border-b border-slate-50 pb-1.5">
+                    <span>Spent:</span>
+                    <span className="font-mono text-slate-900">₹{getUsedBudget().toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Remaining:</span>
+                    <span className="font-mono text-emerald-600 font-black">₹{getRemainingBudget().toLocaleString('en-IN')}</span>
+                  </div>
+                </div>
+
+                {/* Progress bars */}
+                <div className="space-y-2.5 pt-2 border-t border-slate-100">
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-[8px] font-bold text-slate-500">
+                      <span>Transport</span>
+                      <span>₹{spentTransport}</span>
+                    </div>
+                    <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                      <div className="bg-sky-500 h-full" style={{ width: `${(spentTransport/totalBudget)*100}%` }} />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-[8px] font-bold text-slate-500">
+                      <span>Hotels & Stays</span>
+                      <span>₹{spentHotels}</span>
+                    </div>
+                    <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                      <div className="bg-teal-500 h-full" style={{ width: `${(spentHotels/totalBudget)*100}%` }} />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-[8px] font-bold text-slate-500">
+                      <span>Activities & Food</span>
+                      <span>₹{spentActivities + spentFood}</span>
+                    </div>
+                    <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                      <div className="bg-amber-500 h-full" style={{ width: `${((spentActivities + spentFood)/totalBudget)*100}%` }} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Simulators */}
+                <div className="p-3 bg-slate-50 border border-slate-200 border-dashed rounded-2xl space-y-2">
+                  <p className="text-[8px] font-extrabold text-slate-400 uppercase tracking-widest block">Simulate Spends</p>
+                  <button
+                    onClick={handleToggleScuba}
+                    className={`w-full py-2.5 rounded-xl text-[9px] font-bold transition-all flex items-center justify-between px-3 ${
+                      scubaAdded ? "bg-emerald-600 text-white shadow-sm" : "bg-white border border-slate-200 text-slate-600"
+                    }`}
+                  >
+                    <span>🎟️ Scuba Diving activity</span>
+                    <span>+₹3,500</span>
+                  </button>
+
+                  <button
+                    onClick={handleToggleDinner}
+                    className={`w-full py-2.5 rounded-xl text-[9px] font-bold transition-all flex items-center justify-between px-3 ${
+                      dinnerUpgraded ? "bg-emerald-600 text-white shadow-sm" : "bg-white border border-slate-200 text-slate-600"
+                    }`}
+                  >
+                    <span>🌅 Luxury beach dinner</span>
+                    <span>+₹2,400</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Stays Affiliate comparator */}
+              <div className="bg-white border border-[#E5E7EB] rounded-3xl p-5 shadow-sm space-y-3">
+                <div className="border-b border-slate-100 pb-2">
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Stays Affiliate Rates Comparator</span>
+                </div>
+                <div className="space-y-2">
+                  {[
+                    { partner: "Booking.com", price: "₹6,200", badge: "Best Offer" },
+                    { partner: "Agoda", price: "₹6,350", badge: null },
+                    { partner: "MakeMyTrip", price: "₹6,800", badge: null }
+                  ].map((deal, idx) => (
+                    <div key={idx} className="p-3 border border-slate-100 rounded-2xl flex justify-between items-center text-[10px] bg-white">
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-black text-[#0F172A]">{deal.partner}</span>
+                          {deal.badge && <span className="text-[6px] bg-emerald-50 text-emerald-700 px-1 py-0.2 rounded border border-emerald-200 font-bold uppercase">{deal.badge}</span>}
+                        </div>
+                        <p className="text-[8px] text-slate-400 font-bold">Hyatt Goa • Free Cancel</p>
+                      </div>
+                      <div className="text-right flex flex-col items-end gap-1">
+                        <span className="font-black text-slate-900 font-mono">{deal.price}</span>
+                        <button className="text-teal-600 font-black flex items-center gap-0.5 text-[9px]">Book ↗</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* HELP TAB */}
+          {mobileTab === "help" && (
+            <div className="bg-white border border-[#E5E7EB] rounded-3xl p-5 shadow-sm space-y-4 animate-in fade-in duration-200">
+              <div className="border-b border-rose-100 pb-2 flex justify-between items-center text-rose-600">
+                <span className="text-[9px] font-black uppercase tracking-widest block">Emergency Helplines</span>
+                <ShieldAlert className="w-4 h-4" />
+              </div>
+              
+              <div className="space-y-3">
+                {[
+                  { icon: "🚨", label: "Police Helpline", number: "112" },
+                  { icon: "🏥", label: "Nearest Hospital", number: "Manipal Hospital" },
+                  { icon: "🏦", label: "SBI ATM", number: "150m away" },
+                  { icon: "💊", label: "Union Pharmacy", number: "300m away" }
+                ].map((hl, idx) => (
+                  <div key={idx} className="p-3 bg-rose-50/10 border border-rose-500/10 rounded-2xl flex justify-between items-center text-[10px]">
+                    <div className="flex items-center gap-2">
+                      <span className="text-base">{hl.icon}</span>
+                      <div>
+                        <p className="font-black text-slate-900">{hl.label}</p>
+                        <p className="text-[9px] text-slate-500 font-bold">{hl.number}</p>
+                      </div>
+                    </div>
+                    <a href={`tel:${hl.number}`} className="bg-rose-600 text-white font-bold px-3 py-1.5 rounded-xl text-[9px] transition-transform active:scale-95 shadow-sm">Call Now</a>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
