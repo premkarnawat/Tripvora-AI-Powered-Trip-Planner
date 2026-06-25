@@ -51,7 +51,9 @@ export async function GET(request: Request) {
       };
     });
 
-    return NextResponse.json(formattedAgencies);
+    return NextResponse.json(formattedAgencies, {
+      headers: { 'Cache-Control': 'private, max-age=30, stale-while-revalidate=60' }
+    });
   } catch (error: any) {
     console.error("Agencies GET Exception:", error);
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });

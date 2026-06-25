@@ -40,7 +40,9 @@ export async function GET(request: Request) {
       totalPaid: "₹0"
     }));
 
-    return NextResponse.json(formattedUsers);
+    return NextResponse.json(formattedUsers, {
+      headers: { 'Cache-Control': 'private, max-age=30, stale-while-revalidate=60' }
+    });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
   }

@@ -23,7 +23,11 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Failed to fetch trips' }, { status: 500 });
     }
 
-    return NextResponse.json(trips);
+    return NextResponse.json(trips, {
+      headers: {
+        'Cache-Control': 'private, max-age=60, stale-while-revalidate=300'
+      }
+    });
   } catch (error: any) {
     console.error("Trips API Exception:", error);
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
