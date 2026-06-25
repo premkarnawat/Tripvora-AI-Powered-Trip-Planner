@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { DollarSign, TrendingUp, TrendingDown, CreditCard, ArrowUpRight, ArrowDownRight, FileText, Download, Activity, PieChart } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { exportTableToExcel } from "@/lib/utils/excelExport";
+import { exportTableToExcel, ExportColumn } from "@/lib/utils/excelExport";
 
 export default function RevenuePage() {
   const [metrics, setMetrics] = useState({ gross: 0, expenses: 0, profit: 0, margin: "0%" });
@@ -11,7 +11,7 @@ export default function RevenuePage() {
   const [loading, setLoading] = useState(true);
 
   const handleExportARR = () => {
-    const columns = [
+    const columns: ExportColumn[] = [
       { header: "Booking ID", key: "id" },
       { header: "Customer Name", key: "customer" },
       { header: "Destination", key: "dest" },
