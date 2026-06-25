@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { DollarSign, Users, FileText, CalendarCheck, Clock, ArrowRight, Activity, PlaneTakeoff, Plus, TrendingUp, Package, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default function AgencyDashboard() {
   const currentDateTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
@@ -30,8 +31,10 @@ export default function AgencyDashboard() {
           <Button className="h-9 text-xs font-bold bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/20 shadow-sm transition-colors">
             <FileText className="w-3.5 h-3.5 mr-1.5" /> Create Quotation
           </Button>
-          <Button className="h-9 text-xs font-bold bg-[#10B981] hover:bg-[#10B981]/90 text-[#0F172A] border-none shadow-sm transition-colors">
-            <MessageSquare className="w-3.5 h-3.5 mr-1.5" /> Send WhatsApp
+          <Button className="h-9 text-xs font-bold bg-[#10B981] hover:bg-[#10B981]/90 text-[#0F172A] border-none shadow-sm transition-colors" asChild>
+            <Link href="/agency/communication">
+              <MessageSquare className="w-3.5 h-3.5 mr-1.5" /> Comm Hub
+            </Link>
           </Button>
           <Button className="h-9 text-xs font-bold bg-white/5 hover:bg-white/10 text-white border border-white/10 shadow-sm transition-colors">
             <Plus className="w-3.5 h-3.5 mr-1.5" /> Add Vendor

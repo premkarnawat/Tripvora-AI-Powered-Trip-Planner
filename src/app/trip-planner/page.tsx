@@ -108,31 +108,62 @@ export default function TripPlannerPage() {
     }, 1200);
   };
 
-  const triggerItineraryGeneration = () => {
+  const triggerItineraryGeneration = async () => {
     setLoadingPhase(true);
     let progress = 0;
     const loaderTexts = [
       "Analyzing travel interests & timeline criteria...",
-      "Scraping flights & stays via Skyscanner & Booking.com API...",
+      "Connecting to TripPilot AI Engine...",
+      "Scraping real-time routes & stays...",
       "Balancing budget allocations & emergency buffers...",
-      "Assembling optimized route timeline for Goa Sunset Escape...",
-      "Activating floating personal AI Travel Copilot concierge..."
+      "Finalizing luxury itinerary..."
     ];
     setLoadingText(loaderTexts[0]);
 
+    // Visual progress interval
     const interval = setInterval(() => {
-      progress += 20;
+      progress += 15;
+      if (progress > 90) progress = 90; // Hold at 90% until API finishes
       setLoadingProgress(progress);
       const textIdx = Math.min(Math.floor(progress / 20), loaderTexts.length - 1);
       setLoadingText(loaderTexts[textIdx]);
-
-      if (progress >= 100) {
-        clearInterval(interval);
-        setTimeout(() => {
-          router.push("/trips/goa-sunset-escape");
-        }, 400);
-      }
     }, 700);
+
+    try {
+      const response = await fetch('/api/generate-trip', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          destination: destination || "Goa, India",
+          dates: { startDate: fromDate, endDate: toDate },
+          travelers: { adults: adultsCount, children: childrenCount },
+          travelType: travelerType,
+          budget: budgetValue,
+          preferences: selectedPreferences
+        })
+      });
+
+      if (!response.ok) throw new Error("Failed to generate itinerary");
+      
+      const data = await response.json();
+      
+      // Store locally so the /trips page can read the real generated data
+      localStorage.setItem('last_generated_trip', JSON.stringify(data));
+      
+      clearInterval(interval);
+      setLoadingProgress(100);
+      setLoadingText("Itinerary Complete!");
+      
+      setTimeout(() => {
+        router.push("/trips/generated"); // Send to a dynamic trips viewer
+      }, 400);
+      
+    } catch (err) {
+      console.error(err);
+      clearInterval(interval);
+      setLoadingText("Error generating trip. Please try again.");
+      setTimeout(() => setLoadingPhase(false), 2000);
+    }
   };
 
   // Helper text for step summaries

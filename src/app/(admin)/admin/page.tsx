@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   TrendingUp, Users, Building2, Store, Compass, Send, ShieldAlert, 
   ArrowUpRight, ArrowDownRight, CreditCard, Clock, CheckCircle2, ChevronRight, Activity
@@ -8,16 +8,26 @@ import {
 
 export default function AdminDashboard() {
   const [revenuePeriod, setRevenuePeriod] = useState("This Month");
+  const [metricsData, setMetricsData] = useState<any>(null);
+
+  useEffect(() => {
+    fetch('/api/admin/metrics')
+      .then(res => res.json())
+      .then(data => {
+        if (data.metrics) setMetricsData(data.metrics);
+      })
+      .catch(err => console.error("Error loading metrics:", err));
+  }, []);
 
   // Summary Metrics
   const metrics = [
     { title: "Total Revenue", value: "₹48,92,400", change: "+14.2%", isPositive: true, subtext: "vs last month" },
     { title: "Monthly Revenue", value: "₹6,24,800", change: "+8.4%", isPositive: true, subtext: "vs last month" },
-    { title: "Active Agencies", value: "124", change: "+12.1%", isPositive: true, subtext: "28 onboarding" },
+    { title: "Active Agencies", value: metricsData ? metricsData.activeAgencies.toString() : "0", change: "+12.1%", isPositive: true, subtext: "28 onboarding" },
     { title: "Marketplace Listings", value: "1,842", change: "+16.5%", isPositive: true, subtext: "54 new reviews" },
-    { title: "Website Users", value: "34,250", change: "+22.4%", isPositive: true, subtext: "4,800 premium" },
-    { title: "Trips Generated", value: "84,900", change: "+18.9%", isPositive: true, subtext: "Gemini AI" },
-    { title: "Qualified Leads", value: "2,840", change: "-2.4%", isPositive: false, subtext: "conversion 18%" },
+    { title: "Website Users", value: metricsData ? metricsData.websiteUsers.toString() : "0", change: "+22.4%", isPositive: true, subtext: "4,800 premium" },
+    { title: "Trips Generated", value: metricsData ? metricsData.tripsGenerated.toString() : "0", change: "+18.9%", isPositive: true, subtext: "Gemini AI" },
+    { title: "Qualified Leads", value: metricsData ? metricsData.qualifiedLeads.toString() : "0", change: "-2.4%", isPositive: false, subtext: "conversion 18%" },
     { title: "Pending Approvals", value: "16", change: "Alert", isPositive: false, subtext: "needs review" },
   ];
 

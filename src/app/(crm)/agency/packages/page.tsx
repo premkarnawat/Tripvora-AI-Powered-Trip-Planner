@@ -34,46 +34,51 @@ const TIER_VENDORS = {
   }
 };
 
-const VENDOR_LIBRARY = {
-  hotels: [
-    { id: "h-1", name: "Grand Hyatt Bali (Nusa Dua)", cost: 12000, rating: 4.8, desc: "Premium beachfront resort, exclusive contract rates." },
-    { id: "h-2", name: "W Bali Seminyak", cost: 24000, rating: 4.9, desc: "Vibrant beachside luxury. 15% margin bonus." },
-    { id: "h-3", name: "Maya Ubud Resort & Spa", cost: 15500, rating: 4.7, desc: "Preferred wellness partner over river valley." },
-    { id: "h-4", name: "Umana Bali (LXR Resorts)", cost: 42000, rating: 4.9, desc: "Private cliff-edge luxury villas with pools." },
-    { id: "h-5", name: "Hotel Paradise Seminyak", cost: 2800, rating: 4.7, desc: "Budget contract hotel near Seminyak Beach." }
-  ],
-  activities: [
-    { id: "a-1", name: "Private Uluwatu Sunset Tour & Kecak Dance", cost: 4500, desc: "Includes private guide and reserved VIP seats." },
-    { id: "a-2", name: "Nusa Penida Snorkeling Speedboat Adventure", cost: 8000, desc: "Group snorkeling with premium private transfers." },
-    { id: "a-3", name: "Mount Batur Sunrise Jeep Trekking", cost: 6500, desc: "Private off-road Jeep ride with breakfast." },
-    { id: "a-4", name: "Sacred Monkey Forest & Ubud Swing", cost: 3500, desc: "Includes transfers and lunch overlooking valley." }
-  ],
-  transfers: [
-    { id: "t-1", name: "Private Toyota Alphard (VIP)", cost: 6000 },
-    { id: "t-2", name: "Private Toyota Avanza (Standard)", cost: 2500 },
-    { id: "t-3", name: "Private Toyota Innova Crysta", cost: 3200 }
-  ],
-  guides: [
-    { id: "g-1", name: "Elite English Speaking Guide", cost: 2000 },
-    { id: "g-2", name: "Expert Multi-lingual Historian Guide", cost: 3500 }
-  ],
-  meals: [
-    { id: "m-1", name: "Premium Seafood Dinner Jimbaran", cost: 2500 },
-    { id: "m-2", name: "Fine-Dining Ubud Rijsttafel Feast", cost: 4000 }
-  ],
-  cruises: [
-    { id: "c-1", name: "Sunset Catamaran Cruise with Dinner", cost: 7500 }
-  ],
-  flights: [
-    { id: "f-1", name: "IndiGo Economy (DEL-DPS Direct)", cost: 32000 },
-    { id: "f-2", name: "Singapore Airlines Business Class", cost: 95000 }
-  ],
-  insurance: [
-    { id: "i-1", name: "Tata AIG Travel Guard Premium", cost: 1500 }
-  ]
-};
-
 export default function PackageBuilderPageV2() {
+  // Mocks fallback just in case DB is empty for demo purposes
+  const [vendorLibrary, setVendorLibrary] = useState<any>({
+    hotels: [
+      { id: "h-1", name: "Grand Hyatt Bali (Nusa Dua)", cost: 12000, rating: 4.8, desc: "Premium beachfront resort, exclusive contract rates." },
+      { id: "h-2", name: "W Bali Seminyak", cost: 24000, rating: 4.9, desc: "Vibrant beachside luxury. 15% margin bonus." },
+    ],
+    activities: [
+      { id: "a-1", name: "Private Uluwatu Sunset Tour & Kecak Dance", cost: 4500, desc: "Includes private guide and reserved VIP seats." },
+    ],
+    transfers: [
+      { id: "t-1", name: "Private Toyota Alphard (VIP)", cost: 6000 },
+    ],
+    guides: [], meals: [], cruises: [], flights: [], insurance: []
+  });
+
+  useEffect(() => {
+    const fetchVendors = async () => {
+      try {
+        const res = await fetch('/api/crm/vendors');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.vendors && data.vendors.length > 0) {
+            const grouped: any = { hotels: [], activities: [], transfers: [], guides: [], meals: [], cruises: [], flights: [], insurance: [] };
+            data.vendors.forEach((v: any) => {
+              if (grouped[v.category]) {
+                grouped[v.category].push({
+                  id: v.id,
+                  name: v.name,
+                  cost: v.cost_price,
+                  selling_price: v.selling_price,
+                  rating: v.rating,
+                  desc: v.description
+                });
+              }
+            });
+            setVendorLibrary(grouped);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch vendors:", err);
+      }
+    };
+    fetchVendors();
+  }, []);
   // Steps: 1 = Client Details & Mode, 2 = AI Loader, 3 = Split-screen matching, 4 = Three-Column Quotation Dashboard
   const [step, setStep] = useState(1);
   const [loadingProgress, setLoadingProgress] = useState(0);
@@ -877,7 +882,7 @@ export default function PackageBuilderPageV2() {
 
               {/* Vendor Item Listing */}
               <div className="space-y-3 max-h-[480px] overflow-y-auto pr-1">
-                {matcherTab === "hotels" && VENDOR_LIBRARY.hotels.map((vh) => (
+                {matcherTab === "hotels" && vendorLibrary.hotels.map((vh: any) => (
                   <div key={vh.id} className="border border-slate-200 hover:border-teal-500 rounded-lg p-3.5 bg-white transition-all shadow-sm space-y-3">
                     <div className="flex justify-between items-start">
                       <h4 className="text-xs font-bold text-[#0F172A]">{vh.name}</h4>
@@ -907,7 +912,7 @@ export default function PackageBuilderPageV2() {
                   </div>
                 ))}
 
-                {matcherTab === "activities" && VENDOR_LIBRARY.activities.map((va) => (
+                {matcherTab === "activities" && vendorLibrary.activities.map((va: any) => (
                   <div key={va.id} className="border border-slate-200 hover:border-teal-500 rounded-lg p-3.5 bg-white transition-all shadow-sm space-y-3">
                     <h4 className="text-xs font-bold text-[#0F172A]">{va.name}</h4>
                     <p className="text-[10px] text-slate-500 leading-snug">{va.desc}</p>
@@ -934,7 +939,7 @@ export default function PackageBuilderPageV2() {
                   </div>
                 ))}
 
-                {matcherTab === "transfers" && VENDOR_LIBRARY.transfers.map((vt) => (
+                {matcherTab === "transfers" && vendorLibrary.transfers.map((vt: any) => (
                   <div key={vt.id} className="border border-slate-200 hover:border-teal-500 rounded-lg p-3.5 bg-white transition-all shadow-sm flex justify-between items-center">
                     <div>
                       <h4 className="text-xs font-bold text-[#0F172A]">{vt.name}</h4>
@@ -984,23 +989,61 @@ export default function PackageBuilderPageV2() {
                   </span>
                 </div>
                 <p className="text-xs text-[#64748B] mt-0.5">
-                  Quote ID: <strong className="text-[#0F172A]">{quoteNumber}</strong> • Client: <strong className="text-[#0F172A]">{clientName}</strong>
+                    Quote ID: <strong className="text-[#0F172A]">{quoteNumber}</strong> • Client: <strong className="text-[#0F172A]">{clientName}</strong>
                 </p>
               </div>
             </div>
             
             <div className="flex gap-2">
               <Button 
-                onClick={() => setIsPdfModalOpen(true)}
+                onClick={async () => {
+                  try {
+                    setLoadingText("Saving package to Supabase...");
+                    const res = await fetch('/api/crm/packages', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        title: `${clientName} - ${destination}`,
+                        destination,
+                        start_date: startDate,
+                        end_date: endDate,
+                        nights,
+                        budget: totalCost, // target budget saved
+                        total_amount: totalCost,
+                        pricing_metadata: {
+                          mode: pricingMode,
+                          gstType,
+                          discountType,
+                          discountValue
+                        },
+                        components: [
+                          ...componentsList.hotels.map((h: any) => ({ category: 'accommodation', vendor_id: h.id, title: h.name, cost: h.cost, selling_price: h.cost, qty: nights })),
+                          ...componentsList.activities.map((a: any) => ({ category: 'activity', vendor_id: a.id, title: a.name, cost: a.cost, selling_price: a.cost, qty: 1 })),
+                          ...componentsList.transfers.map((t: any) => ({ category: 'transport', vendor_id: t.id, title: t.name, cost: t.cost, selling_price: t.cost, qty: 1 }))
+                        ]
+                      })
+                    });
+                    if (res.ok) {
+                      setIsPdfModalOpen(true);
+                    } else {
+                      alert("Error saving package");
+                    }
+                  } catch (err) {
+                    console.error(err);
+                  }
+                }}
                 className="h-9 px-4 text-xs font-bold bg-white hover:bg-slate-50 text-[#0F172A] border border-slate-200 shadow-sm"
               >
-                <Printer className="w-3.5 h-3.5 mr-1.5" /> Branded PDF Preview
+                <Printer className="w-3.5 h-3.5 mr-1.5" /> Save & Preview PDF
               </Button>
               <Button 
-                onClick={() => alert(`Quotation Proposal sent successfully to WhatsApp channel: ${clientPhone}`)}
+                onClick={() => {
+                  const encoded = encodeURIComponent(`Hi ${clientName}, here is the customized travel package for ${destination} we discussed. Total package cost is ₹${totalCost.toLocaleString('en-IN')}. Let us know your thoughts!`);
+                  window.open(`https://wa.me/?text=${encoded}`, "_blank");
+                }}
                 className="h-9 px-4 text-xs font-bold bg-teal-600 hover:bg-teal-700 text-white border-none shadow-sm flex items-center gap-1.5"
               >
-                <Share2 className="w-3.5 h-3.5" /> Send to Client (WhatsApp)
+                <Send className="w-3.5 h-3.5" /> Send via WhatsApp
               </Button>
             </div>
           </div>

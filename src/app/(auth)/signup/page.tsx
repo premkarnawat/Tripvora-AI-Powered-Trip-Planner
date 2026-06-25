@@ -16,18 +16,40 @@ export default function SignupPage() {
   const [success, setSuccess] = useState(false);
   const router = useRouter();
 
-  const handleSignup = (e: React.FormEvent) => {
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
     
-    // Simulate signup
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const { createClient } = await import('@/lib/supabase/client');
+      const supabase = createClient();
+      
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: name
+          }
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
       setSuccess(true);
       setTimeout(() => {
         router.push("/login");
       }, 2000);
-    }, 1200);
+    } catch (err: any) {
+      setError(err.message || "Failed to create account.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -119,6 +141,12 @@ export default function SignupPage() {
               </div>
 
               <form onSubmit={handleSignup} className="space-y-4">
+                {error && (
+                  <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm text-center">
+                    {error}
+                  </div>
+                )}
+                
                 {/* Google Login */}
                 <button 
                   type="button"
