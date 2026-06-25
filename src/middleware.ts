@@ -24,7 +24,7 @@ function checkRateLimit(key: string, limit: number, windowMs: number): boolean {
 }
 
 export async function middleware(request: NextRequest) {
-  const ip = request.ip || request.headers.get('x-forwarded-for') || 'anon-client';
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || (request as any).ip || 'anon-client';
   const pathname = request.nextUrl.pathname;
 
   // 1. Rate Limit AI Itinerary Engine (Max 6 calls per minute per IP to defend against Denial-of-Wallet)
