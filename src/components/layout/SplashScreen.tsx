@@ -178,7 +178,7 @@ export function SplashScreen() {
                     </linearGradient>
                   </defs>
 
-                  {/* Dotted Map Points (Fixing Opacity Bug for Clear Visibility) */}
+                  {/* Dotted Map Points */}
                   {dottedMapPoints.map((p, idx) => (
                     <motion.circle
                       key={idx}
@@ -224,11 +224,10 @@ export function SplashScreen() {
                     />
                   )}
 
-                  {/* Flying Airplane along the swoop path (Scene 3 - Fixed scaling using native SVG path drawing) */}
+                  {/* Flying Airplane along the swoop path (Scene 3) */}
                   {step === 2 && (
                     <g>
                       <g>
-                        {/* Standard SVG Plane path matching Lucide Plane icon but scaled and aligned */}
                         <path
                           d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L14 19v-5.5l8 2.5z"
                           fill="#FACC15"
@@ -251,7 +250,7 @@ export function SplashScreen() {
             )}
           </AnimatePresence>
 
-          {/* Scene 4 - 8: Logo, Brand Typography, Ecosystem, Loading (3.6s - 9.6s) */}
+          {/* Scene 4 - 8: Official Logo & Tagline (3.6s - 9.6s) */}
           <AnimatePresence>
             {step >= 3 && (
               <motion.div
@@ -261,36 +260,17 @@ export function SplashScreen() {
                 transition={{ duration: 0.5 }}
                 className="flex flex-col items-center"
               >
-                {/* Logo Monogram Wrapper */}
-                <motion.div
-                  animate={{
-                    filter: step >= 4 
-                      ? "drop-shadow(0 0 25px rgba(20,184,166,0.55)) drop-shadow(0 0 10px rgba(250,204,21,0.25))" 
-                      : "drop-shadow(0 0 0px rgba(0,0,0,0))"
-                  }}
-                  transition={{ duration: 0.5 }}
-                  className="relative w-28 h-28 mb-2 flex items-center justify-center"
-                >
-                  <svg viewBox="0 0 100 100" className="w-full h-full">
-                    <defs>
-                      <linearGradient id="accent-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#00f2fe" />
-                        <stop offset="100%" stopColor="#14B8A6" />
-                      </linearGradient>
-                      <linearGradient id="gold-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#FFE259" />
-                        <stop offset="100%" stopColor="#FFA751" />
-                      </linearGradient>
-                    </defs>
-
-                    {/* Concentric Pulsing Radar Rings (Scene 5+) centered around (33, 78) */}
-                    {step >= 4 && (
-                      <>
+                {/* Official Brand Logo Wrapper */}
+                <div className="relative mb-4">
+                  {/* Concentric Pulsing Radar Rings (Scene 5+) centered around the monogram position (31px, 31px) */}
+                  {step >= 4 && (
+                    <div className="absolute left-[31px] top-[31px] -translate-x-1/2 -translate-y-1/2 pointer-events-none z-0">
+                      <svg width="120" height="120" viewBox="0 0 120 120" className="w-full h-full">
                         <motion.circle
-                          cx="33"
-                          cy="78"
+                          cx="60"
+                          cy="60"
                           initial={{ r: 6, opacity: 0.8 }}
-                          animate={{ r: 24, opacity: 0 }}
+                          animate={{ r: 32, opacity: 0 }}
                           transition={{
                             duration: 1.8,
                             repeat: Infinity,
@@ -301,10 +281,10 @@ export function SplashScreen() {
                           fill="none"
                         />
                         <motion.circle
-                          cx="33"
-                          cy="78"
+                          cx="60"
+                          cy="60"
                           initial={{ r: 6, opacity: 0.8 }}
-                          animate={{ r: 38, opacity: 0 }}
+                          animate={{ r: 50, opacity: 0 }}
                           transition={{
                             duration: 1.8,
                             delay: 0.6,
@@ -315,111 +295,30 @@ export function SplashScreen() {
                           strokeWidth="0.75"
                           fill="none"
                         />
-                      </>
-                    )}
+                      </svg>
+                    </div>
+                  )}
 
-                    {/* Top Bar Left (Teal) with diagonal slant */}
-                    <motion.path
-                      d="M 26,34 L 32,30 L 56,30"
-                      stroke="url(#accent-grad)"
-                      strokeWidth="8"
-                      strokeLinecap="square"
-                      fill="none"
-                      initial={{ pathLength: 0 }}
-                      animate={step >= 3 ? { pathLength: 1 } : { pathLength: 0 }}
-                      transition={{ duration: 0.5, ease: "easeInOut" }}
+                  {/* Official Logo with Name */}
+                  <motion.div
+                    animate={{
+                      filter: step >= 4 
+                        ? "drop-shadow(0 0 25px rgba(20,184,166,0.6))" 
+                        : "drop-shadow(0 0 0px rgba(0,0,0,0))"
+                    }}
+                    transition={{ duration: 0.5 }}
+                    className="relative z-10"
+                  >
+                    <img 
+                      src="/travixa-logo.png" 
+                      alt="Travixa" 
+                      width={260} 
+                      height={62} 
+                      className="object-contain" 
+                      style={{ mixBlendMode: "screen" }}
                     />
-                    
-                    {/* Top Bar Right (Gold wing) meeting curve with diagonal cut */}
-                    <motion.path
-                      d="M 54,30 L 76,30 L 68,38 L 62,38 C 60,35 57,32 54,30"
-                      fill="url(#gold-grad)"
-                      initial={{ opacity: 0 }}
-                      animate={step >= 3 ? { opacity: 1 } : { opacity: 0 }}
-                      transition={{ duration: 0.4, delay: 0.5 }}
-                    />
-                    
-                    {/* Curved Monogram Loop & Stem (Exact geometry) */}
-                    <motion.path
-                      d="M 52,30 C 52,48 70,50 70,66 C 70,78 58,84 46,84 C 36,84 32,78 32,72"
-                      stroke="url(#accent-grad)"
-                      strokeWidth="8"
-                      strokeLinecap="round"
-                      fill="none"
-                      initial={{ pathLength: 0 }}
-                      animate={step >= 3 ? { pathLength: 1 } : { pathLength: 0 }}
-                      transition={{ duration: 0.75, delay: 0.25, ease: "easeInOut" }}
-                    />
-
-                    {/* Logo Center Refinement Dot (light cyan / gold gradient) */}
-                    <motion.circle
-                      cx="33"
-                      cy="78"
-                      r="5.5"
-                      fill="url(#gold-grad)"
-                      initial={{ scale: 0, opacity: 0 }}
-                      animate={step >= 4 ? { scale: 1, opacity: 1 } : { scale: 0, opacity: 0 }}
-                      transition={{ duration: 0.45, ease: "easeOut" }}
-                    />
-
-                    {/* Silver/White Crescent wrapping the gold dot exactly (Scene 5+) */}
-                    {step >= 4 && (
-                      <motion.path
-                        d="M 34,68 C 34,56 39,46 47.5,38.5 C 42.5,50 37.5,60 37.5,68 Z"
-                        fill="#FFFFFF"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 0.6, ease: "easeOut" }}
-                      />
-                    )}
-                  </svg>
-                </motion.div>
-
-                {/* Brand Name Custom SVG Typography (Scene 6+) */}
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={step >= 5 ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-                  transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                  className="w-[280px] md:w-[320px] h-10 mt-5 select-none"
-                >
-                  <svg viewBox="0 0 300 40" className="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <defs>
-                      <linearGradient id="brand-teal-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#00f2fe" />
-                        <stop offset="100%" stopColor="#14B8A6" />
-                      </linearGradient>
-                    </defs>
-                    
-                    {/* T */}
-                    <path d="M 18 10 L 42 10" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" />
-                    <path d="M 30 10 L 30 30" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" />
-                    
-                    {/* R */}
-                    <path d="M 56 30 L 56 10" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" />
-                    <path d="M 56 10 C 66 10 74 13 74 20 C 74 27 66 27 56 27" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" fill="none" />
-                    <path d="M 64 24 L 74 30" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" />
-                    
-                    {/* A */}
-                    <path d="M 94 30 L 106 10" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" />
-                    <path d="M 106 10 L 118 30" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" />
-                    
-                    {/* V */}
-                    <path d="M 132 10 L 144 30" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" />
-                    <path d="M 144 30 L 156 10" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" />
-                    
-                    {/* I */}
-                    <path d="M 182 10 L 182 30" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" />
-                    
-                    {/* X (split coloring crossing white leg) */}
-                    <path d="M 208 10 L 232 30" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" />
-                    <path d="M 232 10 L 220 20" stroke="url(#brand-teal-grad)" strokeWidth="4" strokeLinecap="round" />
-                    <path d="M 220 20 L 208 30" stroke="#FACC15" strokeWidth="4" strokeLinecap="round" />
-                    
-                    {/* A */}
-                    <path d="M 246 30 L 258 10" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" />
-                    <path d="M 258 10 L 270 30" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" />
-                  </svg>
-                </motion.div>
+                  </motion.div>
+                </div>
 
                 {/* Tagline Framed by gradient lines (Scene 6+) */}
                 <motion.div
