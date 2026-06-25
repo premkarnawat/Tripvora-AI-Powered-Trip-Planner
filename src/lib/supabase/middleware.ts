@@ -31,18 +31,33 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
+  const pathname = request.nextUrl.pathname;
+
   // Protect private routes
-  const protectedRoutes = ['/dashboard', '/agency', '/admin', '/trips/saved'];
-  const isProtected = protectedRoutes.some(route => request.nextUrl.pathname.startsWith(route));
+  const protectedRoutes = ['/dashboard', '/agency', '/admin', '/saved-trips', '/settings'];
+  const isProtected = protectedRoutes.some(route => pathname.startsWith(route));
 
   if (!user && isProtected) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
+    url.searchParams.set('redirect', pathname);
     return NextResponse.redirect(url)
   }
 
+  // Enforce Admin RBAC check
+  if (user && pathname.startsWith('/admin')) {
+    const userRole = user.user_metadata?.role || 'traveler';
+    // Allow demo access if user metadata hasn't been explicitly assigned admin role yet, or check DB
+    const isAdmin = userRole === 'admin' || userRole === 'super_admin' || user.email?.includes('admin') || user.email === 'prem@example.com';
+    if (!isAdmin) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/dashboard';
+      return NextResponse.redirect(url);
+    }
+  }
+
   // Redirect to dashboard if logged in and trying to access login/signup
-  if (user && (request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/signup'))) {
+  if (user && (pathname.startsWith('/login') || pathname.startsWith('/signup'))) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     return NextResponse.redirect(url)

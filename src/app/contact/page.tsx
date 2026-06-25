@@ -9,10 +9,23 @@ export default function ContactPage() {
   const [formData, setFormData] = useState({ name: "", email: "", message: "" });
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock submission
-    setTimeout(() => setIsSubmitted(true), 1000);
+    setLoading(true);
+    try {
+      await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      setIsSubmitted(true);
+    } catch (err) {
+      alert("Error sending message");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -44,7 +57,7 @@ export default function ContactPage() {
                 </div>
                 <h3 className="text-2xl font-bold font-sora">Message Sent!</h3>
                 <p className="text-white/60 font-medium">We'll get back to you within 24 hours.</p>
-                <Button onClick={() => setIsSubmitted(false)} className="mt-4 bg-white/10 text-white hover:bg-white/20">Send Another</Button>
+                <Button onClick={() => { setIsSubmitted(false); setFormData({name:'', email:'', message:''}); }} className="mt-4 bg-white/10 text-white hover:bg-white/20">Send Another</Button>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -53,6 +66,8 @@ export default function ContactPage() {
                   <input 
                     required
                     type="text" 
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
                     className="w-full bg-[#121824] border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-teal-500 transition-colors"
                     placeholder="John Doe"
                   />
@@ -62,6 +77,8 @@ export default function ContactPage() {
                   <input 
                     required
                     type="email" 
+                    value={formData.email}
+                    onChange={(e) => setFormData({...formData, email: e.target.value})}
                     className="w-full bg-[#121824] border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-teal-500 transition-colors"
                     placeholder="john@example.com"
                   />
@@ -71,12 +88,14 @@ export default function ContactPage() {
                   <textarea 
                     required
                     rows={5}
+                    value={formData.message}
+                    onChange={(e) => setFormData({...formData, message: e.target.value})}
                     className="w-full bg-[#121824] border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-teal-500 transition-colors resize-none"
                     placeholder="How can we help?"
                   />
                 </div>
-                <Button type="submit" className="w-full bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 rounded-xl h-auto">
-                  Send Message
+                <Button disabled={loading} type="submit" className="w-full bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 rounded-xl h-auto">
+                  {loading ? "Sending..." : "Send Message"}
                 </Button>
               </form>
             )}

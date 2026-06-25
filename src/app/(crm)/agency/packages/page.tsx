@@ -1017,9 +1017,9 @@ export default function PackageBuilderPageV2() {
                           discountValue
                         },
                         components: [
-                          ...componentsList.hotels.map((h: any) => ({ category: 'accommodation', vendor_id: h.id, title: h.name, cost: h.cost, selling_price: h.cost, qty: nights })),
-                          ...componentsList.activities.map((a: any) => ({ category: 'activity', vendor_id: a.id, title: a.name, cost: a.cost, selling_price: a.cost, qty: 1 })),
-                          ...componentsList.transfers.map((t: any) => ({ category: 'transport', vendor_id: t.id, title: t.name, cost: t.cost, selling_price: t.cost, qty: 1 }))
+                          ...(componentsList.accommodation || []).map((h: any) => ({ category: 'accommodation', vendor_id: h.id, title: h.name, cost: h.cost, selling_price: h.sellingPrice || h.cost, qty: nights })),
+                          ...(componentsList.activities || []).map((a: any) => ({ category: 'activity', vendor_id: a.id, title: a.name, cost: a.cost, selling_price: a.sellingPrice || a.cost, qty: 1 })),
+                          ...(componentsList.transport || []).map((t: any) => ({ category: 'transport', vendor_id: t.id, title: t.name, cost: t.cost, selling_price: t.sellingPrice || t.cost, qty: 1 }))
                         ]
                       })
                     });

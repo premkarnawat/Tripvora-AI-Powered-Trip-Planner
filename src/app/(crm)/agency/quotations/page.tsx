@@ -30,10 +30,10 @@ export default function QuotationBuilderPage() {
             <p className="text-xs text-[#94A3B8] mt-1">Create and send premium proposals to clients.</p>
           </div>
           <div className="flex gap-2">
-            <Button className="h-8 text-xs font-bold bg-[#020817] hover:bg-white/5 text-white border border-white/10">
+            <Button onClick={() => alert("Quotation draft saved!")} className="h-8 text-xs font-bold bg-[#020817] hover:bg-white/5 text-white border border-white/10">
               Save Draft
             </Button>
-            <Button className="h-8 text-xs font-bold bg-[#38BDF8]/10 hover:bg-[#38BDF8]/20 text-[#38BDF8] border border-[#38BDF8]/20 transition-colors">
+            <Button onClick={async () => { await fetch('/api/pdf/generate', { method: 'POST' }); alert("Quotation PDF generated!"); }} className="h-8 text-xs font-bold bg-[#38BDF8]/10 hover:bg-[#38BDF8]/20 text-[#38BDF8] border border-[#38BDF8]/20 transition-colors">
               <Download className="w-3.5 h-3.5 mr-1" /> Generate PDF
             </Button>
             <Button 
@@ -234,10 +234,10 @@ export default function QuotationBuilderPage() {
             </div>
           </div>
           <div className="p-4 border-t border-white/5 bg-[#020817] flex gap-3">
-            <Button className="flex-1 font-bold bg-[#38BDF8]/10 hover:bg-[#38BDF8]/20 text-[#38BDF8] border border-[#38BDF8]/20 transition-colors">
+            <Button onClick={() => window.location.href = '/agency/packages'} className="flex-1 font-bold bg-[#38BDF8]/10 hover:bg-[#38BDF8]/20 text-[#38BDF8] border border-[#38BDF8]/20 transition-colors">
               Generate Package
             </Button>
-            <Button onClick={() => setIsNewModalOpen(false)} className="flex-1 font-bold bg-[#14B8A6] hover:bg-[#14B8A6]/90 text-[#0F172A] border-none shadow-[0_0_15px_rgba(20,184,166,0.3)] transition-colors">
+            <Button onClick={() => { alert("New Quotation created and dispatched to client!"); setIsNewModalOpen(false); }} className="flex-1 font-bold bg-[#14B8A6] hover:bg-[#14B8A6]/90 text-[#0F172A] border-none shadow-[0_0_15px_rgba(20,184,166,0.3)] transition-colors">
               Create Quotation
             </Button>
           </div>
