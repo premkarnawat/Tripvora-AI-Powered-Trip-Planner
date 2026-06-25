@@ -50,10 +50,18 @@ export function SplashScreen() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
+    // Only play cinematic intro on the main homepage
+    if (window.location.pathname !== "/") {
+      setShow(false);
+      window.dispatchEvent(new CustomEvent("travixa_splash_complete"));
+      return;
+    }
+
     const seen = localStorage.getItem("travixa_intro_seen");
+    const forceSplash = window.location.search.includes("splash=true");
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    if (seen || reducedMotion) {
+    if ((seen && !forceSplash) || reducedMotion) {
       setShow(false);
       window.dispatchEvent(new CustomEvent("travixa_splash_complete"));
       return;
@@ -74,9 +82,9 @@ export function SplashScreen() {
       const monogramEl = document.getElementById("splash-monogram-container");
       const navLogoEl = document.getElementById("navbar-logo");
 
-      if (monogramEl && navLogoEl) {
+      if (monogramEl) {
         const monoRect = monogramEl.getBoundingClientRect();
-        const navRect = navLogoEl.getBoundingClientRect();
+        const navRect = navLogoEl?.getBoundingClientRect();
 
         setMonoStartCoords({
           left: monoRect.left,
@@ -87,10 +95,10 @@ export function SplashScreen() {
 
         // The monogram should fit in the square dimensions of the navbar logo image (height x height)
         setMonoTargetCoords({
-          left: navRect.left,
-          top: navRect.top,
-          width: navRect.height,
-          height: navRect.height,
+          left: navRect ? navRect.left : 32,
+          top: navRect ? navRect.top : 16,
+          width: navRect ? navRect.height : 36,
+          height: navRect ? navRect.height : 36,
         });
 
         setStep(7); // Scene 8 starts

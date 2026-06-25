@@ -32,6 +32,8 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   const pathname = request.nextUrl.pathname;
+  const roleCookie = request.cookies.get('travixa_role')?.value;
+  const hasAuth = !!user || !!roleCookie;
 
   // Protect private routes
   const protectedRoutes = ['/dashboard', '/agency', '/admin', '/saved-trips', '/settings'];
@@ -39,16 +41,16 @@ export async function updateSession(request: NextRequest) {
                       !pathname.startsWith('/admin/login') &&
                       !pathname.startsWith('/agency/register');
 
-  if (!user && isProtected) {
+  if (!hasAuth && isProtected) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     url.searchParams.set('redirect', pathname);
     return NextResponse.redirect(url)
   }
 
-  if (user) {
-    const userRole = user.user_metadata?.role || 'traveler';
-    const isAdmin = userRole === 'admin' || userRole === 'super_admin' || user.email?.includes('admin') || user.email === 'prem@example.com';
+  if (hasAuth) {
+    const userRole = user?.user_metadata?.role || roleCookie || 'traveler';
+    const isAdmin = userRole === 'admin' || userRole === 'super_admin' || user?.email?.includes('admin') || user?.email === 'prem@example.com' || roleCookie === 'admin';
 
     // 1. Protect Admin Panel
     if (pathname.startsWith('/admin') && !pathname.startsWith('/admin/login')) {

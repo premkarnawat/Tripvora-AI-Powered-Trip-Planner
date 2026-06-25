@@ -41,9 +41,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   }, [router]);
 
-  const handleSignOut = (e: React.MouseEvent) => {
+  const handleSignOut = async (e: React.MouseEvent) => {
     e.preventDefault();
+    document.cookie = "travixa_role=; path=/; max-age=0";
     localStorage.removeItem("traveler_auth");
+    localStorage.removeItem("travixa_role");
+    try {
+      const { createClient } = await import('@/lib/supabase/client');
+      const supabase = createClient();
+      await supabase.auth.signOut();
+    } catch (err) {}
     router.push("/login");
   };
 

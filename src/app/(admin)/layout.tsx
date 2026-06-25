@@ -93,7 +93,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         {/* Profile Card Bottom */}
         <div className="p-4 border-t border-[#E5E7EB] shrink-0 bg-white">
-          <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-[#F1F5F9] transition-colors cursor-pointer group">
+          <div 
+            onClick={async () => {
+              document.cookie = "travixa_role=; path=/; max-age=0";
+              localStorage.removeItem("traveler_auth");
+              localStorage.removeItem("travixa_role");
+              try {
+                const { createClient } = await import('@/lib/supabase/client');
+                const supabase = createClient();
+                await supabase.auth.signOut();
+              } catch (e) {}
+              window.location.href = "/admin/login";
+            }}
+            className="flex items-center gap-3 p-2 rounded-xl hover:bg-[#F1F5F9] transition-colors cursor-pointer group"
+          >
             <div className="w-10 h-10 rounded-full overflow-hidden border border-[#E5E7EB] shrink-0 bg-slate-100">
               <img 
                 src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=100&auto=format&fit=crop" 

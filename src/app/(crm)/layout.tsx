@@ -302,6 +302,25 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
                 <Users className="w-3 h-3 text-[#14B8A6]" />
               </div>
             </div>
+            <button 
+              onClick={async () => {
+                document.cookie = "travixa_role=; path=/; max-age=0";
+                localStorage.removeItem("traveler_auth");
+                localStorage.removeItem("travixa_role");
+                try {
+                  const { createClient } = await import('@/lib/supabase/client');
+                  const supabase = createClient();
+                  await supabase.auth.signOut();
+                } catch (e) {}
+                window.location.href = "/login";
+              }}
+              title="Sign Out"
+              className="w-8 h-8 rounded-md flex items-center justify-center text-[#94A3B8] hover:text-red-400 hover:bg-white/5 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+            </button>
           </div>
         </header>
 
