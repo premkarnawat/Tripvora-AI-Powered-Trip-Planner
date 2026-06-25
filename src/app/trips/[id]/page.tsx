@@ -917,7 +917,7 @@ export default function TripItineraryPage() {
                 <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Day {activeDay} Route Timeline</span>
               </div>
               <div className="border-l border-slate-100 ml-3 pl-5 space-y-4">
-                {dayTimeline.map((step, idx) => (
+                {dayTimeline.map((step: any, idx: number) => (
                   <div key={idx} className="relative space-y-2 bg-slate-50/50 border border-slate-100 p-3.5 rounded-2xl">
                     <span className="absolute -left-[27px] top-4 w-2 h-2 rounded-full border border-white shadow bg-teal-600" />
                     
