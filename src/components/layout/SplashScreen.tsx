@@ -59,7 +59,7 @@ export function SplashScreen() {
       return;
     }
 
-    const seen = localStorage.getItem("travixa_intro_seen");
+    const seen = sessionStorage.getItem("travixa_intro_seen");
     const forceSplash = window.location.search.includes("splash=true");
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -83,7 +83,7 @@ export function SplashScreen() {
       setTimeout(() => setStep(7), 8400),  // Scene 8 (8.4s) - Loading bar runs & dissolve transition
       setTimeout(() => {
         // Complete transition and hide
-        localStorage.setItem("travixa_intro_seen", "true");
+        sessionStorage.setItem("travixa_intro_seen", "true");
         window.dispatchEvent(new CustomEvent("travixa_splash_complete"));
         setShow(false);
       }, 9600) // End (9.6s)
