@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { motion, useScroll } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Menu, Heart, Bell } from "lucide-react";
@@ -69,17 +70,17 @@ export function Navbar() {
     >
       <div className="max-w-[1400px] mx-auto flex items-center justify-between">
         
-        {/* Logo and brand name (Always visible, white text with premium teal icon) */}
-        <div className="flex items-center gap-2">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M2 22L12 2L22 22H2Z" fill="#14B8A6" fillOpacity="0.8"/>
-            <path d="M12 2L2 22H12V2Z" fill="#38BDF8"/>
-          </svg>
-          <Link 
-            href="/" 
-            className="text-xl font-bold tracking-tight font-sora text-white hover:text-white/95 transition-colors"
-          >
-            TripPilot
+        {/* Official Travixa Logo */}
+        <div className="flex items-center">
+          <Link href="/" className="flex items-center transition-opacity hover:opacity-95">
+            <Image 
+              src="/travixa-logo.png" 
+              alt="Travixa" 
+              width={150} 
+              height={36} 
+              className="h-8 w-auto object-contain sm:h-9" 
+              priority 
+            />
           </Link>
         </div>
 
