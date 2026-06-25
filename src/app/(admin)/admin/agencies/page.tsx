@@ -202,7 +202,7 @@ export default function AdminAgenciesPage() {
                 {/* Staff avatars list & WhatsApp status */}
                 <div className="flex items-center gap-3">
                   <div className="flex -space-x-1.5 overflow-hidden">
-                    {agency.staffAvatars.map((avatar, idx) => (
+                    {(agency.staffAvatars || []).map((avatar: any, idx: number) => (
                       <div key={idx} className="w-6 h-6 rounded-full overflow-hidden border-2 border-white bg-slate-100 shrink-0">
                         <img src={avatar} alt="Staff" className="w-full h-full object-cover" />
                       </div>
