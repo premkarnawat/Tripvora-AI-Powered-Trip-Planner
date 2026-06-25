@@ -57,7 +57,7 @@ export function SplashScreen() {
       return;
     }
 
-    const seen = localStorage.getItem("travixa_intro_seen");
+    const seen = sessionStorage.getItem("travixa_intro_seen");
     const forceSplash = window.location.search.includes("splash=true");
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -104,7 +104,7 @@ export function SplashScreen() {
         setStep(7); // Scene 8 starts
       } else {
         // Fallback: Skip animation if elements not found
-        localStorage.setItem("travixa_intro_seen", "true");
+        sessionStorage.setItem("travixa_intro_seen", "true");
         window.dispatchEvent(new CustomEvent("travixa_splash_complete"));
         setShow(false);
       }
@@ -112,7 +112,7 @@ export function SplashScreen() {
 
     // Final Clean Up and Complete
     const t8 = setTimeout(() => {
-      localStorage.setItem("travixa_intro_seen", "true");
+      sessionStorage.setItem("travixa_intro_seen", "true");
       window.dispatchEvent(new CustomEvent("travixa_splash_complete"));
       setShow(false);
     }, 3800);

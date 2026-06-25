@@ -21,7 +21,7 @@ export function Navbar() {
     setMounted(true);
     
     if (typeof window !== "undefined") {
-      const seen = localStorage.getItem("travixa_intro_seen");
+      const seen = sessionStorage.getItem("travixa_intro_seen");
       const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       if (!seen && !reducedMotion) {
         setIsSplashActive(true);

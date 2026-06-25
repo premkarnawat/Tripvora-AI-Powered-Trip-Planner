@@ -21,11 +21,11 @@ export default function LoginPage() {
     localStorage.setItem("travixa_role", targetRole);
 
     if (targetRole === "admin" || targetRole === "super_admin") {
-      router.push("/admin");
+      window.location.href = "/admin";
     } else if (targetRole === "agency") {
-      router.push("/agency");
+      window.location.href = "/agency";
     } else {
-      router.push("/dashboard");
+      window.location.href = "/dashboard";
     }
   };
 

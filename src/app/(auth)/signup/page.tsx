@@ -22,7 +22,7 @@ export default function SignupPage() {
     document.cookie = `travixa_role=traveler; path=/; max-age=86400; SameSite=Lax`;
     localStorage.setItem("traveler_auth", "true");
     localStorage.setItem("travixa_role", "traveler");
-    router.push("/dashboard?welcome=true");
+    window.location.href = "/dashboard?welcome=true";
   };
 
   const handleSignup = async (e: React.FormEvent) => {

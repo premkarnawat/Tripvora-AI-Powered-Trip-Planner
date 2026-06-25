@@ -35,7 +35,7 @@ export default function AdminLoginPage() {
       document.cookie = `travixa_role=admin; path=/; max-age=86400; SameSite=Lax`;
       localStorage.setItem("traveler_auth", "true");
       localStorage.setItem("travixa_role", "admin");
-      router.push("/admin");
+      window.location.href = "/admin";
     } catch (err: any) {
       setError(err.message || "Authentication failed.");
     } finally {

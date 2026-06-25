@@ -74,7 +74,7 @@ export default function AgencyRegisterPage() {
       document.cookie = `travixa_role=agency; path=/; max-age=86400; SameSite=Lax`;
       localStorage.setItem("traveler_auth", "true");
       localStorage.setItem("travixa_role", "agency");
-      router.push("/agency?welcome=true");
+      window.location.href = "/agency?welcome=true";
     } catch (err: any) {
       setError(err.message || "Failed to register agency.");
     } finally {
