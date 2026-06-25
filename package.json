@@ -26,8 +26,8 @@
     "tailwind-merge": "^2.3.0",
     "tailwindcss-animate": "^1.0.7",
     "three": "^0.165.0",
-    "@react-three/fiber": "latest",
-    "@react-three/drei": "latest",
+    "@react-three/fiber": "^8.16.8",
+    "@react-three/drei": "^9.105.6",
     "@tsparticles/react": "^3.0.0",
     "@tsparticles/slim": "^3.0.0"
   },
