@@ -411,7 +411,7 @@ export default function TripItineraryPage() {
             </div>
 
             <div className="border-l border-slate-100 ml-4 pl-6 space-y-6">
-              {dayTimeline.map((step, idx) => (
+              {dayTimeline.map((step: any, idx: number) => (
                 <div 
                   key={idx}
                   onClick={() => setSelectedRouteNode(step.nodeId)}
