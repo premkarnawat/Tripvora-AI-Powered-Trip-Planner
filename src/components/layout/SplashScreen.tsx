@@ -178,7 +178,7 @@ export function SplashScreen() {
                     </linearGradient>
                   </defs>
 
-                  {/* Dotted Map Points (Fixing Opacity Bug) */}
+                  {/* Dotted Map Points (Fixing Opacity Bug for Clear Visibility) */}
                   {dottedMapPoints.map((p, idx) => (
                     <motion.circle
                       key={idx}
@@ -187,7 +187,7 @@ export function SplashScreen() {
                       r="1.0"
                       fill="currentColor"
                       initial={{ opacity: 0 }}
-                      animate={{ opacity: 0.35 }}
+                      animate={{ opacity: 0.45 }}
                       transition={{ delay: (p.x + p.y) * 0.002, duration: 0.4 }}
                     />
                   ))}
@@ -224,14 +224,17 @@ export function SplashScreen() {
                     />
                   )}
 
-                  {/* Flying Airplane along the swoop path (Scene 3 - Fixed scaling using native animateMotion) */}
+                  {/* Flying Airplane along the swoop path (Scene 3 - Fixed scaling using native SVG path drawing) */}
                   {step === 2 && (
                     <g>
                       <g>
-                        {/* Static inner rotation of -45deg to offset Lucide plane diagonal orientation */}
-                        <g transform="rotate(-45) translate(-10, -10)">
-                          <Plane className="w-5.5 h-5.5 text-[#FACC15] fill-[#FACC15] drop-shadow-[0_0_10px_rgba(250,204,21,0.9)]" />
-                        </g>
+                        {/* Standard SVG Plane path matching Lucide Plane icon but scaled and aligned */}
+                        <path
+                          d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L14 19v-5.5l8 2.5z"
+                          fill="#FACC15"
+                          className="drop-shadow-[0_0_10px_rgba(250,204,21,0.95)]"
+                          transform="scale(0.55) translate(-12, -12) rotate(90)"
+                        />
                         <animateMotion
                           dur="1.0s"
                           repeatCount="1"
@@ -280,12 +283,12 @@ export function SplashScreen() {
                       </linearGradient>
                     </defs>
 
-                    {/* Concentric Pulsing Radar Rings (Scene 5+) centered around (45, 71) */}
+                    {/* Concentric Pulsing Radar Rings (Scene 5+) centered around (33, 78) */}
                     {step >= 4 && (
                       <>
                         <motion.circle
-                          cx="45"
-                          cy="71"
+                          cx="33"
+                          cy="78"
                           initial={{ r: 6, opacity: 0.8 }}
                           animate={{ r: 24, opacity: 0 }}
                           transition={{
@@ -298,8 +301,8 @@ export function SplashScreen() {
                           fill="none"
                         />
                         <motion.circle
-                          cx="45"
-                          cy="71"
+                          cx="33"
+                          cy="78"
                           initial={{ r: 6, opacity: 0.8 }}
                           animate={{ r: 38, opacity: 0 }}
                           transition={{
@@ -315,31 +318,30 @@ export function SplashScreen() {
                       </>
                     )}
 
-                    {/* Top Bar Left (Teal) */}
+                    {/* Top Bar Left (Teal) with diagonal slant */}
                     <motion.path
-                      d="M 22,30 L 68,30"
+                      d="M 26,34 L 32,30 L 56,30"
                       stroke="url(#accent-grad)"
                       strokeWidth="8"
-                      strokeLinecap="round"
+                      strokeLinecap="square"
+                      fill="none"
                       initial={{ pathLength: 0 }}
                       animate={step >= 3 ? { pathLength: 1 } : { pathLength: 0 }}
                       transition={{ duration: 0.5, ease: "easeInOut" }}
                     />
                     
-                    {/* Top Bar Right (Gold wing) */}
+                    {/* Top Bar Right (Gold wing) meeting curve with diagonal cut */}
                     <motion.path
-                      d="M 68,30 L 80,30"
-                      stroke="url(#gold-grad)"
-                      strokeWidth="8"
-                      strokeLinecap="round"
-                      initial={{ pathLength: 0 }}
-                      animate={step >= 3 ? { pathLength: 1 } : { pathLength: 0 }}
-                      transition={{ duration: 0.4, delay: 0.5, ease: "easeInOut" }}
+                      d="M 54,30 L 76,30 L 68,38 L 62,38 C 60,35 57,32 54,30"
+                      fill="url(#gold-grad)"
+                      initial={{ opacity: 0 }}
+                      animate={step >= 3 ? { opacity: 1 } : { opacity: 0 }}
+                      transition={{ duration: 0.4, delay: 0.5 }}
                     />
                     
                     {/* Curved Monogram Loop & Stem (Exact geometry) */}
                     <motion.path
-                      d="M 56,30 L 56,72 C 56,80 50,83 45,82 C 40,81 37,76 37,71 C 37,60 45,46 54,32"
+                      d="M 52,30 C 52,48 70,50 70,66 C 70,78 58,84 46,84 C 36,84 32,78 32,72"
                       stroke="url(#accent-grad)"
                       strokeWidth="8"
                       strokeLinecap="round"
@@ -349,28 +351,24 @@ export function SplashScreen() {
                       transition={{ duration: 0.75, delay: 0.25, ease: "easeInOut" }}
                     />
 
-                    {/* Logo Center Refinement Dot */}
+                    {/* Logo Center Refinement Dot (light cyan / gold gradient) */}
                     <motion.circle
-                      cx="45"
-                      cy="71"
-                      r="6.5"
+                      cx="33"
+                      cy="78"
+                      r="5.5"
                       fill="url(#gold-grad)"
                       initial={{ scale: 0, opacity: 0 }}
                       animate={step >= 4 ? { scale: 1, opacity: 1 } : { scale: 0, opacity: 0 }}
                       transition={{ duration: 0.45, ease: "easeOut" }}
-                      className="shadow-[0_0_8px_#FACC15]"
                     />
 
-                    {/* Silver/White Crescent wrapping the gold dot (Scene 5+) */}
+                    {/* Silver/White Crescent wrapping the gold dot exactly (Scene 5+) */}
                     {step >= 4 && (
                       <motion.path
-                        d="M 45,77 A 6,6 0 0,0 51,71 A 6,6 0 0,0 45,65"
-                        stroke="#FFFFFF"
-                        strokeWidth="1.5"
-                        fill="none"
-                        strokeLinecap="round"
-                        initial={{ pathLength: 0, opacity: 0 }}
-                        animate={{ pathLength: 1, opacity: 1 }}
+                        d="M 34,68 C 34,56 39,46 47.5,38.5 C 42.5,50 37.5,60 37.5,68 Z"
+                        fill="#FFFFFF"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
                         transition={{ duration: 0.6, ease: "easeOut" }}
                       />
                     )}
@@ -384,7 +382,7 @@ export function SplashScreen() {
                   transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                   className="w-[280px] md:w-[320px] h-10 mt-5 select-none"
                 >
-                  <svg viewBox="0 0 300 40" className="w-full h-full animate-pulse-slow" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <svg viewBox="0 0 300 40" className="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <defs>
                       <linearGradient id="brand-teal-grad" x1="0%" y1="0%" x2="100%" y2="100%">
                         <stop offset="0%" stopColor="#00f2fe" />
@@ -393,33 +391,33 @@ export function SplashScreen() {
                     </defs>
                     
                     {/* T */}
-                    <path d="M 18 8 L 42 8" stroke="#FFFFFF" strokeWidth="3.5" strokeLinecap="round" />
-                    <path d="M 30 8 L 30 32" stroke="#FFFFFF" strokeWidth="3.5" strokeLinecap="round" />
+                    <path d="M 18 10 L 42 10" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" />
+                    <path d="M 30 10 L 30 30" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" />
                     
                     {/* R */}
-                    <path d="M 56 32 L 56 8" stroke="#FFFFFF" strokeWidth="3.5" strokeLinecap="round" />
-                    <path d="M 56 8 C 68 8 78 11 78 19 C 78 25 68 25 56 25" stroke="#FFFFFF" strokeWidth="3.5" strokeLinecap="round" fill="none" />
-                    <path d="M 68 25 L 78 32" stroke="#FFFFFF" strokeWidth="3.5" strokeLinecap="round" />
+                    <path d="M 56 30 L 56 10" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" />
+                    <path d="M 56 10 C 66 10 74 13 74 20 C 74 27 66 27 56 27" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" fill="none" />
+                    <path d="M 64 24 L 74 30" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" />
                     
                     {/* A */}
-                    <path d="M 94 32 L 106 8" stroke="#FFFFFF" strokeWidth="3.5" strokeLinecap="round" />
-                    <path d="M 106 8 L 118 32" stroke="#FFFFFF" strokeWidth="3.5" strokeLinecap="round" />
+                    <path d="M 94 30 L 106 10" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" />
+                    <path d="M 106 10 L 118 30" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" />
                     
                     {/* V */}
-                    <path d="M 132 8 L 144 32" stroke="#FFFFFF" strokeWidth="3.5" strokeLinecap="round" />
-                    <path d="M 144 32 L 156 8" stroke="#FFFFFF" strokeWidth="3.5" strokeLinecap="round" />
+                    <path d="M 132 10 L 144 30" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" />
+                    <path d="M 144 30 L 156 10" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" />
                     
                     {/* I */}
-                    <path d="M 182 8 L 182 32" stroke="#FFFFFF" strokeWidth="3.5" strokeLinecap="round" />
+                    <path d="M 182 10 L 182 30" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" />
                     
                     {/* X (split coloring crossing white leg) */}
-                    <path d="M 208 8 L 232 32" stroke="#FFFFFF" strokeWidth="3.5" strokeLinecap="round" />
-                    <path d="M 232 8 L 220 20" stroke="url(#brand-teal-grad)" strokeWidth="3.5" strokeLinecap="round" />
-                    <path d="M 220 20 L 208 32" stroke="#FACC15" strokeWidth="3.5" strokeLinecap="round" />
+                    <path d="M 208 10 L 232 30" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" />
+                    <path d="M 232 10 L 220 20" stroke="url(#brand-teal-grad)" strokeWidth="4" strokeLinecap="round" />
+                    <path d="M 220 20 L 208 30" stroke="#FACC15" strokeWidth="4" strokeLinecap="round" />
                     
                     {/* A */}
-                    <path d="M 246 32 L 258 8" stroke="#FFFFFF" strokeWidth="3.5" strokeLinecap="round" />
-                    <path d="M 258 8 L 270 32" stroke="#FFFFFF" strokeWidth="3.5" strokeLinecap="round" />
+                    <path d="M 246 30 L 258 10" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" />
+                    <path d="M 258 10 L 270 30" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" />
                   </svg>
                 </motion.div>
 
@@ -428,7 +426,7 @@ export function SplashScreen() {
                   initial={{ opacity: 0, y: 5 }}
                   animate={step >= 5 ? { opacity: 1, y: 0 } : { opacity: 0, y: 5 }}
                   transition={{ duration: 0.6, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                  className="flex items-center justify-center gap-3 mt-4 w-72 md:w-80 select-none"
+                  className="flex items-center justify-center gap-3 mt-4 w-72 md:w-80 select-none font-sora"
                 >
                   {/* Left Cyan Gradient Line & Dot */}
                   <div className="flex-1 h-[1px] bg-gradient-to-r from-[#14B8A6] to-transparent relative">
@@ -450,7 +448,7 @@ export function SplashScreen() {
                   initial={{ opacity: 0 }}
                   animate={step >= 6 ? { opacity: 1 } : { opacity: 0 }}
                   transition={{ duration: 0.5 }}
-                  className="grid grid-cols-4 gap-6 md:gap-8 mt-9 w-72 md:w-80 justify-center animate-fade-in"
+                  className="grid grid-cols-4 gap-6 md:gap-8 mt-9 w-72 md:w-80 justify-center"
                 >
                   {ecosystemItems.map((item, idx) => (
                     <motion.div
