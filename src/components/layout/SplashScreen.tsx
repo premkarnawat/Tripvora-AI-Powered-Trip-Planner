@@ -32,10 +32,10 @@ const dottedMapPoints = [
 ];
 
 const travelRoutes = [
-  { d: "M 35,45 Q 60,30 90,36", delay: 0.1 },
-  { d: "M 90,36 Q 110,50 130,38", delay: 0.2 },
-  { d: "M 40,40 Q 80,60 110,72", delay: 0.15 },
-  { d: "M 30,80 C 60,65 110,45 150,25", delay: 0.25, isActive: true }
+  { d: "M 35,45 Q 60,30 90,36", delay: 0.15 },
+  { d: "M 90,36 Q 110,50 130,38", delay: 0.35 },
+  { d: "M 40,40 Q 80,60 110,72", delay: 0.25 },
+  { d: "M 30,80 C 60,65 110,45 150,25", delay: 0.45, isActive: true }
 ];
 
 const ecosystemItems = [
@@ -72,21 +72,21 @@ export function SplashScreen() {
     setShow(true);
     setStep(0);
 
-    // Timings matching the 8 storyboard panels exactly (600ms per panel)
+    // Timings matching the 8 storyboard panels, slowed down for readability (1.2s per panel)
     const timers = [
-      setTimeout(() => setStep(1), 600),   // Scene 2 (0.6s) - World map softly appears
-      setTimeout(() => setStep(2), 1200),  // Scene 3 (1.2s) - Airplane flies route
-      setTimeout(() => setStep(3), 1800),  // Scene 4 (1.8s) - Logo monogram starts forming
-      setTimeout(() => setStep(4), 2400),  // Scene 5 (2.4s) - Logo completes with gold dot & radar glow
-      setTimeout(() => setStep(5), 3000),  // Scene 6 (3.0s) - Brand name and tagline fade in
-      setTimeout(() => setStep(6), 3600),  // Scene 7 (3.6s) - Ecosystem items fade in
-      setTimeout(() => setStep(7), 4200),  // Scene 8 (4.2s) - Loading bar runs & dissolve transition
+      setTimeout(() => setStep(1), 1200),   // Scene 2 (1.2s) - World map softly appears
+      setTimeout(() => setStep(2), 2400),  // Scene 3 (2.4s) - Airplane flies route
+      setTimeout(() => setStep(3), 3600),  // Scene 4 (3.6s) - Logo monogram starts forming
+      setTimeout(() => setStep(4), 4800),  // Scene 5 (4.8s) - Logo completes with gold dot & radar glow
+      setTimeout(() => setStep(5), 6000),  // Scene 6 (6.0s) - Brand name and tagline fade in
+      setTimeout(() => setStep(6), 7200),  // Scene 7 (7.2s) - Ecosystem items fade in
+      setTimeout(() => setStep(7), 8400),  // Scene 8 (8.4s) - Loading bar runs & dissolve transition
       setTimeout(() => {
-        // Complete transition
+        // Complete transition and hide
         localStorage.setItem("travixa_intro_seen", "true");
         window.dispatchEvent(new CustomEvent("travixa_splash_complete"));
         setShow(false);
-      }, 4800) // End (4.8s)
+      }, 9600) // End (9.6s)
     ];
 
     return () => {
@@ -105,8 +105,8 @@ export function SplashScreen() {
           opacity: step === 7 ? [1, 1, 0] : 1,
         }}
         transition={{
-          duration: 0.6,
-          times: [0, 0.7, 1],
+          duration: 1.2,
+          times: [0, 0.65, 1], // Stays opaque through 65% of the 1.2s, then fades out in the last 420ms
           ease: "easeInOut"
         }}
         className="absolute inset-0 flex flex-col items-center justify-center pointer-events-auto"
@@ -117,37 +117,37 @@ export function SplashScreen() {
 
         <div className="relative z-10 flex flex-col items-center justify-center max-w-2xl px-6 text-center">
           
-          {/* Scene 1: Fading Words Stack (0.0s - 0.6s) */}
+          {/* Scene 1: Fading Words Stack (0.0s - 1.2s) */}
           <AnimatePresence>
             {step === 0 && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3 }}
-                className="flex flex-col items-center space-y-4 md:space-y-6"
+                transition={{ duration: 0.4 }}
+                className="flex flex-col items-center space-y-5 md:space-y-7"
               >
                 <motion.span
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                  className="text-2xl md:text-3xl font-extrabold tracking-[0.35em] text-[#14B8A6] font-sora"
+                  transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                  className="text-2xl md:text-3.5xl font-extrabold tracking-[0.35em] text-[#14B8A6] font-sora"
                 >
                   DISCOVER.
                 </motion.span>
                 <motion.span
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
-                  className="text-2xl md:text-3xl font-extrabold tracking-[0.35em] text-[#38BDF8] font-sora"
+                  transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1], delay: 0.3 }}
+                  className="text-2xl md:text-3.5xl font-extrabold tracking-[0.35em] text-[#38BDF8] font-sora"
                 >
                   PLAN.
                 </motion.span>
                 <motion.span
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1], delay: 0.3 }}
-                  className="text-2xl md:text-3xl font-extrabold tracking-[0.35em] text-[#FACC15] font-sora"
+                  transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1], delay: 0.6 }}
+                  className="text-2xl md:text-3.5xl font-extrabold tracking-[0.35em] text-[#FACC15] font-sora"
                 >
                   EXPERIENCE.
                 </motion.span>
@@ -155,15 +155,15 @@ export function SplashScreen() {
             )}
           </AnimatePresence>
 
-          {/* Scene 2 & 3: Dotted World Map & Airplane (0.6s - 1.8s) */}
+          {/* Scene 2 & 3: Dotted World Map & Airplane (1.2s - 3.6s) */}
           <AnimatePresence>
             {(step === 1 || step === 2) && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.96 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 1.02 }}
-                transition={{ duration: 0.4 }}
-                className="relative w-[340px] h-[180px] md:w-[480px] md:h-[240px] flex items-center justify-center"
+                transition={{ duration: 0.5 }}
+                className="relative w-[360px] h-[190px] md:w-[500px] md:h-[260px] flex items-center justify-center"
               >
                 <svg viewBox="0 0 180 100" className="w-full h-full text-[#14B8A6]/20 select-none">
                   <defs>
@@ -188,7 +188,7 @@ export function SplashScreen() {
                       fill="currentColor"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 0.22 }}
-                      transition={{ delay: (p.x + p.y) * 0.0015, duration: 0.3 }}
+                      transition={{ delay: (p.x + p.y) * 0.002, duration: 0.4 }}
                     />
                   ))}
 
@@ -199,11 +199,11 @@ export function SplashScreen() {
                       d={route.d}
                       fill="none"
                       stroke={route.isActive ? "url(#route-active-grad)" : "url(#route-passive-grad)"}
-                      strokeWidth={route.isActive ? "1.25" : "0.75"}
+                      strokeWidth={route.isActive ? "1.5" : "0.75"}
                       strokeDasharray={route.isActive ? "none" : "2 2"}
                       initial={{ pathLength: 0 }}
                       animate={{ pathLength: 1 }}
-                      transition={{ duration: 0.5, delay: route.delay, ease: "easeInOut" }}
+                      transition={{ duration: 0.9, delay: route.delay, ease: "easeInOut" }}
                     />
                   ))}
 
@@ -213,10 +213,10 @@ export function SplashScreen() {
                       d="M 30,80 C 60,65 110,45 150,25"
                       fill="none"
                       stroke="#14B8A6"
-                      strokeWidth="1.75"
+                      strokeWidth="2.0"
                       initial={{ pathLength: 0 }}
                       animate={{ pathLength: 1 }}
-                      transition={{ duration: 0.55, ease: "easeInOut" }}
+                      transition={{ duration: 1.0, ease: "easeInOut" }}
                       className="drop-shadow-[0_0_6px_rgba(20,184,166,0.65)]"
                     />
                   )}
@@ -237,12 +237,12 @@ export function SplashScreen() {
                     initial={{ offsetDistance: "0%", opacity: 0 }}
                     animate={{ offsetDistance: "100%", opacity: [0, 1, 1, 0] }}
                     transition={{
-                      offsetDistance: { duration: 0.55, ease: "easeInOut" },
-                      opacity: { times: [0, 0.1, 0.9, 1], duration: 0.55 }
+                      offsetDistance: { duration: 1.0, ease: "easeInOut" },
+                      opacity: { times: [0, 0.12, 0.88, 1], duration: 1.0 }
                     }}
                   >
                     <div className="-translate-x-1/2 -translate-y-1/2">
-                      <Plane className="w-5 h-5 text-[#FACC15] fill-[#FACC15] drop-shadow-[0_0_8px_rgba(250,204,21,0.85)]" />
+                      <Plane className="w-5.5 h-5.5 text-[#FACC15] fill-[#FACC15] drop-shadow-[0_0_10px_rgba(250,204,21,0.9)]" />
                     </div>
                   </motion.div>
                 )}
@@ -250,14 +250,14 @@ export function SplashScreen() {
             )}
           </AnimatePresence>
 
-          {/* Scene 4 - 8: Logo, Brand Typography, Ecosystem, Loading (1.8s - 4.8s) */}
+          {/* Scene 4 - 8: Logo, Brand Typography, Ecosystem, Loading (3.6s - 9.6s) */}
           <AnimatePresence>
             {step >= 3 && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.96 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.4 }}
+                transition={{ duration: 0.5 }}
                 className="flex flex-col items-center"
               >
                 {/* Logo Monogram Wrapper */}
@@ -267,13 +267,13 @@ export function SplashScreen() {
                       ? "drop-shadow(0 0 25px rgba(20,184,166,0.5)) drop-shadow(0 0 10px rgba(250,204,21,0.25))" 
                       : "drop-shadow(0 0 0px rgba(0,0,0,0))"
                   }}
-                  transition={{ duration: 0.4 }}
+                  transition={{ duration: 0.5 }}
                   className="relative w-28 h-28 mb-2 flex items-center justify-center"
                 >
                   <svg viewBox="0 0 100 100" className="w-full h-full text-[#14B8A6]">
                     <defs>
                       <linearGradient id="accent-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#0EA5E9" />
+                        <stop offset="0%" stopColor="#0ea5e9" />
                         <stop offset="100%" stopColor="#14B8A6" />
                       </linearGradient>
                     </defs>
@@ -282,12 +282,12 @@ export function SplashScreen() {
                     {step >= 4 && (
                       <>
                         <motion.circle
-                          cx="46"
+                          cx="48"
                           cy="72"
                           initial={{ r: 6, opacity: 0.8 }}
                           animate={{ r: 24, opacity: 0 }}
                           transition={{
-                            duration: 1.3,
+                            duration: 1.8,
                             repeat: Infinity,
                             ease: "easeOut",
                           }}
@@ -296,13 +296,13 @@ export function SplashScreen() {
                           fill="none"
                         />
                         <motion.circle
-                          cx="46"
+                          cx="48"
                           cy="72"
                           initial={{ r: 6, opacity: 0.8 }}
                           animate={{ r: 38, opacity: 0 }}
                           transition={{
-                            duration: 1.3,
-                            delay: 0.45,
+                            duration: 1.8,
+                            delay: 0.6,
                             repeat: Infinity,
                             ease: "easeOut",
                           }}
@@ -315,13 +315,13 @@ export function SplashScreen() {
 
                     {/* T-Monogram Shapes drawing themselves */}
                     <motion.path
-                      d="M 20,30 L 68,30"
+                      d="M 22,30 L 68,30"
                       stroke="url(#accent-grad)"
                       strokeWidth="8"
                       strokeLinecap="round"
                       initial={{ pathLength: 0 }}
                       animate={step >= 3 ? { pathLength: 1 } : { pathLength: 0 }}
-                      transition={{ duration: 0.3, ease: "easeInOut" }}
+                      transition={{ duration: 0.5, ease: "easeInOut" }}
                     />
                     <motion.path
                       d="M 68,30 L 80,30"
@@ -330,28 +330,28 @@ export function SplashScreen() {
                       strokeLinecap="round"
                       initial={{ pathLength: 0 }}
                       animate={step >= 3 ? { pathLength: 1 } : { pathLength: 0 }}
-                      transition={{ duration: 0.25, delay: 0.3, ease: "easeInOut" }}
+                      transition={{ duration: 0.4, delay: 0.5, ease: "easeInOut" }}
                     />
                     <motion.path
-                      d="M 40,30 C 40,45 28,60 28,72 C 28,82 36,90 46,90 C 56,90 64,82 64,72 C 64,60 52,45 52,30"
+                      d="M 42,30 C 42,45 30,60 30,72 C 30,82 38,90 48,90 C 58,90 66,82 66,72 C 66,60 54,45 54,30"
                       stroke="url(#accent-grad)"
                       strokeWidth="8"
                       strokeLinecap="round"
                       fill="none"
                       initial={{ pathLength: 0 }}
                       animate={step >= 3 ? { pathLength: 1 } : { pathLength: 0 }}
-                      transition={{ duration: 0.45, delay: 0.1, ease: "easeInOut" }}
+                      transition={{ duration: 0.75, delay: 0.25, ease: "easeInOut" }}
                     />
 
                     {/* Logo Center Refinement Dot */}
                     <motion.circle
-                      cx="46"
+                      cx="48"
                       cy="72"
                       r="6.5"
                       fill="#FACC15"
                       initial={{ scale: 0, opacity: 0 }}
                       animate={step >= 4 ? { scale: 1, opacity: 1 } : { scale: 0, opacity: 0 }}
-                      transition={{ duration: 0.35, ease: "easeOut" }}
+                      transition={{ duration: 0.45, ease: "easeOut" }}
                       className="shadow-[0_0_8px_#FACC15]"
                     />
                   </svg>
@@ -362,7 +362,7 @@ export function SplashScreen() {
                   <motion.h1
                     initial={{ opacity: 0, y: 10 }}
                     animate={step >= 5 ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-                    transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                    transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                     className="text-3.5xl md:text-4xl font-extrabold tracking-[0.45em] text-white font-sora select-none mt-2 translate-x-[0.225em]"
                   >
                     TRAVIXA
@@ -371,7 +371,7 @@ export function SplashScreen() {
                   <motion.p
                     initial={{ opacity: 0, y: 5 }}
                     animate={step >= 5 ? { opacity: 1, y: 0 } : { opacity: 0, y: 5 }}
-                    transition={{ duration: 0.4, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+                    transition={{ duration: 0.6, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
                     className="text-[10px] md:text-xs font-bold tracking-[0.25em] mt-3 select-none text-slate-400 font-sans"
                   >
                     <span className="text-[#14B8A6]">TRAVEL INTELLIGENCE.</span>{" "}
@@ -383,7 +383,7 @@ export function SplashScreen() {
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={step >= 6 ? { opacity: 1 } : { opacity: 0 }}
-                  transition={{ duration: 0.4 }}
+                  transition={{ duration: 0.5 }}
                   className="grid grid-cols-4 gap-6 md:gap-8 mt-9 w-72 md:w-80 justify-center"
                 >
                   {ecosystemItems.map((item, idx) => (
@@ -391,7 +391,7 @@ export function SplashScreen() {
                       key={idx}
                       initial={{ opacity: 0, y: 12 }}
                       animate={step >= 6 ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
-                      transition={{ duration: 0.4, delay: idx * 0.08, ease: "easeOut" }}
+                      transition={{ duration: 0.5, delay: idx * 0.15, ease: "easeOut" }}
                       className="flex flex-col items-center"
                     >
                       <div className="w-12 h-12 rounded-full bg-white/[0.03] border border-white/10 flex items-center justify-center text-[#14B8A6] shadow-[0_0_8px_rgba(20,184,166,0.15)]">
@@ -411,21 +411,21 @@ export function SplashScreen() {
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={step === 7 ? { opacity: 1, scale: 1 } : { opacity: 0 }}
-                  transition={{ duration: 0.2 }}
+                  transition={{ duration: 0.3 }}
                   className="w-56 md:w-64 h-[2px] bg-white/10 rounded-full overflow-hidden mt-10 relative"
                 >
                   {/* Filling progress line */}
                   <motion.div
                     initial={{ width: "0%" }}
                     animate={step === 7 ? { width: "100%" } : { width: "0%" }}
-                    transition={{ duration: 0.5, ease: "easeInOut" }}
+                    transition={{ duration: 0.9, ease: "easeInOut" }}
                     className="h-full bg-gradient-to-r from-[#14B8A6] via-[#38BDF8] to-[#FACC15] relative"
                   >
                     {/* Moving lens flare glow point */}
                     <motion.div
                       initial={{ left: "0%" }}
                       animate={step === 7 ? { left: "100%" } : { left: "0%" }}
-                      transition={{ duration: 0.5, ease: "easeInOut" }}
+                      transition={{ duration: 0.9, ease: "easeInOut" }}
                       className="absolute top-1/2 -translate-y-1/2 w-4 h-4 -translate-x-1/2 rounded-full bg-white blur-[2.5px] shadow-[0_0_8px_#38BDF8,0_0_15px_#14B8A6]"
                     />
                   </motion.div>
