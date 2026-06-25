@@ -15,12 +15,33 @@ export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSplashActive, setIsSplashActive] = useState(false);
   
   useEffect(() => {
     setMounted(true);
-    return scrollY.onChange((latest) => {
+    
+    if (typeof window !== "undefined") {
+      const seen = localStorage.getItem("travixa_intro_seen");
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (!seen && !reducedMotion) {
+        setIsSplashActive(true);
+      }
+    }
+
+    const handleSplashComplete = () => {
+      setIsSplashActive(false);
+    };
+
+    window.addEventListener("travixa_splash_complete", handleSplashComplete);
+
+    const unsubscribeScroll = scrollY.onChange((latest) => {
       setIsScrolled(latest > 50);
     });
+
+    return () => {
+      window.removeEventListener("travixa_splash_complete", handleSplashComplete);
+      unsubscribeScroll();
+    };
   }, [scrollY]);
 
   if (!mounted) {
@@ -74,11 +95,13 @@ export function Navbar() {
         <div className="flex items-center">
           <Link href="/" className="flex items-center transition-opacity hover:opacity-95">
             <Image 
+              id="navbar-logo"
               src="/travixa-logo.png" 
               alt="Travixa" 
               width={150} 
               height={36} 
-              className="h-8 w-auto object-contain sm:h-9" 
+              className="h-8 w-auto object-contain sm:h-9 transition-opacity duration-300" 
+              style={{ opacity: isSplashActive ? 0 : 1 }}
               priority 
             />
           </Link>

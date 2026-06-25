@@ -3,11 +3,25 @@
 import { useState, useEffect } from "react";
 import { Search, Plus, Filter, Download, FileText, CheckCircle2, Clock, XCircle, MapPin, DollarSign, Send, Loader2, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { exportTableToExcel } from "@/lib/utils/excelExport";
 
 export default function BookingsPage() {
   const [filter, setFilter] = useState("All");
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const handleExportBookings = () => {
+    const columns = [
+      { header: "Booking ID", key: "id" },
+      { header: "Customer Name", key: "customer" },
+      { header: "Destination", key: "dest" },
+      { header: "Invoice Number", key: "invoice" },
+      { header: "Total Amount", key: "amount" },
+      { header: "Paid Amount", key: "paid" },
+      { header: "Status", key: "status" }
+    ];
+    exportTableToExcel(filteredBookings, columns, "agency_bookings");
+  };
 
   useEffect(() => {
     async function fetchBookings() {
@@ -42,7 +56,7 @@ export default function BookingsPage() {
           <p className="text-xs text-[#94A3B8] mt-1">Manage client bookings and track payment statuses.</p>
         </div>
         <div className="flex gap-3 items-center">
-          <Button className="h-8 text-xs font-bold bg-[#0B1220] hover:bg-white/5 text-white border border-white/10 shadow-sm">
+          <Button onClick={handleExportBookings} className="h-8 text-xs font-bold bg-[#0B1220] hover:bg-white/5 text-white border border-white/10 shadow-sm">
             <Download className="w-3.5 h-3.5 mr-1" /> Export Bookings
           </Button>
           <Button className="h-8 text-xs font-bold bg-[#14B8A6] hover:bg-[#14B8A6]/90 text-[#0F172A] border-none shadow-sm">

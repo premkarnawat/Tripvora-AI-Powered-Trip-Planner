@@ -1,14 +1,37 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Filter, Plus, Building2, MapPin, DollarSign, Star, MoreHorizontal, Upload, Trash2 } from "lucide-react";
+import { Search, Filter, Plus, Building2, MapPin, DollarSign, Star, MoreHorizontal, Upload, Trash2, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { exportTableToExcel } from "@/lib/utils/excelExport";
 
 export default function VendorsPage() {
   const [vendors, setVendors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
+
+  const handleExportExcel = () => {
+    const columns = [
+      { header: "ID", key: "id" },
+      { header: "Vendor Name", key: "name" },
+      { header: "Category", key: "category" },
+      { header: "Destination", key: "dest" },
+      { header: "Contract Rate", key: "price" },
+      { header: "Rating", key: "rating" },
+      { header: "Status", key: "status" }
+    ];
+    const exportData = filteredVendors.map(v => ({
+      id: v.id || "",
+      name: v.name || v.vendor_name || "",
+      category: v.category || "Hotel",
+      dest: v.dest || v.destination || "",
+      price: v.price || "₹0",
+      rating: v.rating || 4.8,
+      status: v.status || "Active"
+    }));
+    exportTableToExcel(exportData, columns, "vendor_library");
+  };
 
   useEffect(() => {
     fetch('/api/crm/vendors')
@@ -79,6 +102,9 @@ export default function VendorsPage() {
           <p className="text-xs text-[#94A3B8] mt-1">Manage your agency's actual inventory for package building.</p>
         </div>
         <div className="flex gap-3 items-center">
+          <Button onClick={handleExportExcel} className="h-8 text-xs font-bold bg-[#020817] hover:bg-white/5 text-[#14B8A6] border border-[#14B8A6]/20">
+            <Download className="w-3.5 h-3.5 mr-1" /> Export Excel
+          </Button>
           <Button onClick={() => alert("CSV Import template generated!")} className="h-8 text-xs font-bold bg-[#020817] hover:bg-white/5 text-white border border-white/10">
             <Upload className="w-3.5 h-3.5 mr-1" /> Import CSV
           </Button>

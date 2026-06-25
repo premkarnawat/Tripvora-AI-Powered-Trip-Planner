@@ -110,7 +110,7 @@ export default function ContactPage() {
               <div>
                 <h3 className="text-lg font-bold font-sora text-white">Email Us</h3>
                 <p className="text-white/50 text-sm mt-1">For general inquiries and support.</p>
-                <a href="mailto:hello@trippilot.ai" className="text-teal-400 font-bold text-sm mt-2 block hover:underline">hello@trippilot.ai</a>
+                <a href="mailto:contact.travixa@gmail.com" className="text-teal-400 font-bold text-sm mt-2 block hover:underline">contact.travixa@gmail.com</a>
               </div>
             </div>
 

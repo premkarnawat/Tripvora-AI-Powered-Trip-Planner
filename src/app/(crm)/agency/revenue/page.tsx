@@ -3,17 +3,47 @@
 import { useState, useEffect } from "react";
 import { DollarSign, TrendingUp, TrendingDown, CreditCard, ArrowUpRight, ArrowDownRight, FileText, Download, Activity, PieChart } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { exportTableToExcel } from "@/lib/utils/excelExport";
 
 export default function RevenuePage() {
   const [metrics, setMetrics] = useState({ gross: 0, expenses: 0, profit: 0, margin: "0%" });
+  const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const handleExportARR = () => {
+    const columns = [
+      { header: "Booking ID", key: "id" },
+      { header: "Customer Name", key: "customer" },
+      { header: "Destination", key: "dest" },
+      { header: "Total Amount", key: "amount", format: "currency" },
+      { header: "Est. Cost (80%)", key: "cost", format: "currency" },
+      { header: "Net Profit (20%)", key: "profit", format: "currency" },
+      { header: "Status", key: "status" }
+    ];
+    const exportData = bookings.map(b => {
+      const rawAmt = Number((b.amount || "0").replace(/[^0-9.-]+/g,"")) || 0;
+      const cost = Math.floor(rawAmt * 0.8);
+      const profit = rawAmt - cost;
+      return {
+        id: b.id || "",
+        customer: b.customer || "",
+        dest: b.dest || "",
+        amount: rawAmt,
+        cost,
+        profit,
+        status: b.status || ""
+      };
+    });
+    exportTableToExcel(exportData, columns, "agency_revenue_ledger");
+  };
 
   useEffect(() => {
     fetch('/api/crm/bookings')
       .then(res => res.json())
-      .then(bookings => {
-        if (Array.isArray(bookings)) {
-          const gross = bookings.reduce((acc, b) => {
+      .then(fetchedBookings => {
+        if (Array.isArray(fetchedBookings)) {
+          setBookings(fetchedBookings);
+          const gross = fetchedBookings.reduce((acc, b) => {
             const rawAmt = Number((b.amount || "0").replace(/[^0-9.-]+/g,"")) || 0;
             return acc + rawAmt;
           }, 0);
@@ -38,7 +68,7 @@ export default function RevenuePage() {
           <p className="text-xs text-[#94A3B8] mt-1">Live financial calculation computed dynamically from confirmed agency bookings.</p>
         </div>
         <div className="flex gap-3 items-center">
-          <Button onClick={() => alert("ARR Financial Tax PDF generated!")} className="h-8 text-xs font-bold bg-[#14B8A6] hover:bg-[#14B8A6]/90 text-[#0F172A] border-none shadow-sm">
+          <Button onClick={handleExportARR} className="h-8 text-xs font-bold bg-[#14B8A6] hover:bg-[#14B8A6]/90 text-[#0F172A] border-none shadow-sm">
             <Download className="w-3.5 h-3.5 mr-1" /> Export ARR Ledger
           </Button>
         </div>

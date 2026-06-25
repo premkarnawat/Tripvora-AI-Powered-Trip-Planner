@@ -1,13 +1,28 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Plus, Filter, LayoutGrid, List, TableProperties, MoreHorizontal, Phone, MessageCircle, Mail, MapPin, Calendar, DollarSign, Users, Loader2 } from "lucide-react";
+import { Search, Plus, Filter, LayoutGrid, List, TableProperties, MoreHorizontal, Phone, MessageCircle, Mail, MapPin, Calendar, DollarSign, Users, Loader2, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { exportTableToExcel } from "@/lib/utils/excelExport";
 
 export default function LeadsPage() {
   const [view, setView] = useState("table");
   const [leads, setLeads] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const handleExportLeads = () => {
+    const columns = [
+      { header: "Lead ID", key: "id" },
+      { header: "Customer Name", key: "name" },
+      { header: "Destination", key: "dest" },
+      { header: "Dates", key: "date" },
+      { header: "Pax Count", key: "pax" },
+      { header: "Budget", key: "budget" },
+      { header: "Lead Score", key: "score" },
+      { header: "Status", key: "status" }
+    ];
+    exportTableToExcel(leads, columns, "agency_leads");
+  };
 
   useEffect(() => {
     async function fetchLeads() {
@@ -39,6 +54,9 @@ export default function LeadsPage() {
           <p className="text-xs text-[#94A3B8] mt-1">Track and convert inquiries into booked trips.</p>
         </div>
         <div className="flex gap-3 items-center">
+          <Button onClick={handleExportLeads} className="h-8 text-xs font-bold bg-[#0B1220] hover:bg-white/5 text-white border border-white/10 shadow-sm">
+            <Download className="w-3.5 h-3.5 mr-1" /> Export Leads
+          </Button>
           <div className="flex bg-[#0B1220] p-1 rounded-md border border-white/10 h-8">
             <button onClick={() => setView("kanban")} className={`px-2.5 rounded ${view === "kanban" ? "bg-white/10 text-white" : "text-[#94A3B8] hover:text-white"}`}><LayoutGrid className="w-3.5 h-3.5" /></button>
             <button onClick={() => setView("list")} className={`px-2.5 rounded ${view === "list" ? "bg-white/10 text-white" : "text-[#94A3B8] hover:text-white"}`}><List className="w-3.5 h-3.5" /></button>
