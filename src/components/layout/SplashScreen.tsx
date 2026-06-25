@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plane, Building2, MapPin, PalmTree } from "lucide-react";
+import { Plane, Building2, MapPin, Palmtree } from "lucide-react";
 
 // Dotted world map coordinates (scaled to 180x100 viewBox)
 const dottedMapPoints = [
@@ -42,7 +42,7 @@ const ecosystemItems = [
   { icon: Plane, label: "FLIGHTS" },
   { icon: Building2, label: "HOTELS" },
   { icon: MapPin, label: "DESTINATIONS" },
-  { icon: PalmTree, label: "EXPERIENCES" },
+  { icon: Palmtree, label: "EXPERIENCES" },
 ];
 
 export function SplashScreen() {
