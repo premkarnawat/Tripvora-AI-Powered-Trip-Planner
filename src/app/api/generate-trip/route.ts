@@ -103,12 +103,13 @@ export async function POST(request: Request) {
     const itineraryJson: ItineraryData = JSON.parse(textResponse);
 
     // 5. Save to Cache (fail silently if table doesn't exist yet during provisioning)
-    await supabase.from('ai_generation_logs').insert({
+    const { error: cacheError } = await supabase.from('ai_generation_logs').insert({
       prompt_hash: promptHash,
       prompt_text: prompt,
       response_json: itineraryJson,
       token_count: 0 // Could calculate from usage metadata
-    }).catch(e => console.error("Cache save failed:", e));
+    });
+    if (cacheError) console.error("Cache save failed:", cacheError);
 
     return NextResponse.json(itineraryJson);
 
