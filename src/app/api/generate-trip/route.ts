@@ -143,7 +143,17 @@ export async function POST(request: Request) {
       return NextResponse.json(cached.response_json);
     }
 
-    // Execute Generation Task inside Single-Flight Lock
+    // Distributed Lock Check across Serverless Lambda Regions
+    const { data: activeLock } = await supabase.from('ai_generation_locks').select('prompt_hash').eq('prompt_hash', promptHash).gt('expires_at', new Date().toISOString()).single();
+    if (activeLock) {
+      await new Promise(r => setTimeout(r, 1500));
+      const { data: retryCache } = await supabase.from('ai_generation_logs').select('response_json').eq('prompt_hash', promptHash).single();
+      if (retryCache?.response_json) return NextResponse.json(retryCache.response_json);
+    } else {
+      supabase.from('ai_generation_locks').insert({ prompt_hash: promptHash }).then();
+    }
+
+    // Execute Generation Task inside Single-Flight & Distributed Lock
     const generationPromise = (async () => {
       const geminiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
       if (!geminiKey) throw new Error("Missing AI API Key");
@@ -163,13 +173,14 @@ export async function POST(request: Request) {
       const itineraryJson: ItineraryData = JSON.parse(textResponse);
       const tokenCount = aiData.usageMetadata?.totalTokenCount || 450;
 
-      // Save to cache asynchronously
+      // Save to cache asynchronously and release distributed lock
       supabase.from('ai_generation_logs').insert({
         prompt_hash: promptHash,
         prompt_text: prompt,
         response_json: itineraryJson,
         token_count: tokenCount
       }).then(({ error }) => { if (error) console.warn("Cache write warning:", error.message); });
+      supabase.from('ai_generation_locks').delete().eq('prompt_hash', promptHash).then();
 
       return itineraryJson;
     })();
@@ -182,6 +193,7 @@ export async function POST(request: Request) {
       return NextResponse.json(result);
     } catch (aiError) {
       inFlightRequests.delete(promptHash);
+      supabase.from('ai_generation_locks').delete().eq('prompt_hash', promptHash).then();
       console.warn(`[AI Engine] Primary Gemini generation degraded for "${body.destination}". Triggering Tier 4 Semantic Failover...`, aiError);
 
       // Tier 4: Semantic Destination Cache Fallback
