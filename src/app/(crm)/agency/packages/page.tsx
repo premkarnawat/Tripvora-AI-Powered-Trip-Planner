@@ -1008,8 +1008,8 @@ export default function PackageBuilderPageV2() {
                         start_date: startDate,
                         end_date: endDate,
                         nights,
-                        budget: totalCost, // target budget saved
-                        total_amount: totalCost,
+                        budget: finalCustomerPrice, // target budget saved
+                        total_amount: finalCustomerPrice,
                         pricing_metadata: {
                           mode: pricingMode,
                           gstType,
@@ -1038,7 +1038,7 @@ export default function PackageBuilderPageV2() {
               </Button>
               <Button 
                 onClick={() => {
-                  const encoded = encodeURIComponent(`Hi ${clientName}, here is the customized travel package for ${destination} we discussed. Total package cost is ₹${totalCost.toLocaleString('en-IN')}. Let us know your thoughts!`);
+                  const encoded = encodeURIComponent(`Hi ${clientName}, here is the customized travel package for ${destination} we discussed. Total package cost is ₹${finalCustomerPrice.toLocaleString('en-IN')}. Let us know your thoughts!`);
                   window.open(`https://wa.me/?text=${encoded}`, "_blank");
                 }}
                 className="h-9 px-4 text-xs font-bold bg-teal-600 hover:bg-teal-700 text-white border-none shadow-sm flex items-center gap-1.5"
