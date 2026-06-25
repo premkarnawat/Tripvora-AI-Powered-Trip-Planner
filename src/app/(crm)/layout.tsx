@@ -63,7 +63,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
               <path d="M2 22L12 2L22 22H2Z" fill="#14B8A6" fillOpacity="0.8"/>
               <path d="M12 2L2 22H12V2Z" fill="#38BDF8"/>
             </svg>
-            <h2 className="text-lg font-bold text-white tracking-tight leading-none">TripPilot OS</h2>
+            <h2 className="text-lg font-bold text-white tracking-tight leading-none">Travixa OS</h2>
           </Link>
           
           <div className="mt-4 flex items-center gap-3 p-2 bg-white/[0.03] border border-white/10 rounded-md">
@@ -124,7 +124,7 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
               <path d="M2 22L12 2L22 22H2Z" fill="#14B8A6" fillOpacity="0.8"/>
               <path d="M12 2L2 22H12V2Z" fill="#38BDF8"/>
             </svg>
-          <span className="font-bold text-white text-sm">TripPilot OS</span>
+          <span className="font-bold text-white text-sm">Travixa OS</span>
         </div>
         <button onClick={() => setIsMobileMenuOpen(true)} className="text-white p-1.5 hover:bg-white/5 rounded-md transition-colors">
           <Menu className="w-5 h-5" />

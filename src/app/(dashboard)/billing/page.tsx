@@ -64,7 +64,7 @@ export default function BillingPage() {
               <div className="absolute top-0 right-0 p-6">
                 <Zap className="w-8 h-8 text-primary opacity-20" />
               </div>
-              <h3 className="text-2xl font-bold text-white font-sora mb-2">TripPilot Pro</h3>
+              <h3 className="text-2xl font-bold text-white font-sora mb-2">Travixa Pro</h3>
               <p className="text-white/60 text-sm mb-6">For the avid traveler who wants the best tools.</p>
               <div className="mb-6">
                 <span className="text-4xl font-black text-white font-sora">$19</span>

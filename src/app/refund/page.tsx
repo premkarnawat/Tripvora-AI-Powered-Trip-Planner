@@ -29,7 +29,7 @@ export default function RefundPolicyPage() {
           <section className="space-y-4">
             <h2 className="text-2xl font-bold text-white font-sora">1. Subscription Plans</h2>
             <p>
-              TripPilot offers various subscription plans (Pro, Agency, Enterprise). If you are not satisfied with your subscription, you may request a full refund within 14 days of your initial purchase.
+              Travixa offers various subscription plans (Pro, Agency, Enterprise). If you are not satisfied with your subscription, you may request a full refund within 14 days of your initial purchase.
             </p>
             <p>
               After the 14-day period, we do not offer refunds for any subscription fees. You may cancel your subscription at any time, and you will continue to have access to the service through the end of your billing period.
@@ -39,7 +39,7 @@ export default function RefundPolicyPage() {
           <section className="space-y-4">
             <h2 className="text-2xl font-bold text-white font-sora">2. Affiliate Bookings</h2>
             <p>
-              TripPilot does not process payments for flights, hotels, or external activities. All transactions made through our affiliate partners (e.g., Booking.com, Skyscanner) are governed by the respective partner's refund and cancellation policies.
+              Travixa does not process payments for flights, hotels, or external activities. All transactions made through our affiliate partners (e.g., Booking.com, Skyscanner) are governed by the respective partner's refund and cancellation policies.
             </p>
             <p>
               If you need a refund for a travel booking, you must contact the airline, hotel, or booking platform directly.
@@ -49,7 +49,7 @@ export default function RefundPolicyPage() {
           <section className="space-y-4">
             <h2 className="text-2xl font-bold text-white font-sora">3. How to Request a Refund</h2>
             <p>
-              To request a refund for a TripPilot SaaS subscription, please contact our support team at <span className="text-white font-bold">billing@trippilot.ai</span> with your account details and reason for cancellation.
+              To request a refund for a Travixa SaaS subscription, please contact our support team at <span className="text-white font-bold">contact.travixa@gmail.com</span> with your account details and reason for cancellation.
             </p>
           </section>
 

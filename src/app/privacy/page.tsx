@@ -29,7 +29,7 @@ export default function PrivacyPolicyPage() {
           <section className="space-y-4">
             <h2 className="text-2xl font-bold text-white font-sora">1. Introduction</h2>
             <p>
-              Welcome to TripPilot. We respect your privacy and are committed to protecting your personal data. This privacy policy will inform you as to how we look after your personal data when you visit our website (regardless of where you visit it from) and tell you about your privacy rights and how the law protects you.
+              Welcome to Travixa. We respect your privacy and are committed to protecting your personal data. This privacy policy will inform you as to how we look after your personal data when you visit our website (regardless of where you visit it from) and tell you about your privacy rights and how the law protects you.
             </p>
           </section>
 
@@ -76,7 +76,7 @@ export default function PrivacyPolicyPage() {
             <h2 className="text-2xl font-bold text-white font-sora">6. Contact Us</h2>
             <p>
               If you have any questions about this privacy policy or our privacy practices, please contact us at: <br/>
-              <span className="text-white font-bold">privacy@trippilot.ai</span>
+              <span className="text-white font-bold">contact.travixa@gmail.com</span>
             </p>
           </section>
 

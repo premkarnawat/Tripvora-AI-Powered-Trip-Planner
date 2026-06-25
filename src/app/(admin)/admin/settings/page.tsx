@@ -62,9 +62,9 @@ export default function AdminSettingsPage() {
               <h3 className="text-base font-bold font-sora text-[#0F172A] border-b border-[#E5E7EB] pb-3">Platform Configurations</h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <InputField label="Platform Name" value="TripPilot" />
+                <InputField label="Platform Name" value="Travixa" />
                 <InputField label="Tagline" value="Travel Business Operating System" />
-                <InputField label="Support Email" value="support@trippilot.in" />
+                <InputField label="Support Email" value="support@travixa.in" />
                 <InputField label="Support Phone" value="+91 98765 43210" />
                 <InputField label="WhatsApp Support" value="+91 98765 43210" />
                 <InputField label="Timezone" value="Asia/Kolkata (IST)" />
@@ -109,11 +109,11 @@ export default function AdminSettingsPage() {
                 <InputField label="Secondary Brand Color (Hex)" value="#14B8A6" />
                 
                 <div className="md:col-span-2">
-                  <InputField label="Email Branding Header" value="TripPilot - Premium Travel Management" />
+                  <InputField label="Email Branding Header" value="Travixa - Premium Travel Management" />
                 </div>
                 
                 <div className="md:col-span-2">
-                  <InputField label="Footer Copyright Information" value="© 2026 TripPilot Inc. All rights reserved." />
+                  <InputField label="Footer Copyright Information" value="© 2026 Travixa Inc. All rights reserved." />
                 </div>
               </div>
             </div>
@@ -124,13 +124,13 @@ export default function AdminSettingsPage() {
               <h3 className="text-base font-bold font-sora text-[#0F172A] border-b border-[#E5E7EB] pb-3">Social Media Integrations</h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <InputField label="Instagram Profile Link" value="https://instagram.com/trippilot" />
-                <InputField label="LinkedIn Company Page" value="https://linkedin.com/company/trippilot" />
-                <InputField label="Facebook Fan Page" value="https://facebook.com/trippilot" />
-                <InputField label="YouTube Channel Page" value="https://youtube.com/@trippilot" />
-                <InputField label="Twitter / X handle" value="https://x.com/trippilot" />
+                <InputField label="Instagram Profile Link" value="https://instagram.com/travixa" />
+                <InputField label="LinkedIn Company Page" value="https://linkedin.com/company/travixa" />
+                <InputField label="Facebook Fan Page" value="https://facebook.com/travixa" />
+                <InputField label="YouTube Channel Page" value="https://youtube.com/@travixa" />
+                <InputField label="Twitter / X handle" value="https://x.com/travixa" />
                 <InputField label="WhatsApp broadcast channel" value="https://wa.me/channel/12345" />
-                <InputField label="Telegram support community" value="https://t.me/trippilot" />
+                <InputField label="Telegram support community" value="https://t.me/travixa" />
               </div>
             </div>
           )}

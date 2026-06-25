@@ -35,7 +35,9 @@ export async function updateSession(request: NextRequest) {
 
   // Protect private routes
   const protectedRoutes = ['/dashboard', '/agency', '/admin', '/saved-trips', '/settings'];
-  const isProtected = protectedRoutes.some(route => pathname.startsWith(route));
+  const isProtected = protectedRoutes.some(route => pathname.startsWith(route)) &&
+                      !pathname.startsWith('/admin/login') &&
+                      !pathname.startsWith('/agency/register');
 
   if (!user && isProtected) {
     const url = request.nextUrl.clone()
@@ -44,24 +46,54 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Enforce Admin RBAC check
-  if (user && pathname.startsWith('/admin')) {
+  if (user) {
     const userRole = user.user_metadata?.role || 'traveler';
-    // Allow demo access if user metadata hasn't been explicitly assigned admin role yet, or check DB
     const isAdmin = userRole === 'admin' || userRole === 'super_admin' || user.email?.includes('admin') || user.email === 'prem@example.com';
-    if (!isAdmin) {
+
+    // 1. Protect Admin Panel
+    if (pathname.startsWith('/admin') && !pathname.startsWith('/admin/login')) {
+      if (!isAdmin) {
+        const url = request.nextUrl.clone();
+        url.pathname = '/unauthorized';
+        return NextResponse.redirect(url);
+      }
+    }
+
+    // 2. Protect Agency CRM
+    if (pathname.startsWith('/agency') && !pathname.startsWith('/agency/register')) {
+      if (userRole !== 'agency') {
+        const url = request.nextUrl.clone();
+        url.pathname = '/unauthorized';
+        return NextResponse.redirect(url);
+      }
+    }
+
+    // 3. Protect Traveler Dashboard
+    if (pathname.startsWith('/dashboard') || pathname.startsWith('/saved-trips')) {
+      if (userRole === 'agency') {
+        const url = request.nextUrl.clone();
+        url.pathname = '/agency';
+        return NextResponse.redirect(url);
+      } else if (isAdmin) {
+        const url = request.nextUrl.clone();
+        url.pathname = '/admin';
+        return NextResponse.redirect(url);
+      }
+    }
+
+    // 4. Redirect auth pages to active role dashboards
+    if (pathname.startsWith('/login') || pathname.startsWith('/signup')) {
       const url = request.nextUrl.clone();
-      url.pathname = '/dashboard';
+      if (isAdmin) {
+        url.pathname = '/admin';
+      } else if (userRole === 'agency') {
+        url.pathname = '/agency';
+      } else {
+        url.pathname = '/dashboard';
+      }
       return NextResponse.redirect(url);
     }
   }
 
-  // Redirect to dashboard if logged in and trying to access login/signup
-  if (user && (pathname.startsWith('/login') || pathname.startsWith('/signup'))) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
-    return NextResponse.redirect(url)
-  }
-
-  return supabaseResponse
+  return supabaseResponse;
 }

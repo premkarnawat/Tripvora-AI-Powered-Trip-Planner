@@ -332,7 +332,7 @@ export function SplashScreen() {
                 {/* Monogram Wrapper */}
                 <div
                   id="splash-monogram-container"
-                  className="relative w-20 h-20 mb-4 flex items-center justify-center"
+                  className="relative w-24 h-24 mb-4 flex items-center justify-center"
                 >
                   <svg viewBox="0 0 100 100" className="w-full h-full text-teal-400 drop-shadow-[0_0_15px_rgba(20,184,166,0.35)]">
                     <defs>

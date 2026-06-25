@@ -154,7 +154,7 @@ export default function SettingsPage() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8 relative z-10">
               <div>
                 <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                  TripPilot Pro
+                  Travixa Pro
                   <span className="text-[10px] bg-[#10B981]/10 text-[#10B981] border border-[#10B981]/20 px-2 py-0.5 rounded-full uppercase tracking-wider">Active</span>
                 </h2>
                 <div className="flex items-end gap-1 mt-2">

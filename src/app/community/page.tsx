@@ -32,7 +32,7 @@ export default function CommunityPage() {
       hasLiked: true,
       comments: 45,
       time: "5 hours ago",
-      caption: "Wandering through the bamboo forests. The itinerary TripPilot built for my week here has been flawless. Highly recommend the early morning route!",
+      caption: "Wandering through the bamboo forests. The itinerary Travixa built for my week here has been flawless. Highly recommend the early morning route!",
       tags: ["#Kyoto", "#Japan", "#Forests"]
     }
   ]);
@@ -63,7 +63,7 @@ export default function CommunityPage() {
             Shared Adventures
           </h1>
           <p className="text-slate-500 text-xs font-semibold leading-relaxed">
-            See real itineraries, photos, and stories posted by the global TripPilot explorer network.
+            See real itineraries, photos, and stories posted by the global Travixa explorer network.
           </p>
         </div>
 

@@ -6,7 +6,7 @@ import {
   Eye, MousePointerClick, Send, Coins, Star, Plus
 } from "lucide-react";
 
-// Mock marketplace listing data in TripPilot B2B2C model
+// Mock marketplace listing data in Travixa B2B2C model
 const listingsData = [
   {
     id: 1,

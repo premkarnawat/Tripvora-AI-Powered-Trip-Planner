@@ -215,7 +215,7 @@ export default function PackageBuilderPageV2() {
       generateBaseItinerary();
       let progress = 0;
       const texts = [
-        "Initializing TripPilot AI Core Engine...",
+        "Initializing Travixa AI Core Engine...",
         "Scoping Destination Database & Places API...",
         "Checking signed contracts in Elite Travels Vendor Library...",
         "Balancing margin parameters & final day-wise routing..."
@@ -1917,7 +1917,7 @@ export default function PackageBuilderPageV2() {
                 {/* PDF FOOTER */}
                 <div className="pt-4 border-t border-slate-200 flex justify-between items-center text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-auto">
                   <span>Elite Travels Proposal</span>
-                  <span>Powered by TripPilot</span>
+                  <span>Powered by Travixa</span>
                 </div>
 
               </div>

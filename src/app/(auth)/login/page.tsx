@@ -24,7 +24,7 @@ export default function LoginPage() {
       const { createClient } = await import('@/lib/supabase/client');
       const supabase = createClient();
       
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -32,8 +32,32 @@ export default function LoginPage() {
       if (error) {
         throw error;
       }
-      
-      router.push("/dashboard");
+
+      localStorage.setItem("traveler_auth", "true");
+
+      const user = data.user;
+      if (user) {
+        // Query the profile role
+        const { data: profile } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+
+        const role = profile?.role || user.user_metadata?.role || 'traveler';
+
+        if (role === 'admin' || role === 'super_admin') {
+          router.push("/admin");
+        } else if (role === 'agency') {
+          router.push("/agency");
+        } else if (role === 'traveler') {
+          router.push("/dashboard");
+        } else {
+          router.push("/unauthorized");
+        }
+      } else {
+        router.push("/dashboard");
+      }
     } catch (err: any) {
       setError(err.message || "Failed to sign in. Please check your credentials.");
     } finally {
@@ -57,7 +81,7 @@ export default function LoginPage() {
               <path d="M2 22L12 2L22 22H2Z" fill="#14B8A6" fillOpacity="0.8"/>
               <path d="M12 2L2 22H12V2Z" fill="#38BDF8"/>
             </svg>
-            <span className="text-xl font-bold tracking-tight font-sora text-white">TripPilot</span>
+            <span className="text-xl font-bold tracking-tight font-sora text-white">Travixa</span>
           </Link>
           
           <motion.h3 

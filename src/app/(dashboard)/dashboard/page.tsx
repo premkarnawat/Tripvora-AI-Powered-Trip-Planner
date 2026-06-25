@@ -369,7 +369,7 @@ export default function Dashboard() {
               <p className="text-[10px] text-slate-400 mt-1 leading-snug">Need live help? Talk to our certified agency expert on WhatsApp.</p>
             </div>
             <a 
-              href={`https://wa.me/919876543210?text=Hi%20TripPilot,%20I%2527d%20like%20expert%20assistance%20for%20my%20itinerary.`}
+              href={`https://wa.me/919876543210?text=Hi%20Travixa,%20I%2527d%20like%20expert%20assistance%20for%20my%20itinerary.`}
               target="_blank"
               rel="noreferrer"
               className="block"

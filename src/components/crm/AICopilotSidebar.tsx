@@ -22,7 +22,7 @@ export function AICopilotSidebar() {
       <div className="p-5 border-b border-white/5 flex items-center justify-between bg-[#0B1220]">
         <div>
           <h2 className="text-sm font-bold text-white flex items-center gap-2">
-            TripPilot AI
+            Travixa AI
           </h2>
           <p className="text-[10px] text-[#14B8A6] font-bold tracking-widest uppercase mt-0.5 flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-[#14B8A6] animate-pulse"></span> Ready to assist

@@ -25,7 +25,7 @@ export function Footer() {
           {/* Col 1: Brand & Bio */}
           <div className="lg:col-span-2 space-y-4 text-left">
             <Link href="/" className="inline-block transition-opacity hover:opacity-90">
-              <Image src="/travixa-logo.png" alt="Travixa" width={160} height={40} className="h-9 w-auto object-contain" />
+              <Image src="/travixa-logo.png" alt="Travixa" width={160} height={40} className="h-9 w-auto object-contain" style={{ mixBlendMode: "screen" }} />
             </Link>
             <p className="text-[#94A3B8] text-xs font-medium max-w-sm leading-relaxed">
               Travixa is the enterprise AI travel intelligence operating system designed to automate itineraries, quotations, and commercial agency operations with zero compromise.

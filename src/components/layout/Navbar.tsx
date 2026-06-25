@@ -101,7 +101,7 @@ export function Navbar() {
               width={150} 
               height={36} 
               className="h-8 w-auto object-contain sm:h-9 transition-opacity duration-300" 
-              style={{ opacity: isSplashActive ? 0 : 1 }}
+              style={{ opacity: isSplashActive ? 0 : 1, mixBlendMode: "screen" }}
               priority 
             />
           </Link>

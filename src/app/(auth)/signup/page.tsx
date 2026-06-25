@@ -27,12 +27,13 @@ export default function SignupPage() {
       const { createClient } = await import('@/lib/supabase/client');
       const supabase = createClient();
       
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
-            full_name: name
+            full_name: name,
+            role: 'traveler'
           }
         }
       });
@@ -41,10 +42,28 @@ export default function SignupPage() {
         throw error;
       }
 
-      setSuccess(true);
-      setTimeout(() => {
-        router.push("/login");
-      }, 2000);
+      // Initialize database user profile record
+      const user = data.user;
+      if (user) {
+        const { error: profileError } = await supabase.from('users').upsert({
+          id: user.id,
+          email: user.email || email,
+          full_name: name,
+          role: 'traveler',
+          subscription_tier: 'Free Tier',
+          preferences: { destinations: [], styles: [], foods: [] }
+        });
+        if (profileError) console.warn("Profile database initialization warning:", profileError.message);
+      }
+
+      if (data.session) {
+        // Auto-login succeeds (auto-confirm is active)
+        localStorage.setItem("traveler_auth", "true");
+        router.push("/dashboard?welcome=true");
+      } else {
+        // Requires email verification
+        setSuccess(true);
+      }
     } catch (err: any) {
       setError(err.message || "Failed to create account.");
     } finally {
@@ -68,7 +87,7 @@ export default function SignupPage() {
               <path d="M2 22L12 2L22 22H2Z" fill="#14B8A6" fillOpacity="0.8"/>
               <path d="M12 2L2 22H12V2Z" fill="#38BDF8"/>
             </svg>
-            <span className="text-xl font-bold tracking-tight font-sora text-white">TripPilot</span>
+            <span className="text-xl font-bold tracking-tight font-sora text-white">Travixa</span>
           </Link>
           
           <motion.h3 
@@ -120,9 +139,9 @@ export default function SignupPage() {
               <div className="w-12 h-12 rounded-full bg-teal-50 flex items-center justify-center text-teal-600 mx-auto mb-4 animate-bounce">
                 <Check className="w-6 h-6" />
               </div>
-              <h2 className="text-2xl font-bold text-black font-sora mb-2">Account Created!</h2>
+              <h2 className="text-2xl font-bold text-black font-sora mb-2">Check Your Email</h2>
               <p className="text-slate-500 text-xs font-semibold">
-                Your account is ready. Redirecting to login...
+                We've sent a verification link to your email inbox. Please click it to continue.
               </p>
             </div>
           ) : (

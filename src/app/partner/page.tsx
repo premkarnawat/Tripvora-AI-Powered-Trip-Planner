@@ -23,11 +23,11 @@ export default function PartnerPage() {
             </div>
             <h1 className="text-4xl md:text-6xl font-black font-sora tracking-tight mb-6">Integrate with the Future of Travel.</h1>
             <p className="text-white/60 font-medium text-lg mb-8 leading-relaxed">
-              Are you a hotel chain, experience provider, or travel agency? Partner with TripPilot to inject your inventory directly into our AI's decision-making engine. Let our Smart Travel OS recommend your services to thousands of active planners.
+              Are you a hotel chain, experience provider, or travel agency? Partner with Travixa to inject your inventory directly into our AI's decision-making engine. Let our Smart Travel OS recommend your services to thousands of active planners.
             </p>
             <div className="flex gap-4">
-              <Button className="bg-teal-500 hover:bg-teal-600 text-white font-bold px-8 py-6 rounded-xl text-sm">
-                Apply for Partnership
+              <Button asChild className="bg-teal-500 hover:bg-teal-600 text-white font-bold px-8 py-6 rounded-xl text-sm">
+                <Link href="/agency/register">Apply for Partnership</Link>
               </Button>
               <Button className="bg-white/5 hover:bg-white/10 text-white font-bold px-8 py-6 rounded-xl text-sm border border-white/10">
                 View API Docs
@@ -63,7 +63,7 @@ export default function PartnerPage() {
                       <Zap className="w-5 h-5 text-teal-400" />
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-teal-100">TripPilot AI Engine</p>
+                      <p className="text-xs font-bold text-teal-100">Travixa AI Engine</p>
                       <p className="text-[10px] text-teal-400">Processing Match...</p>
                     </div>
                   </div>

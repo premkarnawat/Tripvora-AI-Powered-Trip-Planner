@@ -250,14 +250,14 @@ export default function AgenciesPage() {
         <div>
           <div className="text-center max-w-xl mx-auto mb-16">
             <h2 className="text-3xl font-bold font-sora text-black tracking-tight">Success Stories</h2>
-            <p className="text-slate-500 text-sm mt-1">See how leading travel companies scale with TripPilot.</p>
+            <p className="text-slate-500 text-sm mt-1">See how leading travel companies scale with Travixa.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {[
               {
                 title: "Alpine Luxury Collection",
-                quote: "Before TripPilot, building a custom itinerary took hours. Now, we generate and deliver clean, stunning proposals in 3 minutes, which skyrocketed our conversion by 650%.",
+                quote: "Before Travixa, building a custom itinerary took hours. Now, we generate and deliver clean, stunning proposals in 3 minutes, which skyrocketed our conversion by 650%.",
                 user: "Marcus Thorne, CEO"
               },
               {

@@ -19,7 +19,7 @@ export default function AboutPage() {
               Redefining Travel Planning
             </h2>
             <p className="text-sm text-slate-600 leading-relaxed mb-4 font-semibold">
-              At TripPilot, we believe that the journey should be as enjoyable as the destination itself. For too long, planning a trip has been a fragmented, overwhelming process involving dozens of tabs and endless research.
+              At Travixa, we believe that the journey should be as enjoyable as the destination itself. For too long, planning a trip has been a fragmented, overwhelming process involving dozens of tabs and endless research.
             </p>
             <p className="text-sm text-slate-600 leading-relaxed font-semibold">
               We've built a premium AI-powered ecosystem that understands your unique travel style, budget, and desires, crafting bespoke itineraries in seconds. It's like having a world-class travel concierge in your pocket.

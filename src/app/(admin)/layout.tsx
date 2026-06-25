@@ -58,7 +58,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <path d="M2 22L12 2L22 22H2Z" fill="#0EA5A4" />
               <path d="M12 2L2 22H12V2Z" fill="#14B8A6" />
             </svg>
-            <h1 className="text-lg font-bold font-sora tracking-tight text-[#0F172A]">TripPilot Admin</h1>
+            <h1 className="text-lg font-bold font-sora tracking-tight text-[#0F172A]">Travixa Admin</h1>
           </div>
           <p className="text-[10px] font-bold text-[#64748B] uppercase tracking-widest mt-1">Travel OS</p>
         </div>
@@ -128,7 +128,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M2 22L12 2L22 22H2Z" fill="#0EA5A4" />
               </svg>
-              <span className="font-bold font-sora text-sm text-[#0F172A]">TripPilot</span>
+              <span className="font-bold font-sora text-sm text-[#0F172A]">Travixa</span>
             </div>
           </div>
 
@@ -281,7 +281,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M2 22L12 2L22 22H2Z" fill="#0EA5A4" />
                   </svg>
-                  <span className="font-sora font-bold text-[#0F172A]">TripPilot Admin</span>
+                  <span className="font-sora font-bold text-[#0F172A]">Travixa Admin</span>
                 </div>
                 <button onClick={() => setIsMobileMenuOpen(false)} className="w-8 h-8 flex items-center justify-center bg-slate-100 hover:bg-slate-200 border border-[#E5E7EB] rounded-full">
                   <X className="w-4 h-4 text-[#0F172A]" />

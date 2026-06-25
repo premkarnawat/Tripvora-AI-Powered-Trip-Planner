@@ -113,7 +113,7 @@ export default function TripPlannerPage() {
     let progress = 0;
     const loaderTexts = [
       "Analyzing travel interests & timeline criteria...",
-      "Connecting to TripPilot AI Engine...",
+      "Connecting to Travixa AI Engine...",
       "Scraping real-time routes & stays...",
       "Balancing budget allocations & emergency buffers...",
       "Finalizing luxury itinerary..."
@@ -192,7 +192,7 @@ export default function TripPlannerPage() {
             <path d="M2 22L12 2L22 22H2Z" fill="#14B8A6" />
             <path d="M12 2L2 22H12V2Z" fill="#38BDF8" />
           </svg>
-          <span className="text-base font-bold font-sora tracking-tight">TripPilot</span>
+          <span className="text-base font-bold font-sora tracking-tight">Travixa</span>
         </span>
         <button 
           onClick={() => router.push("/dashboard")}
@@ -242,7 +242,7 @@ export default function TripPlannerPage() {
                   <path d="M2 22L12 2L22 22H2Z" fill="#14B8A6" fillOpacity="0.8"/>
                   <path d="M12 2L2 22H12V2Z" fill="#38BDF8"/>
                 </svg>
-                <span className="text-xl font-bold tracking-tight text-white">TripPilot</span>
+                <span className="text-xl font-bold tracking-tight text-white">Travixa</span>
               </span>
               
               <h3 className="text-3xl font-extrabold font-sora leading-tight mb-4 max-w-sm">
@@ -275,7 +275,7 @@ export default function TripPlannerPage() {
                 <p className="text-[10px] font-bold text-teal-400 uppercase tracking-widest mb-1 flex items-center gap-1">
                   <Heart className="w-3 h-3 fill-teal-400" /> Trust Indicator
                 </p>
-                <p className="text-[11px] text-white/80 italic">&ldquo;TripPilot completely eliminated my spreadsheet logistics planning. Goa itinerary was ready in 2 minutes!&rdquo;</p>
+                <p className="text-[11px] text-white/80 italic">&ldquo;Travixa completely eliminated my spreadsheet logistics planning. Goa itinerary was ready in 2 minutes!&rdquo;</p>
                 <span className="text-[9px] text-white/40 mt-1.5 block">— Sarah J., Solo Explorer</span>
               </div>
             </div>

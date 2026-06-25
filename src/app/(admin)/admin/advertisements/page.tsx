@@ -6,7 +6,7 @@ import {
   Send, Percent, Calendar, Play, Pause, Trash2
 } from "lucide-react";
 
-// Mock ads data in TripPilot Admin Panel
+// Mock ads data in Travixa Admin Panel
 const campaignsData = [
   {
     id: 1,

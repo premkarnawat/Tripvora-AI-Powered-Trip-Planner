@@ -407,7 +407,7 @@ export function GlassSearchCard() {
                       <path d="M2 22L12 2L22 22H2Z" fill="#14B8A6" fillOpacity="0.8"/>
                       <path d="M12 2L2 22H12V2Z" fill="#38BDF8"/>
                     </svg>
-                    <span className="text-lg font-bold tracking-tight font-sora text-white">TripPilot</span>
+                    <span className="text-lg font-bold tracking-tight font-sora text-white">Travixa</span>
                   </div>
                   
                   <h3 className="text-2xl md:text-3xl font-extrabold font-sora leading-tight mb-4">

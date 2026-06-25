@@ -498,7 +498,7 @@ export default function MarketplacePage() {
           <div className="text-center max-w-2xl mx-auto mb-16">
             <h2 className="text-3xl md:text-4xl font-extrabold font-sora mb-3">Partner Spotlight</h2>
             <p className="text-slate-400 text-sm leading-relaxed">
-              Discover how leading travel brands are transforming their reach through TripPilot's advertising ecosystem.
+              Discover how leading travel brands are transforming their reach through Travixa's advertising ecosystem.
             </p>
           </div>
 
@@ -507,7 +507,7 @@ export default function MarketplacePage() {
             <div className="lg:col-span-5 bg-white text-slate-800 rounded-3xl p-8 md:p-10 shadow-xl border border-slate-100">
               <span className="text-[9px] font-black text-teal-600 tracking-widest uppercase block mb-6">Success Story</span>
               <p className="text-lg italic font-medium text-slate-700 leading-relaxed mb-8">
-                "TripPilot didn't just give us leads, they gave us a platform to deliver sharp, custom quotations. We've seen a 650% increase in bookings for our premium packages within the first quarter."
+                "Travixa didn't just give us leads, they gave us a platform to deliver sharp, custom quotations. We've seen a 650% increase in bookings for our premium packages within the first quarter."
               </p>
               
               <div className="flex items-center gap-3">

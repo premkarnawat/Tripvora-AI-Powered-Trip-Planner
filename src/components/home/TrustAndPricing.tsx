@@ -198,7 +198,6 @@ export function TrustAndPricing() {
   const [selectedPlan, setSelectedPlan] = useState<number>(2); // Default Professional
   const [activeFeatureIndex, setActiveFeatureIndex] = useState<number>(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState<boolean>(true);
-  const [showStickyBar, setShowStickyBar] = useState<boolean>(false);
   const autoPlayTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const sectionRef = useRef<HTMLDivElement | null>(null);
 
@@ -213,18 +212,6 @@ export function TrustAndPricing() {
       if (autoPlayTimerRef.current) clearInterval(autoPlayTimerRef.current);
     };
   }, [isAutoPlaying]);
-
-  // Scroll detection to show sticky CTA only when pricing section is visible
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!sectionRef.current) return;
-      const rect = sectionRef.current.getBoundingClientRect();
-      const isVisible = rect.top < window.innerHeight && rect.bottom > 150;
-      setShowStickyBar(isVisible);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   const handleFeatureClick = (index: number) => {
     setIsAutoPlaying(false); // Stop autoplay on interaction
@@ -641,42 +628,6 @@ export function TrustAndPricing() {
         </div>
 
       </div>
-
-      {/* ---------------------------------------------------- */}
-      {/* STICKY BOTTOM CONVERSIONS CTA BAR (Only visible if showStickyBar is true) */}
-      {/* ---------------------------------------------------- */}
-      <AnimatePresence>
-        {showStickyBar && (
-          <motion.div 
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 100, opacity: 0 }}
-            className="fixed bottom-0 left-0 right-0 z-50 bg-[#050816]/90 backdrop-blur-md border-t border-white/10 py-4 px-6 shadow-[0_-10px_35px_rgba(0,0,0,0.5)]"
-          >
-            <div className="max-w-[1200px] mx-auto flex flex-col sm:flex-row justify-between items-center gap-3">
-              <div className="text-center sm:text-left">
-                <p className="text-[10px] font-extrabold text-[#14B8A6] uppercase tracking-widest leading-none mb-1">Active Plan Selection</p>
-                <h4 className="text-sm font-black text-white">
-                  TripPilot {activePlanInfo.name} • <span className="font-mono text-teal-400">{getPriceDisplay(activePlanInfo)}</span>
-                  {billingPeriod === "yearly" && activePlanInfo.monthlyPrice !== "Custom" && (
-                    <span className="text-[9px] text-[#06B6D4] ml-2">Billed Annually</span>
-                  )}
-                </h4>
-              </div>
-
-              <div className="flex items-center gap-4 w-full sm:w-auto">
-                <button 
-                  onClick={() => alert(`Subscribing to ${activePlanInfo.name} plan...`)}
-                  className="w-full sm:w-max h-12 px-8 rounded-full bg-gradient-to-r from-[#14B8A6] to-[#06B6D4] hover:from-[#14B8A6]/90 hover:to-[#06B6D4]/90 text-[#050816] font-extrabold text-sm shadow-[0_0_20px_rgba(20,184,166,0.3)] hover:scale-[1.02] active:scale-[0.99] transition-all flex items-center justify-center gap-2 border-none"
-                >
-                  <span>{activePlanInfo.ctaText}</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
     </section>
   );

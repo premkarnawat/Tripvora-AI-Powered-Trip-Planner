@@ -6,7 +6,7 @@ import {
   MapPin, Coins, ArrowUpRight, Plus, ExternalLink
 } from "lucide-react";
 
-// Mock lead matching data in TripPilot
+// Mock lead matching data in Travixa
 const leadsData = [
   {
     id: "TRIP-2026-00042",

@@ -184,11 +184,11 @@ export default function DocumentationPage() {
                 <h3 className="text-sm font-bold text-white border-b border-white/5 pb-2">SEO Meta Data</h3>
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest">Meta Title</label>
-                  <input type="text" className="w-full bg-[#020817] border border-white/10 rounded-md py-2 px-3 text-xs text-white focus:outline-none focus:border-[#14B8A6]" defaultValue="Getting Started with TripPilot CRM" />
+                  <input type="text" className="w-full bg-[#020817] border border-white/10 rounded-md py-2 px-3 text-xs text-white focus:outline-none focus:border-[#14B8A6]" defaultValue="Getting Started with Travixa CRM" />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-widest">Meta Description</label>
-                  <textarea rows={3} className="w-full bg-[#020817] border border-white/10 rounded-md py-2 px-3 text-xs text-white focus:outline-none focus:border-[#14B8A6]" defaultValue="Learn the basics of using the TripPilot Agency CRM to manage your leads and build packages." />
+                  <textarea rows={3} className="w-full bg-[#020817] border border-white/10 rounded-md py-2 px-3 text-xs text-white focus:outline-none focus:border-[#14B8A6]" defaultValue="Learn the basics of using the Travixa Agency CRM to manage your leads and build packages." />
                 </div>
               </div>
 

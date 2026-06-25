@@ -37,7 +37,7 @@ export default function AdminDashboard() {
       {/* Top Banner Welcome */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xs font-bold text-[#64748B] uppercase tracking-widest mb-1">TripPilot Hub</h2>
+          <h2 className="text-xs font-bold text-[#64748B] uppercase tracking-widest mb-1">Travixa Hub</h2>
           <h1 className="text-3xl font-bold font-sora text-[#0F172A]">Welcome Back, Admin</h1>
           <p className="text-sm text-[#64748B] mt-1">Here is the latest snapshot of your travel ecosystem today.</p>
         </div>

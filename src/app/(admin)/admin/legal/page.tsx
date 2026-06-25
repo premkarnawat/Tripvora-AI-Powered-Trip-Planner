@@ -27,7 +27,7 @@ export default function LegalPagesManager() {
               <h1 className="text-2xl font-bold text-white flex items-center gap-2">
                 Legal Documents
               </h1>
-              <p className="text-xs text-[#94A3B8] mt-1">Manage public-facing legal and compliance pages for TripPilot.</p>
+              <p className="text-xs text-[#94A3B8] mt-1">Manage public-facing legal and compliance pages for Travixa.</p>
             </div>
           </div>
 
@@ -104,11 +104,11 @@ export default function LegalPagesManager() {
                   className="flex-1 w-full bg-transparent border-none text-sm text-white resize-none focus:outline-none custom-scrollbar leading-relaxed font-mono"
                   defaultValue={`1. ACCEPTANCE OF TERMS
 
-By accessing or using the TripPilot Platform, you agree to be bound by these Terms and Conditions.
+By accessing or using the Travixa Platform, you agree to be bound by these Terms and Conditions.
 
 2. DEFINITIONS
 
-"Platform" means the TripPilot software, website, and associated services.
+"Platform" means the Travixa software, website, and associated services.
 "User" means any individual or entity utilizing the Platform, including Travelers and Agencies.`}
                 />
               </div>

@@ -215,7 +215,7 @@ export default function CMSPage() {
                 <h4 className="text-sm font-bold font-sora text-[#0F172A] border-b border-slate-100 pb-2">SEO Configurations</h4>
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-[#64748B] uppercase tracking-widest">Meta Title</label>
-                  <input type="text" className="w-full bg-[#F1F5F9] border border-transparent rounded-lg py-2 px-3 text-xs text-[#0F172A] focus:outline-none focus:bg-white focus:border-[#0EA5A4] transition-all" defaultValue={`${selectedPage.title} | TripPilot`} />
+                  <input type="text" className="w-full bg-[#F1F5F9] border border-transparent rounded-lg py-2 px-3 text-xs text-[#0F172A] focus:outline-none focus:bg-white focus:border-[#0EA5A4] transition-all" defaultValue={`${selectedPage.title} | Travixa`} />
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-[#64748B] uppercase tracking-widest">Meta Description</label>

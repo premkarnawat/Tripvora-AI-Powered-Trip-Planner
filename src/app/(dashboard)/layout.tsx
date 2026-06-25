@@ -78,7 +78,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <path d="M2 22L12 2L22 22H2Z" fill="#14B8A6" />
               <path d="M12 2L2 22H12V2Z" fill="#38BDF8" />
             </svg>
-            <span className="text-lg font-bold font-sora tracking-tight text-[#0F172A]">TripPilot</span>
+            <span className="text-lg font-bold font-sora tracking-tight text-[#0F172A]">Travixa</span>
           </Link>
           
           <nav className="hidden lg:flex items-center gap-6 text-xs font-bold text-[#64748B] uppercase tracking-wider">

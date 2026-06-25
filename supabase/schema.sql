@@ -1,4 +1,4 @@
--- TripPilot Supabase Schema v1
+-- Travixa Supabase Schema v1
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Core Enums
