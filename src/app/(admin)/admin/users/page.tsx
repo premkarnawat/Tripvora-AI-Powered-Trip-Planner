@@ -1,59 +1,36 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Users, Search, Filter, ShieldCheck, Mail, Phone, 
-  Plus, Calendar, CreditCard, ChevronRight, Eye, ArrowLeft
+  Plus, Calendar, CreditCard, ChevronRight, Eye, ArrowLeft, Loader2
 } from "lucide-react";
 
-// Mock platform travelers data
-const usersData = [
-  {
-    id: "usr-01",
-    name: "Aditya Roy",
-    email: "adityaroy@gmail.com",
-    phone: "+91 99887 76655",
-    type: "Premium Traveler",
-    trips: 18,
-    bookings: 4,
-    status: "Active",
-    joinedDate: "10 Jan 2026",
-    premiumPlan: "TripPilot Pro Plus",
-    totalPaid: "₹24,500"
-  },
-  {
-    id: "usr-02",
-    name: "Priya Sen",
-    email: "priyasen@hotmail.com",
-    phone: "+91 98888 77777",
-    type: "Regular Traveler",
-    trips: 6,
-    bookings: 1,
-    status: "Active",
-    joinedDate: "15 Mar 2026",
-    premiumPlan: "Free Tier",
-    totalPaid: "₹0"
-  },
-  {
-    id: "usr-03",
-    name: "Rahul Verma",
-    email: "rverma@gmail.com",
-    phone: "+91 97777 66666",
-    type: "Premium Traveler",
-    trips: 24,
-    bookings: 6,
-    status: "Inactive",
-    joinedDate: "05 May 2025",
-    premiumPlan: "TripPilot Pro",
-    totalPaid: "₹18,000"
-  }
-];
-
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState(usersData);
+  const [users, setUsers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [userTab, setUserTab] = useState("All");
+
+  useEffect(() => {
+    async function fetchUsers() {
+      try {
+        const res = await fetch('/api/admin/users');
+        if (res.ok) {
+          const data = await res.json();
+          setUsers(data);
+        } else {
+          console.error("Failed to fetch users");
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchUsers();
+  }, []);
 
   const filteredUsers = users.filter(u => {
     const matchesSearch = u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -139,7 +116,23 @@ export default function AdminUsersPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#E5E7EB]/50 text-xs font-semibold text-[#0F172A]">
-                  {filteredUsers.map((u) => (
+                  {loading ? (
+                    <tr>
+                      <td colSpan={7} className="p-20 text-center text-[#64748B]">
+                        <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" /> Loading users...
+                      </td>
+                    </tr>
+                  ) : filteredUsers.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="p-20 text-center">
+                        <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <Users className="w-8 h-8 text-[#94A3B8]" />
+                        </div>
+                        <h3 className="text-[#0F172A] font-bold mb-1">No Users Found</h3>
+                        <p className="text-xs text-[#64748B]">There are no users matching your current filter.</p>
+                      </td>
+                    </tr>
+                  ) : filteredUsers.map((u) => (
                     <tr key={u.id} className="hover:bg-slate-50/50 transition-colors">
                       <td className="p-4">
                         <div className="flex items-center gap-2.5">

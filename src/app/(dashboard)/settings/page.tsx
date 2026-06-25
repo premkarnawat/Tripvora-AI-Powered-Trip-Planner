@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   User, Lock, Bell, Globe, Camera, Trash2, ShieldAlert, Check, Plus, 
@@ -36,7 +36,6 @@ const foodPrefs = [
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<"profile" | "preferences" | "security" | "notifications">("profile");
   
-  // Profile Info States
   const [profile, setProfile] = useState({
     firstName: "Prem",
     lastName: "Karnawat",
@@ -44,6 +43,25 @@ export default function SettingsPage() {
     phone: "+91 98765 43210",
     avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=100&auto=format&fit=crop"
   });
+
+  useEffect(() => {
+    async function loadAuthProfile() {
+      const { createClient } = await import('@/lib/supabase/client');
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const fullName = user.user_metadata?.full_name || "Traveler";
+        const parts = fullName.split(' ');
+        setProfile(prev => ({
+          ...prev,
+          firstName: parts[0] || "Prem",
+          lastName: parts.slice(1).join(' ') || "Karnawat",
+          email: user.email || prev.email
+        }));
+      }
+    }
+    loadAuthProfile();
+  }, []);
 
   // User input for new destination tags
   const [destinationInput, setDestinationInput] = useState("");

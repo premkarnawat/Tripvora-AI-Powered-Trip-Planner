@@ -1,18 +1,32 @@
 "use client";
 
-import { useState } from "react";
-import { Search, Plus, Filter, LayoutGrid, List, TableProperties, MoreHorizontal, Phone, MessageCircle, Mail, MapPin, Calendar, DollarSign, Users } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, Plus, Filter, LayoutGrid, List, TableProperties, MoreHorizontal, Phone, MessageCircle, Mail, MapPin, Calendar, DollarSign, Users, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-const mockLeads = [
-  { id: "L-4092", name: "David Smith", whatsapp: "+1 234 567 8900", dest: "Tokyo, Japan", budget: "₹8,50,000", date: "Oct 12, 2026", pax: 4, source: "Website", score: "Hot", status: "Negotiation", owner: "Sarah" },
-  { id: "L-4091", name: "Priya Sharma", whatsapp: "+91 98765 43210", dest: "Europe Tour", budget: "₹12,00,000", date: "Nov 05, 2026", pax: 2, source: "Instagram", score: "Warm", status: "Proposal Sent", owner: "Mike" },
-  { id: "L-4089", name: "Acme HR Team", whatsapp: "+1 555 019 2834", dest: "Bali, Ind.", budget: "₹45,00,000", date: "Sep 20, 2026", pax: 24, source: "Referral", score: "Hot", status: "Qualified", owner: "JD" },
-  { id: "L-4085", name: "Rahul Verma", whatsapp: "+91 99999 88888", dest: "Maldives", budget: "₹5,20,000", date: "Dec 15, 2026", pax: 2, source: "Marketplace", score: "Cold", status: "New", owner: "Unassigned" },
-];
 
 export default function LeadsPage() {
   const [view, setView] = useState("table");
+  const [leads, setLeads] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchLeads() {
+      try {
+        const res = await fetch('/api/crm/leads');
+        if (res.ok) {
+          const data = await res.json();
+          setLeads(data);
+        } else {
+          console.error("Failed to fetch leads");
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchLeads();
+  }, []);
 
   return (
     <div className="w-full max-w-[1400px] mx-auto space-y-6 pb-10">
@@ -54,9 +68,25 @@ export default function LeadsPage() {
       </div>
 
       {/* Content View */}
-      {view === "table" && <LeadsTable leads={mockLeads} />}
-      {view === "list" && <LeadsList leads={mockLeads} />}
-      {view === "kanban" && <LeadsKanban leads={mockLeads} />}
+      {loading ? (
+        <div className="flex justify-center items-center py-20 text-[#94A3B8]">
+          <Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading leads...
+        </div>
+      ) : leads.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 border border-white/5 bg-[#0B1220] rounded-md">
+          <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4">
+            <Users className="w-8 h-8 text-[#94A3B8]" />
+          </div>
+          <h3 className="text-white font-bold mb-1">No Leads Found</h3>
+          <p className="text-xs text-[#94A3B8]">Get started by adding a new lead or importing a CSV.</p>
+        </div>
+      ) : (
+        <>
+          {view === "table" && <LeadsTable leads={leads} />}
+          {view === "list" && <LeadsList leads={leads} />}
+          {view === "kanban" && <LeadsKanban leads={leads} />}
+        </>
+      )}
       
     </div>
   );

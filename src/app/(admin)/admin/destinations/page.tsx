@@ -1,54 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Compass, Search, Plus, Eye, EyeOff, Edit2, 
-  MapPin, Calendar, Coins, Star, Trash2
+  MapPin, Calendar, Coins, Star, Trash2, Loader2
 } from "lucide-react";
 
-// Mock destinations content data in TripPilot
-const destinationsData = [
-  {
-    id: 1,
-    name: "Goa",
-    description: "Pristine beaches, heritage churches, and vibrant nightlife.",
-    bestMonths: "November to February",
-    budget: "₹15,000 - ₹35,000",
-    attractions: "Calangute Beach, Fort Aguada, Dudhsagar Falls",
-    hotels: "The Ocean Resort, Taj Exotica",
-    activities: "Parasailing, Scuba Diving, Casino Tours",
-    visibility: "Public",
-    image: "https://images.unsplash.com/photo-1540541338287-41700207dee6?q=80&w=300&auto=format&fit=crop"
-  },
-  {
-    id: 2,
-    name: "Kashmir",
-    description: "Heaven on earth with snow-capped peaks and serene Dal Lake shikhara rides.",
-    bestMonths: "March to August",
-    budget: "₹30,000 - ₹65,000",
-    attractions: "Gulmarg Gondola, Shalimar Bagh, Pahalgam Valley",
-    hotels: "The Grand Palace, Khyber Resort",
-    activities: "Shikhara Ride, Skiing, Snowboarding",
-    visibility: "Public",
-    image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=300&auto=format&fit=crop"
-  },
-  {
-    id: 3,
-    name: "Manali",
-    description: "Adventure hub in Himachal Pradesh offering trekking, river rafting, and scenic beauty.",
-    bestMonths: "October to June",
-    budget: "₹18,000 - ₹40,000",
-    attractions: "Solang Valley, Rohtang Pass, Hadimba Temple",
-    hotels: "Mountain Retreat, Span Resort",
-    activities: "Paragliding, Trekking, Skiing",
-    visibility: "Draft",
-    image: "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?q=80&w=300&auto=format&fit=crop"
-  }
-];
-
 export default function AdminDestinationsPage() {
-  const [destinations, setDestinations] = useState(destinationsData);
+  const [destinations, setDestinations] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+
+  useEffect(() => {
+    async function fetchDestinations() {
+      try {
+        const res = await fetch('/api/admin/destinations');
+        if (res.ok) {
+          const data = await res.json();
+          setDestinations(data);
+        } else {
+          console.error("Failed to fetch destinations");
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchDestinations();
+  }, []);
 
   const toggleVisibility = (id: number) => {
     setDestinations(prev => prev.map(d => {
@@ -99,8 +79,21 @@ export default function AdminDestinationsPage() {
       </div>
 
       {/* Grid listing destinations content */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredDestinations.map((dest) => (
+      {loading ? (
+        <div className="flex justify-center items-center py-20 text-[#64748B]">
+          <Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading destinations...
+        </div>
+      ) : filteredDestinations.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 border border-[#E5E7EB] bg-white rounded-2xl shadow-sm">
+          <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+            <Compass className="w-8 h-8 text-[#94A3B8]" />
+          </div>
+          <h3 className="text-[#0F172A] font-bold mb-1">No Destinations Found</h3>
+          <p className="text-xs text-[#64748B]">There are no destinations matching your current filter.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredDestinations.map((dest) => (
           <div 
             key={dest.id}
             className="bg-white border border-[#E5E7EB] rounded-2xl overflow-hidden hover:translate-y-[-2px] hover:shadow-[0_4px_25px_rgba(0,0,0,0.04)] transition-all flex flex-col justify-between h-[420px]"
@@ -168,8 +161,9 @@ export default function AdminDestinationsPage() {
             </div>
 
           </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
     </div>
   );

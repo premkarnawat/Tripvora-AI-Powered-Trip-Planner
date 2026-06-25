@@ -1,21 +1,34 @@
 "use client";
 
-import { useState } from "react";
-import { Search, Plus, Filter, Download, FileText, CheckCircle2, Clock, XCircle, MapPin, DollarSign, Send } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, Plus, Filter, Download, FileText, CheckCircle2, Clock, XCircle, MapPin, DollarSign, Send, Loader2, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-const mockBookings = [
-  { id: "BKG-9942", customer: "David Smith", dest: "Tokyo, Japan", amount: "₹8,50,000", paid: "₹4,25,000", status: "Confirmed", date: "Oct 12, 2026", invoice: "INV-2026-142" },
-  { id: "BKG-9941", customer: "Acme Corp Retreat", dest: "Bali, Indonesia", amount: "₹45,00,000", paid: "₹45,00,000", status: "Confirmed", date: "Oct 10, 2026", invoice: "INV-2026-141" },
-  { id: "BKG-9938", customer: "Priya Sharma", dest: "Europe Tour", amount: "₹12,00,000", paid: "₹0", status: "Pending", date: "Nov 05, 2026", invoice: "INV-2026-138" },
-  { id: "BKG-9935", customer: "Rahul Verma", dest: "Maldives", amount: "₹5,20,000", paid: "₹5,20,000", status: "Cancelled", date: "Dec 15, 2026", invoice: "INV-2026-135" },
-  { id: "BKG-9930", customer: "Sarah Jenkins", dest: "Dubai", amount: "₹3,40,000", paid: "₹1,70,000", status: "Pending", date: "Dec 20, 2026", invoice: "INV-2026-130" },
-];
 
 export default function BookingsPage() {
   const [filter, setFilter] = useState("All");
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredBookings = filter === "All" ? mockBookings : mockBookings.filter(b => b.status === filter);
+  useEffect(() => {
+    async function fetchBookings() {
+      try {
+        const res = await fetch('/api/crm/bookings');
+        if (res.ok) {
+          const data = await res.json();
+          setBookings(data);
+        } else {
+          console.error("Failed to fetch bookings");
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchBookings();
+  }, []);
+
+  const filteredBookings = filter === "All" ? bookings : bookings.filter(b => b.status === filter);
 
   return (
     <div className="w-full max-w-[1400px] mx-auto space-y-6 pb-10">
@@ -82,7 +95,23 @@ export default function BookingsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-white/[0.02]">
-            {filteredBookings.map((bkg, i) => {
+            {loading ? (
+              <tr>
+                <td colSpan={5} className="py-20 text-center text-[#94A3B8]">
+                  <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" /> Loading bookings...
+                </td>
+              </tr>
+            ) : filteredBookings.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="py-20 text-center">
+                  <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Calendar className="w-8 h-8 text-[#94A3B8]" />
+                  </div>
+                  <h3 className="text-white font-bold mb-1">No Bookings Found</h3>
+                  <p className="text-xs text-[#94A3B8]">There are no bookings matching your current filter.</p>
+                </td>
+              </tr>
+            ) : filteredBookings.map((bkg, i) => {
               const amountNum = parseInt(bkg.amount.replace(/[^0-9]/g, ''));
               const paidNum = parseInt(bkg.paid.replace(/[^0-9]/g, ''));
               const progress = amountNum > 0 ? (paidNum / amountNum) * 100 : 0;

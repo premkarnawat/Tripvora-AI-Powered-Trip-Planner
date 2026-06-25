@@ -1,33 +1,65 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { 
   Sparkles, Calendar, MapPin, Plus, ArrowUpRight, Compass, Settings, 
   CloudSun, Shield, Coins, FileText, PhoneCall, Star, Bell, Gift, 
   BookOpen, HelpCircle, ArrowRight, UserCheck, ShieldCheck, CreditCard,
-  History, Search, MessageSquare, AlertCircle
+  History, Search, MessageSquare, AlertCircle, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function Dashboard() {
   const router = useRouter();
+  const [trips, setTrips] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock Data
-  const upcomingTrips = [
-    { id: "goa-sunset-escape", name: "Goa Sunset & Beach Escape", dates: "July 15 - July 20, 2026", pax: "2 Adults", status: "Confirmed", img: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=300&auto=format&fit=crop" }
-  ];
+  useEffect(() => {
+    async function fetchTrips() {
+      try {
+        const res = await fetch('/api/trips');
+        if (res.ok) {
+          const data = await res.json();
+          setTrips(data);
+        } else {
+          console.error("Failed to fetch trips");
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchTrips();
+  }, []);
 
-  const savedTrips = [
-    { id: "tokyo-cherry-blossoms", name: "Tokyo & Kyoto Cherry Blossoms", duration: "7 Nights", budget: "₹2,50,000", img: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=300&auto=format&fit=crop" },
-    { id: "bali-honeymoon", name: "Bali Luxury Honeymoon Escape", duration: "6 Nights", budget: "₹1,85,000", img: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=300&auto=format&fit=crop" }
-  ];
+  // Filter trips into upcoming, saved (draft), past
+  const upcomingTrips = trips.filter(t => t.status !== 'draft' && new Date(t.start_date) >= new Date()).map(t => ({
+    id: t.id,
+    name: t.name || t.destination,
+    dates: t.start_date && t.end_date ? `${new Date(t.start_date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })} - ${new Date(t.end_date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}` : "Dates TBD",
+    pax: `${t.adult_count || 1} Adults`,
+    status: t.status === 'confirmed' ? "Confirmed" : "Planned",
+    img: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=300&auto=format&fit=crop"
+  }));
 
-  const pastTrips = [
-    { id: "munnar-tea-estates", name: "Munnar Tea Estates & Hills", dates: "Oct 12 - Oct 15, 2025", status: "Completed", rating: 5 },
-    { id: "leh-ladakh-roadtrip", name: "Leh & Ladakh Adventure Caravan", dates: "July 2 - July 10, 2025", status: "Completed", rating: 4 }
-  ];
+  const savedTrips = trips.filter(t => t.status === 'draft').map(t => ({
+    id: t.id,
+    name: t.name || t.destination,
+    duration: t.duration_days ? `${t.duration_days} Nights` : "Duration TBD",
+    budget: t.budget_tier ? (t.budget_tier === 'luxury' ? 'Premium' : 'Standard') : 'Flexible',
+    img: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=300&auto=format&fit=crop"
+  }));
+
+  const pastTrips = trips.filter(t => t.status !== 'draft' && new Date(t.start_date) < new Date()).map(t => ({
+    id: t.id,
+    name: t.name || t.destination,
+    dates: t.start_date && t.end_date ? `${new Date(t.start_date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })} - ${new Date(t.end_date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}` : "Past Trip",
+    status: "Completed",
+    rating: 5
+  }));
 
   const marketplaceOffers = [
     { title: "20% Off Spa at W Bali", code: "WBALISPA20", expiry: "Valid till July 30" },
@@ -102,7 +134,15 @@ export default function Dashboard() {
           <div className="bg-white border border-[#E5E7EB] rounded-[28px] p-6 shadow-sm space-y-4">
             <h3 className="text-xs font-black uppercase text-[#64748B] tracking-wider border-b border-slate-100 pb-2">Upcoming Trips</h3>
             
-            {upcomingTrips.map(trip => (
+            {loading ? (
+              <div className="py-10 text-center text-[#64748B] text-xs">
+                <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2" /> Loading upcoming trips...
+              </div>
+            ) : upcomingTrips.length === 0 ? (
+              <div className="py-10 text-center text-[#64748B] text-xs border border-dashed border-slate-200 rounded-2xl">
+                No upcoming trips found. Start planning one today!
+              </div>
+            ) : upcomingTrips.map(trip => (
               <div key={trip.id} className="border border-slate-200 rounded-2xl overflow-hidden flex flex-col md:flex-row justify-between items-stretch shadow-sm hover:shadow-md transition-all">
                 <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
                   <div>
@@ -132,8 +172,17 @@ export default function Dashboard() {
           <div className="bg-white border border-[#E5E7EB] rounded-[28px] p-6 shadow-sm space-y-4">
             <h3 className="text-xs font-black uppercase text-[#64748B] tracking-wider border-b border-slate-100 pb-2">Saved Trips</h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {savedTrips.map(trip => (
+            {loading ? (
+              <div className="py-10 text-center text-[#64748B] text-xs">
+                <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2" /> Loading saved trips...
+              </div>
+            ) : savedTrips.length === 0 ? (
+              <div className="py-10 text-center text-[#64748B] text-xs border border-dashed border-slate-200 rounded-2xl">
+                No saved trips found.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {savedTrips.map(trip => (
                 <div key={trip.id} className="border border-slate-200 hover:border-teal-500 rounded-2xl overflow-hidden bg-white shadow-sm flex flex-col justify-between transition-all">
                   <div className="w-full h-32 bg-slate-100">
                     <img src={trip.img} alt={trip.name} className="w-full h-full object-cover" />
@@ -153,7 +202,8 @@ export default function Dashboard() {
                   </div>
                 </div>
               ))}
-            </div>
+              </div>
+            )}
           </div>
 
           {/* Section 3: Recent Searches */}
@@ -267,7 +317,15 @@ export default function Dashboard() {
               <History className="w-4 h-4 text-teal-600" /> Trip History
             </h4>
             <div className="space-y-3 text-xs">
-              {pastTrips.map(trip => (
+              {loading ? (
+                <div className="py-5 text-center text-[#64748B] text-[10px]">
+                  <Loader2 className="w-4 h-4 animate-spin mx-auto mb-1" /> Loading...
+                </div>
+              ) : pastTrips.length === 0 ? (
+                <div className="py-5 text-center text-[#64748B] text-[10px] border border-dashed border-slate-200 rounded-xl">
+                  No past trips found.
+                </div>
+              ) : pastTrips.map(trip => (
                 <div key={trip.id} className="flex justify-between items-center py-0.5 border-b border-slate-50 pb-2 last:border-none">
                   <div>
                     <p className="font-bold text-[#0F172A]">{trip.name}</p>

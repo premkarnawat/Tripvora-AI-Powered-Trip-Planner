@@ -1,18 +1,31 @@
 "use client";
 
-import { useState } from "react";
-import { Search, Plus, Filter, Download, MessageCircle, MoreHorizontal, Mail, MapPin, Calendar, Star } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, Plus, Filter, Download, MessageCircle, MoreHorizontal, Mail, MapPin, Calendar, Star, Loader2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const mockCustomers = [
-  { id: "C-1042", name: "David Smith", whatsapp: "+1 234 567 8900", email: "david.smith@example.com", city: "New York", since: "Mar 2024", spend: "₹18,50,000", trips: 3, ltv: "High", lastTrip: "Tokyo (Oct '25)" },
-  { id: "C-1039", name: "Acme Corporation", whatsapp: "+1 555 019 2834", email: "travel@acmecorp.com", city: "San Francisco", since: "Jan 2023", spend: "₹1,25,00,000", trips: 12, ltv: "Elite", lastTrip: "Bali Retreat (Sep '26)" },
-  { id: "C-1088", name: "Priya Sharma", whatsapp: "+91 98765 43210", email: "priya.s@example.in", city: "Mumbai", since: "Aug 2025", spend: "₹4,20,000", trips: 1, ltv: "Medium", lastTrip: "Maldives (Aug '25)" },
-  { id: "C-1092", name: "Rahul Verma", whatsapp: "+91 99999 88888", email: "rahul.v@example.in", city: "Delhi", since: "Feb 2026", spend: "₹8,50,000", trips: 2, ltv: "High", lastTrip: "Europe Tour (May '26)" },
-  { id: "C-1011", name: "Sarah Jenkins", whatsapp: "+44 7700 900077", email: "sarah.j@example.co.uk", city: "London", since: "Nov 2022", spend: "₹22,00,000", trips: 4, ltv: "High", lastTrip: "Dubai (Dec '25)" },
-];
-
 export default function CustomersPage() {
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchCustomers() {
+      try {
+        const res = await fetch('/api/crm/customers');
+        if (res.ok) {
+          const data = await res.json();
+          setCustomers(data);
+        } else {
+          console.error("Failed to fetch customers");
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchCustomers();
+  }, []);
   return (
     <div className="w-full max-w-[1400px] mx-auto space-y-6 pb-10">
       {/* Header */}
@@ -65,7 +78,23 @@ export default function CustomersPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-white/[0.02]">
-            {mockCustomers.map((cust, i) => (
+            {loading ? (
+              <tr>
+                <td colSpan={7} className="py-20 text-center text-[#94A3B8]">
+                  <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" /> Loading customers...
+                </td>
+              </tr>
+            ) : customers.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="py-20 text-center">
+                  <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Users className="w-8 h-8 text-[#94A3B8]" />
+                  </div>
+                  <h3 className="text-white font-bold mb-1">No Customers Found</h3>
+                  <p className="text-xs text-[#94A3B8]">Your customer directory is empty.</p>
+                </td>
+              </tr>
+            ) : customers.map((cust, i) => (
               <tr key={i} className="hover:bg-white/[0.02] transition-colors group cursor-pointer">
                 <td className="py-3 px-4 text-[10px] font-mono text-[#94A3B8]">{cust.id}</td>
                 <td className="py-3 px-4">

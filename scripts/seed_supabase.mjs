@@ -1,0 +1,87 @@
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = 'https://gbmuacxsterrofwvvfow.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdibXVhY3hzdGVycm9md3Z2Zm93Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1OTU2NjQsImV4cCI6MjA5NzE3MTY2NH0.59xytlk9gb2yFQJlfCv-_gVXwc2izr3YyRadJCYCl1s';
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+async function seed() {
+  console.log("Seeding Database using Supabase JS Client...");
+
+  try {
+    // 1. Agencies
+    const agencies = [
+      { id: '771e7a50-01c0-482a-a9e9-158a1bc1c2da', name: 'Wanderlust Holidays', city: 'New Delhi, India', subscription_status: 'Active', badge_type: 'ELITE PARTNER', revenue: 245600, conversion_rate: 18.5 },
+      { id: '22c4d621-cf5c-4389-9a25-b44c38d38cfd', name: 'Travelista India', city: 'Mumbai, India', subscription_status: 'Active', badge_type: 'GROWTH PLAN', revenue: 192480, conversion_rate: 15.2 },
+      { id: 'c58bcbb8-8bc6-4660-ae1d-2321481d2f78', name: 'Elite Escapes', city: 'Bangalore, India', subscription_status: 'Pending Audit', badge_type: 'OVERDUE REVIEW', revenue: 320300, conversion_rate: 12.8 }
+    ];
+    let res = await supabase.from('agencies').upsert(agencies);
+    if (res.error) throw res.error;
+    console.log("Seeded Agencies.");
+
+    // 2. Users
+    const users = [
+      { id: '1c8a169b-8bc6-4660-ae1d-2321481d2f78', email: 'adityaroy@gmail.com', full_name: 'Aditya Roy', role: 'traveler' },
+      { id: '2a5c4d62-cf5c-4389-9a25-b44c38d38cfd', email: 'priyasen@hotmail.com', full_name: 'Priya Sen', role: 'traveler' },
+      { id: '3b1e7a50-01c0-482a-a9e9-158a1bc1c2da', email: 'rverma@gmail.com', full_name: 'Rahul Verma', role: 'traveler' }
+    ];
+    res = await supabase.from('users').upsert(users);
+    if (res.error) throw res.error;
+    console.log("Seeded Users.");
+
+    // 3. Destinations
+    const destinations = [
+      { id: 'd1c4d621-cf5c-4389-9a25-b44c38d38cfd', name: 'Goa', seo_description: 'Pristine beaches, heritage churches, and vibrant nightlife.', popular_attractions: ['Calangute Beach', 'Fort Aguada', 'Dudhsagar Falls'], popular_activities: ['Parasailing', 'Scuba Diving', 'Casino Tours'], images: ['https://images.unsplash.com/photo-1540541338287-41700207dee6?q=80&w=300&auto=format&fit=crop'] },
+      { id: 'd2c4d621-cf5c-4389-9a25-b44c38d38cfd', name: 'Kashmir', seo_description: 'Heaven on earth with snow-capped peaks and serene Dal Lake shikhara rides.', popular_attractions: ['Gulmarg Gondola', 'Shalimar Bagh', 'Pahalgam Valley'], popular_activities: ['Shikhara Ride', 'Skiing', 'Snowboarding'], images: ['https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=300&auto=format&fit=crop'] },
+      { id: 'd3c4d621-cf5c-4389-9a25-b44c38d38cfd', name: 'Manali', seo_description: 'Adventure hub in Himachal Pradesh offering trekking, river rafting, and scenic beauty.', popular_attractions: ['Solang Valley', 'Rohtang Pass', 'Hadimba Temple'], popular_activities: ['Paragliding', 'Trekking', 'Skiing'], images: ['https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?q=80&w=300&auto=format&fit=crop'] }
+    ];
+    res = await supabase.from('destination_cache').upsert(destinations);
+    if (res.error) throw res.error;
+    console.log("Seeded Destinations.");
+
+    // 4. Trips
+    // Try to get authenticated user, or fallback
+    const { data: authData } = await supabase.auth.getUser();
+    const userId = authData?.user?.id || '1c8a169b-8bc6-4660-ae1d-2321481d2f78';
+    
+    const trips = [
+      { id: 't1c4d621-cf5c-4389-9a25-b44c38d38cfd', user_id: userId, destination: 'Goa Sunset & Beach Escape', start_date: new Date(Date.now() + 864000000).toISOString(), end_date: new Date(Date.now() + 1296000000).toISOString(), adult_count: 2, status: 'confirmed', budget_tier: 'standard' },
+      { id: 't2c4d621-cf5c-4389-9a25-b44c38d38cfd', user_id: userId, destination: 'Tokyo & Kyoto Cherry Blossoms', adult_count: 2, status: 'draft', budget_tier: 'luxury' }
+    ];
+    res = await supabase.from('trips').upsert(trips);
+    if (res.error) throw res.error;
+    console.log("Seeded Trips.");
+
+    // 5. Agency Customers
+    const customers = [
+      { id: 'c1c4d621-cf5c-4389-9a25-b44c38d38cfd', agency_id: '771e7a50-01c0-482a-a9e9-158a1bc1c2da', name: 'Aditya Roy', email: 'adityaroy@gmail.com', phone: '+91 99887 76655', total_trips: 4, total_spent: 245000, status: 'VIP Customer' },
+      { id: 'c2c4d621-cf5c-4389-9a25-b44c38d38cfd', agency_id: '771e7a50-01c0-482a-a9e9-158a1bc1c2da', name: 'Priya Sen', email: 'priyasen@hotmail.com', phone: '+91 98888 77777', total_trips: 1, total_spent: 0, status: 'New Lead' }
+    ];
+    res = await supabase.from('agency_customers').upsert(customers);
+    if (res.error) throw res.error;
+    console.log("Seeded Customers.");
+
+    // 6. Agency Leads
+    const leads = [
+      { id: 'l1c4d621-cf5c-4389-9a25-b44c38d38cfd', agency_id: '771e7a50-01c0-482a-a9e9-158a1bc1c2da', customer_name: 'Rohan Sharma', customer_email: 'rohan@example.com', customer_phone: '+91 91234 56789', destination: 'Bali, Indonesia', budget: 180000, pax: '2 Adults, 1 Child', trip_dates: 'Next Month', pipeline_status: 'New Inquiries', source: 'Website Organic' },
+      { id: 'l2c4d621-cf5c-4389-9a25-b44c38d38cfd', agency_id: '771e7a50-01c0-482a-a9e9-158a1bc1c2da', customer_name: 'Kavita Das', customer_email: 'kavita@example.com', customer_phone: '+91 99887 77665', destination: 'Maldives', budget: 250000, pax: '2 Adults', trip_dates: 'Oct 2026', pipeline_status: 'Quotation Sent', source: 'WhatsApp Lead' }
+    ];
+    res = await supabase.from('agency_leads').upsert(leads);
+    if (res.error) throw res.error;
+    console.log("Seeded Leads.");
+
+    // 7. Bookings
+    const bookings = [
+      { id: 'b1c4d621-cf5c-4389-9a25-b44c38d38cfd', agency_id: '771e7a50-01c0-482a-a9e9-158a1bc1c2da', lead_id: 'l1c4d621-cf5c-4389-9a25-b44c38d38cfd', customer_id: 'c1c4d621-cf5c-4389-9a25-b44c38d38cfd', booking_reference: 'TRIP-2026-X8Y9', total_amount: 185000, payment_status: 'Partial', booking_status: 'Confirmed' }
+    ];
+    res = await supabase.from('bookings').upsert(bookings);
+    if (res.error) throw res.error;
+    console.log("Seeded Bookings.");
+
+    console.log("Database seeded successfully!");
+  } catch (error) {
+    console.error("Seeding Error:", error);
+  }
+}
+
+seed();

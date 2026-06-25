@@ -1,135 +1,38 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { 
   Building2, Search, Plus, ExternalLink, ShieldCheck, 
-  MessageSquare, ChevronRight, AlertCircle, ArrowUpRight
+  MessageSquare, ChevronRight, AlertCircle, ArrowUpRight, Loader2
 } from "lucide-react";
-
-// Mock data for B2B agencies in TripPilot
-const agenciesData = [
-  {
-    id: "wanderlust-holidays",
-    name: "Wanderlust Holidays",
-    city: "New Delhi, India",
-    plan: "Premium Tier",
-    badgeType: "ELITE PARTNER",
-    badgeColor: "bg-[#0EA5A4]/10 text-[#0EA5A4] border-[#0EA5A4]/25",
-    revenue: "₹2,45,600",
-    conversion: "18.5%",
-    leads: 284,
-    bookings: 84,
-    whatsappConnected: true,
-    subscriptionStatus: "Active",
-    staffAvatars: [
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=100&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=100&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=100&auto=format&fit=crop"
-    ],
-    avatarPlaceholder: "WH"
-  },
-  {
-    id: "travelista-india",
-    name: "Travelista India",
-    city: "Mumbai, India",
-    plan: "Growth Plan",
-    badgeType: "GROWTH PLAN",
-    badgeColor: "bg-teal-500/10 text-teal-600 border-teal-500/25",
-    revenue: "₹1,92,480",
-    conversion: "15.2%",
-    leads: 198,
-    bookings: 62,
-    whatsappConnected: true,
-    subscriptionStatus: "Active",
-    staffAvatars: [
-      "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=100&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=100&auto=format&fit=crop"
-    ],
-    avatarPlaceholder: "TI"
-  },
-  {
-    id: "elite-escapes",
-    name: "Elite Escapes",
-    city: "Bangalore, India",
-    plan: "Premium Tier",
-    badgeType: "OVERDUE REVIEW",
-    badgeColor: "bg-[#DC2626]/10 text-[#DC2626] border-[#DC2626]/20",
-    revenue: "₹3,20,300",
-    conversion: "12.8%",
-    leads: 450,
-    bookings: 110,
-    whatsappConnected: false,
-    subscriptionStatus: "Pending Audit",
-    staffAvatars: [
-      "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=100&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=100&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=100&auto=format&fit=crop"
-    ],
-    avatarPlaceholder: "EE"
-  },
-  {
-    id: "voyager-planners",
-    name: "Voyager Planners",
-    city: "Chennai, India",
-    plan: "Premium Tier",
-    badgeType: "ELITE PARTNER",
-    badgeColor: "bg-[#0EA5A4]/10 text-[#0EA5A4] border-[#0EA5A4]/25",
-    revenue: "₹96,400",
-    conversion: "11.4%",
-    leads: 120,
-    bookings: 34,
-    whatsappConnected: true,
-    subscriptionStatus: "Active",
-    staffAvatars: [
-      "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=100&auto=format&fit=crop"
-    ],
-    avatarPlaceholder: "VP"
-  },
-  {
-    id: "global-trails",
-    name: "Global Trails",
-    city: "Kolkata, India",
-    plan: "Growth Plan",
-    badgeType: "PREMIUM PLAN",
-    badgeColor: "bg-blue-500/10 text-blue-600 border-blue-500/25",
-    revenue: "₹85,900",
-    conversion: "10.1%",
-    leads: 94,
-    bookings: 22,
-    whatsappConnected: true,
-    subscriptionStatus: "Active",
-    staffAvatars: [
-      "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?q=80&w=100&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?q=80&w=100&auto=format&fit=crop"
-    ],
-    avatarPlaceholder: "GT"
-  },
-  {
-    id: "adventure-hub",
-    name: "Adventure Hub",
-    city: "Pune, India",
-    plan: "Base Plan",
-    badgeType: "RENEWED",
-    badgeColor: "bg-[#16A34A]/10 text-[#16A34A] border-[#16A34A]/25",
-    revenue: "₹78,600",
-    conversion: "9.3%",
-    leads: 85,
-    bookings: 20,
-    whatsappConnected: true,
-    subscriptionStatus: "Renewed",
-    staffAvatars: [
-      "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=100&auto=format&fit=crop"
-    ],
-    avatarPlaceholder: "AH"
-  }
-];
 
 export default function AdminAgenciesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterTab, setFilterTab] = useState("All");
+  const [agencies, setAgencies] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredAgencies = agenciesData.filter(agency => {
+  useEffect(() => {
+    async function fetchAgencies() {
+      try {
+        const res = await fetch('/api/admin/agencies');
+        if (res.ok) {
+          const data = await res.json();
+          setAgencies(data);
+        } else {
+          console.error("Failed to fetch agencies");
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchAgencies();
+  }, []);
+
+  const filteredAgencies = agencies.filter(agency => {
     const matchesSearch = agency.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           agency.city.toLowerCase().includes(searchTerm.toLowerCase());
     if (filterTab === "All") return matchesSearch;
@@ -148,10 +51,23 @@ export default function AdminAgenciesPage() {
           <h1 className="text-3xl font-bold font-sora text-[#0F172A]">Agencies (B2B)</h1>
           <p className="text-sm text-[#64748B] mt-1">Manage and monitor your 124 luxury travel partners.</p>
         </div>
-        <button className="flex items-center gap-1.5 px-4 py-2 bg-[#0EA5A4] hover:bg-[#0EA5A4]/90 text-white rounded-full text-xs font-semibold shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all self-start md:self-auto">
-          <Plus className="w-4 h-4" />
-          <span>Onboard New Agency</span>
-        </button>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={async () => {
+              const res = await fetch('/api/dev/seed');
+              const data = await res.json();
+              alert(data.message || data.error);
+              window.location.reload();
+            }}
+            className="flex items-center gap-1.5 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-full text-xs font-semibold shadow-sm transition-all"
+          >
+            <span>🌱 Seed Sample DB</span>
+          </button>
+          <button className="flex items-center gap-1.5 px-4 py-2 bg-[#0EA5A4] hover:bg-[#0EA5A4]/90 text-white rounded-full text-xs font-semibold shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all self-start md:self-auto">
+            <Plus className="w-4 h-4" />
+            <span>Onboard New Agency</span>
+          </button>
+        </div>
       </div>
 
       {/* Summary Stat Cards */}
@@ -234,8 +150,21 @@ export default function AdminAgenciesPage() {
       </div>
 
       {/* Grid Cards Layout exactly like reference image */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredAgencies.map((agency) => (
+      {loading ? (
+        <div className="flex justify-center items-center py-20 text-[#64748B]">
+          <Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading agencies...
+        </div>
+      ) : filteredAgencies.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 border border-[#E5E7EB] bg-white rounded-2xl shadow-sm">
+          <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+            <Building2 className="w-8 h-8 text-[#94A3B8]" />
+          </div>
+          <h3 className="text-[#0F172A] font-bold mb-1">No Agencies Found</h3>
+          <p className="text-xs text-[#64748B]">There are no agencies matching your current filter.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredAgencies.map((agency) => (
           <Link href={`/admin/agencies/${agency.id}`} key={agency.id} className="block">
             <div 
               className="bg-white border border-[#E5E7EB] rounded-2xl overflow-hidden hover:translate-y-[-2px] hover:shadow-[0_4px_25px_rgba(0,0,0,0.05)] transition-all cursor-pointer flex flex-col justify-between min-h-[275px]"
@@ -301,8 +230,9 @@ export default function AdminAgenciesPage() {
 
             </div>
           </Link>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
     </div>
   );
