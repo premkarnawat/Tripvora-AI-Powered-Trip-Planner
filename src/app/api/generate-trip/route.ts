@@ -38,10 +38,11 @@ function validateTripRequest(body: any): { valid: boolean; error?: string; data?
         adults: Math.min(Math.max(Number(body.travelers?.adults) || 1, 1), 20),
         children: Math.min(Math.max(Number(body.travelers?.children) || 0, 0), 10)
       },
-      budget: budget,
+      budget: budget.toString(),
       dates: {
         startDate: body.dates?.startDate || new Date().toISOString().split('T')[0],
-        endDate: body.dates?.endDate || new Date(Date.now() + 86400000 * 4).toISOString().split('T')[0]
+        endDate: body.dates?.endDate || new Date(Date.now() + 86400000 * 4).toISOString().split('T')[0],
+        isFlexible: Boolean(body.dates?.isFlexible)
       }
     }
   };
@@ -199,7 +200,7 @@ export async function POST(request: Request) {
 
       // Tier 5: Precomputed Static Luxury Template Fallback (100% Availability Guarantee)
       console.warn(`[AI Engine] Tier 4 miss. Serving Tier 5 Precomputed Baseline Template for "${body.destination}".`);
-      return NextResponse.json(getBaselineTemplate(body.destination, body.budget));
+      return NextResponse.json(getBaselineTemplate(body.destination, Number(body.budget)));
     }
   } catch (err: any) {
     console.error("Fatal trip generation API exception:", err);
