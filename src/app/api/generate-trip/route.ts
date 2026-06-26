@@ -83,6 +83,8 @@ interface VerifiedGISPayload {
   temp: number;
   rainProb: number;
   uvIndex: number;
+  wikiExtract: string;
+  wikiThumbnail: string;
 }
 
 async function executeGISDiscoveryEngine(destination: string): Promise<VerifiedGISPayload> {
@@ -96,6 +98,8 @@ async function executeGISDiscoveryEngine(destination: string): Promise<VerifiedG
   let temp = 25;
   let rainProb = 15;
   let uvIndex = 6;
+  let wikiExtract = "";
+  let wikiThumbnail = "";
 
   try {
     // Stage 2: Nominatim Geocoding Engine
@@ -171,6 +175,20 @@ async function executeGISDiscoveryEngine(destination: string): Promise<VerifiedG
       }
     })(),
     (async () => {
+      // Stage 5: Wikipedia Knowledge Engine (History, Culture & Overview Extract)
+      try {
+        const sumRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(destination)}`, {
+          headers: { 'User-Agent': 'Travixa-Global-OS/4.0' }
+        });
+        if (sumRes.ok) {
+          const sumJson = await sumRes.json();
+          if (sumJson?.extract) wikiExtract = sumJson.extract;
+          if (sumJson?.thumbnail?.source) wikiThumbnail = sumJson.thumbnail.source;
+        }
+      } catch (e) {
+        console.warn("Wikipedia summary skipped:", e);
+      }
+
       // Backup Wikipedia Geosearch if Overpass tourism is sparse
       if (osmAttractions.length < 3) {
         try {
@@ -187,7 +205,7 @@ async function executeGISDiscoveryEngine(destination: string): Promise<VerifiedG
     })()
   ]);
 
-  return { lat, lon, osmHotels, osmRestaurants, osmAttractions, osmHospitals, weatherDesc, temp, rainProb, uvIndex };
+  return { lat, lon, osmHotels, osmRestaurants, osmAttractions, osmHospitals, weatherDesc, temp, rainProb, uvIndex, wikiExtract, wikiThumbnail };
 }
 
 // Stage 6 & 7: Budget Optimization Engine & Universal Factual Assembler
@@ -300,11 +318,12 @@ function assembleUniversalOSMEngine(body: any, gis: VerifiedGISPayload): Itinera
   }
 
   const hospitalName = gis.osmHospitals[0]?.name || `${dest} District Government Civil Hospital`;
+  const overviewText = gis.wikiExtract ? `${gis.wikiExtract} Sequenced strictly by TRAVIXA Engine across verified coordinates (${gis.lat}, ${gis.lon}).` : `${totalDays}-Day Dynamic Real-World Travel Plan for ${dest}. Engineered by TRAVIXA Global Travel OS with live geographic coordinates (${gis.lat}, ${gis.lon}).`;
 
   return {
     id: `travixa-os-${Date.now()}`,
-    tripOverview: `${totalDays}-Day Dynamic Real-World Travel Plan for ${dest}. Engineered by TRAVIXA Global Travel OS with live geographic coordinates (${gis.lat}, ${gis.lon}), verified real OSM hotels, specific culinary landmarks, and strict ≤5 km spatial clustering.`,
-    destination: dest, destinationSummary: `Top verified OSM landmarks: ${lms.slice(0,4).join(', ')}. Accessible transit routes and verified dining across ${dest}.`,
+    tripOverview: overviewText,
+    destination: dest, destinationSummary: `${gis.wikiExtract ? gis.wikiExtract.slice(0, 180) + '... ' : ''}Top verified OSM landmarks: ${lms.slice(0,4).join(', ')}. Accessible transit routes and verified dining across ${dest}.`,
     totalDays, totalBudget: budget, estimatedCost: allocatedStay + allocatedFood + allocatedTransit + allocatedActivities + Math.min(allocatedMisc, 3000), currency: "INR", bestVisitingTime: "October to June",
     weatherConsiderations: `Live Open-Meteo Forecast: ${gis.temp}°C with ${gis.rainProb}% rain probability.`,
     weatherEngine: { currentWeather: gis.weatherDesc, temperature: gis.temp, rainProbability: gis.rainProb, wind: 14, humidity: 65, uvIndex: gis.uvIndex, sunrise: "06:15 AM", sunset: "06:45 PM", weatherAdvice: gis.rainProb > 50 ? "Carry rain umbrella for afternoon outdoor slots." : "Keep walking sneakers and stay hydrated." },
