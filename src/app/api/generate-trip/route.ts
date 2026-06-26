@@ -236,6 +236,7 @@ function assembleUniversalOSMEngine(body: any, gis: VerifiedGISPayload): Itinera
   const allocatedTransit = Math.floor(budget * 0.20);
   const allocatedActivities = Math.floor(budget * 0.10);
   const allocatedEmergency = Math.floor(budget * 0.10);
+  const allocatedMisc = allocatedEmergency;
   const nightlyRate = Math.floor(allocatedStay / totalDays);
 
   const mainHotelName = gis.osmHotels[0]?.name || (isBeach ? `Abhishek Beach Resort & Spa ${dest}` : isHill ? `Westend Mountain Cottage ${dest}` : `Hotel Grand Heritage ${dest}`);
