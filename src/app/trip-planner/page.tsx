@@ -28,10 +28,12 @@ export default function TripPlannerPage() {
   const [destination, setDestination] = useState("Ganpatipule");
   const [arrivalMode, setArrivalMode] = useState("Bus");
   const [arrivalTime, setArrivalTime] = useState("08:30 AM");
+  const [departureTime, setDepartureTime] = useState("04:30 PM");
   const [hotelPreference, setHotelPreference] = useState("Midrange");
   const [foodPreference, setFoodPreference] = useState("Veg");
   const [transportPreference, setTransportPreference] = useState("Bus / Cab");
   const [travelStyle, setTravelStyle] = useState("Relaxed Sightseeing");
+  const [travelSpeed, setTravelSpeed] = useState("Balanced");
   const [recentSearches, setRecentSearches] = useState<string[]>([
     "Ganpatipule", 
     "Goa, India", 
@@ -148,8 +150,10 @@ export default function TripPlannerPage() {
           travelers: { adults: adultsCount, children: childrenCount, soloGender },
           arrival_mode: arrivalMode,
           arrival_time: arrivalTime,
+          departure_time: departureTime,
           hotel_preference: hotelPreference,
           food_preference: foodPreference,
+          travel_speed: travelSpeed,
           veg_nonveg: foodPreference === "Veg" ? "Pure Veg" : "Veg & Non-Veg",
           interests: selectedPreferences,
           duration: durationNights,
