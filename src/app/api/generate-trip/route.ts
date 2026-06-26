@@ -165,7 +165,8 @@ function buildRealDestinationIntelligence(body: any): ItineraryData {
       lunch1: "Mapro Garden Cafe",
       dinner1: "Grapevine Kitchen",
       lunch2: "Bagicha Corner Cafe",
-      dinner2: "Rooftop Valley View Dining"
+      dinner2: "Rooftop Valley View Dining",
+      famousForItems: "Strawberry Cream, Corn Pattice, Sandwiches"
     };
   } else if (normDest.includes("ganpatipule")) {
     arrivalMode = "Train";
@@ -201,7 +202,8 @@ function buildRealDestinationIntelligence(body: any): ItineraryData {
       lunch1: "Kokan Swad Bhojanalaya",
       dinner1: "Tarang Beachfront Kitchen",
       lunch2: "Mehendale Konkani Dining",
-      dinner2: "Aare Ware Cliff Deck"
+      dinner2: "Aare Ware Cliff Deck",
+      famousForItems: "Ukadiche Modak, Konkani Fish Thali, Kokum"
     };
   } else if (normDest.includes("goa") || isIntl) {
     arrivalMode = "Flight";
