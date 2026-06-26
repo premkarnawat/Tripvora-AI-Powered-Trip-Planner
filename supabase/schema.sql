@@ -323,6 +323,32 @@ CREATE TABLE emergency_cache (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE hotel_cache (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    destination_name TEXT NOT NULL,
+    name TEXT NOT NULL,
+    rating NUMERIC DEFAULT 4.5,
+    price_per_night NUMERIC DEFAULT 5000,
+    star_tier TEXT DEFAULT '5-Star',
+    amenities TEXT[] DEFAULT '{}',
+    image_url TEXT,
+    address TEXT,
+    alternatives JSONB DEFAULT '[]'::jsonb,
+    budget_option JSONB DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(destination_name, name)
+);
+
+CREATE TABLE route_cache (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    origin_city TEXT NOT NULL,
+    destination_name TEXT NOT NULL,
+    transit_options JSONB DEFAULT '[]'::jsonb,
+    total_transit_cost NUMERIC DEFAULT 3000,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(origin_city, destination_name)
+);
+
 -- Enable RLS on all tables
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE agencies ENABLE ROW LEVEL SECURITY;
@@ -345,3 +371,5 @@ ALTER TABLE restaurant_cache ENABLE ROW LEVEL SECURITY;
 ALTER TABLE food_intelligence ENABLE ROW LEVEL SECURITY;
 ALTER TABLE attraction_cache ENABLE ROW LEVEL SECURITY;
 ALTER TABLE emergency_cache ENABLE ROW LEVEL SECURITY;
+ALTER TABLE hotel_cache ENABLE ROW LEVEL SECURITY;
+ALTER TABLE route_cache ENABLE ROW LEVEL SECURITY;

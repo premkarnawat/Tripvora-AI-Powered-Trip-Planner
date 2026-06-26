@@ -1,4 +1,5 @@
 export interface TripRequest {
+  origin?: string;
   destination: string;
   travelType: string;
   travelers: {
@@ -74,11 +75,22 @@ export interface ActivityItem {
   time: string;
   timeSlot: "morning" | "afternoon" | "evening" | "night";
   title: string;
+  name?: string;
   description: string;
+  category?: string;
   type: "travel" | "hotel" | "meal" | "activity" | "flight" | "transfer" | "misc";
   cost: number;
   location: string;
+  distance?: string;
+  travelTime?: string;
   rating?: number;
+  reviewCount?: number;
+  bestVisitingTime?: string;
+  weather?: string;
+  recommendedStayDuration?: string;
+  aiTip?: string;
+  alternativeOptions?: string[];
+  imageUrl?: string;
   details?: string;
   aiRecommendation?: string;
   isVeg?: boolean;
@@ -111,6 +123,8 @@ export interface Hotel {
   description?: string;
   affiliateOffer?: AffiliateOffer;
   agencyVendorId?: string;
+  alternatives?: Hotel[];
+  budgetOption?: Hotel;
   [key: string]: any;
 }
 
@@ -182,6 +196,20 @@ export interface ItineraryData {
   budgetTracker: BudgetBreakdown;
   isAgencyMode?: boolean;
   agencyVendorLibraryUsed?: boolean;
+  userOriginJourney?: {
+    originCity: string;
+    transitOptions: { mode: string; cost: number; duration: string; notes?: string }[];
+    totalTransitCost: number;
+  };
+  foodIntelligence?: {
+    bestVeg?: string;
+    bestNonVeg?: string;
+    bestSeafood?: string;
+    bestBudget?: string;
+    bestPremium?: string;
+    bestLocalSpecialty?: string;
+    streetFood?: string;
+  };
   hotels: Hotel[];
   flights: Flight[];
   restaurants: RestaurantRecommendation[];
