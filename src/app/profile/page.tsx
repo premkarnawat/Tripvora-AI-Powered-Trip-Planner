@@ -1,12 +1,33 @@
 "use client";
 
-import { useState } from "react";
-import { User, Settings, CreditCard, Bell, Shield, Map, Check } from "lucide-react";
+import { useState, useEffect } from "react";
+import { User, Settings, CreditCard, Bell, Shield, Map, Check, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState("info");
   const [success, setSuccess] = useState(false);
+  const [userProfile, setUserProfile] = useState({
+    name: "Elena Rostova",
+    email: "elena@travixa.ai",
+    tripsPlanned: 1,
+    countriesVisited: 1,
+    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=100&auto=format&fit=crop"
+  });
+
+  useEffect(() => {
+    try {
+      const lastTrip = localStorage.getItem('last_generated_trip');
+      if (lastTrip) {
+        const data = JSON.parse(lastTrip);
+        setUserProfile(prev => ({
+          ...prev,
+          tripsPlanned: data.totalDays ? 1 : prev.tripsPlanned,
+          countriesVisited: data.destination?.includes("Japan") || data.destination?.includes("India") ? 1 : prev.countriesVisited
+        }));
+      }
+    } catch (e) {}
+  }, []);
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,13 +61,13 @@ export default function ProfilePage() {
               
               <div className="w-20 h-20 mx-auto rounded-full border-4 border-white overflow-hidden relative z-10 shadow-md mb-4 mt-2">
                 <img 
-                  src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=100&auto=format&fit=crop" 
-                  alt="Arjun Kumar"
+                  src={userProfile.avatar} 
+                  alt={userProfile.name}
                   className="w-full h-full object-cover"
                 />
               </div>
-              <h2 className="text-lg font-bold text-black font-sora">Elena Rostova</h2>
-              <p className="text-xs text-slate-400 font-semibold mb-6">elena@luxury.com</p>
+              <h2 className="text-lg font-bold text-black font-sora">{userProfile.name}</h2>
+              <p className="text-xs text-slate-400 font-semibold mb-6">{userProfile.email}</p>
               
               <Button className="w-full bg-slate-50 hover:bg-slate-100 border border-slate-150 text-black text-xs font-bold rounded-xl h-10 transition-all">
                 Edit Avatar
@@ -90,7 +111,7 @@ export default function ProfilePage() {
                   <Map className="w-6 h-6" />
                 </div>
                 <div>
-                  <div className="text-2xl font-black text-black font-sora leading-none mb-1">12</div>
+                  <div className="text-2xl font-black text-black font-sora leading-none mb-1">{userProfile.tripsPlanned}</div>
                   <div className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Trips Planned</div>
                 </div>
               </div>
@@ -100,7 +121,7 @@ export default function ProfilePage() {
                   <Globe className="w-6 h-6" />
                 </div>
                 <div>
-                  <div className="text-2xl font-black text-black font-sora leading-none mb-1">5</div>
+                  <div className="text-2xl font-black text-black font-sora leading-none mb-1">{userProfile.countriesVisited}</div>
                   <div className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Countries Visited</div>
                 </div>
               </div>

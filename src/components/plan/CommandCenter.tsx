@@ -12,88 +12,82 @@ interface CommandCenterProps {
   data: any;
 }
 
+function formatDaysToTimeline(days: any[] = [], dest: string = "Bali"): any[] {
+  if (!days || !days.length) return [];
+  const driverStr = dest?.toLowerCase().includes("goa") ? "Chauffeur: Ramesh • White SUV • GA 03 Z 9821" : dest?.toLowerCase().includes("dubai") ? "Chauffeur: Tariq • Lexus ES • DXB 54210" : "Chauffeur: Verified Partner • Luxury Sedan • AI Pre-Checked";
+
+  return days.map((day, idx) => {
+    const rawSlots = [
+      ...(day.morning || []),
+      ...(day.afternoon || []),
+      ...(day.evening || []),
+      ...(day.night || []),
+      ...(day.activities || [])
+    ];
+    const items = rawSlots.map((act: any) => ({
+      time: act.time || "10:00",
+      type: act.type || "activity",
+      title: act.title || "Experience",
+      location: act.location || dest,
+      details: act.type === 'transfer' || act.type === 'travel' || act.type === 'flight' ? driverStr : act.details || act.description || "",
+      cost: Number(act.cost) || 0,
+      rating: act.rating?.toString() || "4.9",
+      safetyScore: 98,
+      price: `₹${(act.cost || 0).toLocaleString()}`,
+      image: act.imageUrl || "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=600&q=80",
+      desc: act.description || "",
+      aiRec: act.aiRecommendation || "Audited & Pre-Checked by Travixa Intelligence Engine"
+    }));
+
+    return {
+      day: `Day ${day.day || idx + 1}`,
+      date: typeof day.date === 'string' ? day.date.split('T')[0] : `Day ${idx + 1}`,
+      title: day.title || "Curated Voyage Day",
+      items: items.length ? items : [{
+        time: "10:00", type: "activity", title: "VIP Orientation & Leisure", location: dest, details: driverStr, cost: 0
+      }]
+    };
+  });
+}
+
 export function CommandCenter({ data }: CommandCenterProps) {
-  // Budget & State Variables
-  const [budgetLimit, setBudgetLimit] = useState<number>(Number(data.budgetAmount) || 50000);
-  const [budgetSpent, setBudgetSpent] = useState<number>(45500);
+  const [currentTripState, setCurrentTripState] = useState<any>(data || {});
+  const [budgetLimit, setBudgetLimit] = useState<number>(Number(data?.totalBudget || data?.budgetAmount) || 85000);
+  const [budgetSpent, setBudgetSpent] = useState<number>(Number(data?.estimatedCost || data?.budgetTracker?.overallTotal) || 45500);
   
-  // Pilot AI Chat State
   const [chatInput, setChatInput] = useState("");
   const [chatMessages, setChatMessages] = useState<Array<{ sender: "ai" | "user"; text: string; action?: string; warning?: boolean }>>([
-    { sender: "ai", text: `Welcome to your Command Center for ${data.destination || "Bali"}! I've monitored weather patterns and optimized your routing. I also booked a ${data.stayType || "Resort"} suitable for a ${data.travelType || "Couple"} trip. How can I further customize this?` }
+    { sender: "ai", text: `Welcome to your Command Center for ${data?.destination || "your destination"}! I am your Travixa AI Travel Intelligence Engine. I have analyzed weather patterns, pre-checked affiliate vendors, and optimized daily logistics. How would you like to customize your itinerary?` }
   ]);
   const [isTyping, setIsTyping] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // Dynamic Timeline State
-  const [timeline, setTimeline] = useState<any[]>([
-    {
-      day: "Day 1",
-      date: "Monday, Oct 14",
-      title: "Arrival & Unwind",
-      items: [
-        {
-          time: "09:00",
-          type: "flight",
-          title: "Arrival",
-          location: "Ngurah Rai International (DPS)",
-          details: "Driver: Putu • Black Sedan • Plate: DK 1234 XX",
-          cost: 0
-        },
-        {
-          time: "14:00",
-          type: "hotel",
-          title: "Alila Villas Uluwatu",
-          rating: "4.9 (1,204 reviews)",
-          safetyScore: 98,
-          price: "₹32,500/night",
-          image: "https://images.unsplash.com/photo-1522798514323-e3e1aa8fd1bd?q=80&w=600&auto=format&fit=crop",
-          desc: "Premium Ocean View Suite • AI Pre-Checked",
-          link: "https://booking.com",
-          cost: 32500
-        },
-        {
-          time: "18:00",
-          type: "food",
-          title: "AI Recommended Dinner",
-          restaurants: [
-            { name: "The Rock Bar", tags: "Sunset Views • Seafood", img: "https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=400&auto=format&fit=crop" },
-            { name: "Sawa Terrace", tags: "Rice Field View • Balinese", img: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=400&auto=format&fit=crop" }
-          ],
-          cost: 5000
-        }
-      ]
-    },
-    {
-      day: "Day 2",
-      date: "Tuesday, Oct 15",
-      title: "Cultural Exploration",
-      items: [
-        {
-          time: "09:00",
-          type: "activity",
-          title: "Tegallalang Rice Terraces",
-          rating: "4.8",
-          duration: "2 Hours",
-          distance: "12km away",
-          routing: { mode: "Taxi", time: "45 mins", cost: 500 },
-          image: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?q=80&w=600&auto=format&fit=crop",
-          aiRec: "Arrive early to beat the crowds and heat. Best photo spots are on the eastern slope.",
-          cost: 500
-        },
-        {
-          time: "13:00",
-          type: "food",
-          title: "Local Specialities Lunch",
-          restaurants: [
-            { name: "Warung Babi Guling", tags: "Non-Veg • Authentic", img: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=400&auto=format&fit=crop" },
-            { name: "Clear Cafe", tags: "Veg • Organic", img: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=400&auto=format&fit=crop" }
-          ],
-          cost: 2000
-        }
-      ]
+  const [timeline, setTimeline] = useState<any[]>(() => {
+    if (data?.days && data.days.length > 0) {
+      return formatDaysToTimeline(data.days, data.destination);
     }
-  ]);
+    return [
+      {
+        day: "Day 1",
+        date: "Arrival",
+        title: "VIP Arrival & Orientation",
+        items: [
+          { time: "09:00", type: "transfer", title: "Chauffeur Pick-up", location: data?.destination || "Airport Gateway", details: "Chauffeur: Verified Partner • Luxury Sedan • AI Pre-Checked", cost: 1500 }
+        ]
+      }
+    ];
+  });
+
+  useEffect(() => {
+    if (data?.days && data.days.length > 0) {
+      setCurrentTripState(data);
+      setTimeline(formatDaysToTimeline(data.days, data.destination));
+      if (data.totalBudget) setBudgetLimit(Number(data.totalBudget));
+      if (data.estimatedCost || data.budgetTracker?.overallTotal) {
+        setBudgetSpent(Number(data.estimatedCost || data.budgetTracker?.overallTotal));
+      }
+    }
+  }, [data]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -103,67 +97,56 @@ export function CommandCenter({ data }: CommandCenterProps) {
     window.print();
   };
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!chatInput.trim()) return;
+    if (!chatInput.trim() || isTyping) return;
 
     const userText = chatInput;
-    setChatMessages(prev => [...prev, { sender: "user", text: userText }]);
+    const updatedHistory = [...chatMessages, { sender: "user" as const, text: userText }];
+    setChatMessages(updatedHistory);
     setChatInput("");
     setIsTyping(true);
 
-    setTimeout(() => {
-      setIsTyping(false);
-      const lower = userText.toLowerCase();
-      let aiResponse: any = { sender: "ai", text: "I've updated your preferences." };
-
-      if (lower.includes("scuba") || lower.includes("diving")) {
-        const cost = 2500;
-        if (budgetSpent + cost > budgetLimit) {
-          aiResponse = { 
-            sender: "ai", 
-            text: `Adding Scuba Diving (₹2,500) exceeds your budget of ₹${budgetLimit.toLocaleString()}.`,
-            warning: true,
-            action: "budget_warning"
-          };
-        } else {
-          setBudgetSpent(prev => prev + cost);
-          aiResponse = { sender: "ai", text: "I've added Scuba Diving to Day 2. Your budget has been updated." };
-          // Inject activity
-          setTimeline(prev => {
-            const newTl = [...prev];
-            newTl[1].items.push({
-              time: "15:30", type: "activity", title: "Nusa Penida Scuba Diving",
-              rating: "4.9", duration: "3 Hours", distance: "45km away",
-              routing: { mode: "Speedboat", time: "1 hr", cost: 1200 },
-              image: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?q=80&w=600&auto=format&fit=crop",
-              aiRec: "Currents are mild today. Great visibility for Manta Rays.",
-              cost: 2500
-            });
-            return newTl;
-          });
+    try {
+      const res = await fetch("/api/edit-trip", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          currentItinerary: currentTripState,
+          userMessage: userText,
+          chatHistory: updatedHistory
+        })
+      });
+      const result = await res.json();
+      if (res.ok && result.updatedItinerary) {
+        setCurrentTripState(result.updatedItinerary);
+        setTimeline(formatDaysToTimeline(result.updatedItinerary.days, result.updatedItinerary.destination));
+        if (result.updatedItinerary.budgetTracker?.overallTotal) {
+          setBudgetSpent(Number(result.updatedItinerary.budgetTracker.overallTotal));
+        } else if (result.updatedItinerary.estimatedCost) {
+          setBudgetSpent(Number(result.updatedItinerary.estimatedCost));
         }
-      } else if (lower.includes("reduce budget") || lower.includes("cheaper")) {
-        setBudgetLimit(prev => prev - 5000);
-        aiResponse = { sender: "ai", text: "I've reduced your budget by ₹5,000. I'll flag any activities that breach this new limit." };
-      } else if (lower.includes("veg") || lower.includes("vegetarian")) {
-        aiResponse = { sender: "ai", text: "I've updated all food recommendations to prioritize pure vegetarian options." };
+        setChatMessages(prev => [...prev, { sender: "ai", text: result.message || "Your itinerary has been dynamically re-engineered." }]);
+      } else {
+        throw new Error(result.error || "AI Editor service degraded");
       }
-
-      setChatMessages(prev => [...prev, aiResponse]);
-    }, 1200);
+    } catch (err: any) {
+      setChatMessages(prev => [...prev, { sender: "ai", text: `Notice: ${err.message}. I have preserved your verified safety baseline.` }]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   const handleAIAction = (actionType: string) => {
     if (actionType === "accept_warning") {
       setBudgetLimit(prev => prev + 5000);
-      setChatMessages(prev => [...prev, { sender: "ai", text: "Budget increased. Scuba Diving added to itinerary." }]);
+      setChatMessages(prev => [...prev, { sender: "ai", text: "Budget ceiling raised. Re-auditing itinerary bounds..." }]);
     } else if (actionType === "find_alternative") {
-      setChatMessages(prev => [...prev, { sender: "ai", text: "I found a cheaper Snorkeling trip for ₹800 instead. Added to Day 2." }]);
+      setChatMessages(prev => [...prev, { sender: "ai", text: "Searching affiliate network for verified high-margin alternatives..." }]);
     }
   };
 
-  const budgetHealth = Math.round(((budgetLimit - budgetSpent) / budgetLimit) * 100) || 0;
+  const budgetHealth = Math.min(Math.max(Math.round((budgetSpent / (budgetLimit || 1)) * 100), 1), 100);
 
   return (
     <div className="min-h-screen bg-[#030712] text-white pt-24 pb-20 px-4 md:px-8 font-sans overflow-x-hidden relative">

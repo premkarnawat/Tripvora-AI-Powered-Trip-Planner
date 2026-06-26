@@ -36,39 +36,62 @@ export default function TripItineraryPage() {
 
   // Dynamic AI State mapping
   const [realTripData, setRealTripData] = useState<any>(null);
-  const [realTitle, setRealTitle] = useState("Goa Sunset & Beach Escape");
-  const [realDestination, setRealDestination] = useState("North & South Goa, India");
+  const [realTitle, setRealTitle] = useState("Curated Luxury Voyage");
+  const [realDestination, setRealDestination] = useState("Selected Destination");
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('last_generated_trip');
-      if (saved) {
-        const data = JSON.parse(saved);
-        setRealTripData(data);
-        if (data.totalBudget) setTotalBudget(data.totalBudget);
-        if (data.destination) setRealDestination(data.destination);
-        
-        // Sum up costs dynamically from the AI payload
-        let hotelsCost = 0, flightsCost = 0, foodCost = 0, activityCost = 0;
-        data.hotels?.forEach((h: any) => hotelsCost += h.pricePerNight * (data.totalDays || 1));
-        data.flights?.forEach((f: any) => flightsCost += f.price);
-        
-        data.days?.forEach((day: any) => {
-          day.activities?.forEach((act: any) => {
-            if (act.type === 'meal') foodCost += act.cost;
-            else if (act.type === 'activity') activityCost += act.cost;
+    async function loadLiveTrip() {
+      try {
+        if (id && id !== 'latest' && !id.startsWith('static-')) {
+          const res = await fetch(`/api/trips/${id}`);
+          if (res.ok) {
+            const row = await res.json();
+            if (row && row.demographics) {
+              setRealTripData(row.demographics);
+              setRealTitle(row.title || "Curated Voyage");
+              setRealDestination(row.destination || "Luxury Escape");
+              if (row.target_budget) setTotalBudget(Number(row.target_budget));
+              return;
+            }
+          }
+        }
+
+        const saved = localStorage.getItem('last_generated_trip');
+        if (saved) {
+          const data = JSON.parse(saved);
+          setRealTripData(data);
+          if (data.totalBudget) setTotalBudget(Number(data.totalBudget));
+          if (data.destination) setRealDestination(data.destination);
+          if (data.tripOverview || data.destinationSummary) {
+            setRealTitle((data.tripOverview || data.destinationSummary).slice(0, 48) + "...");
+          }
+          
+          let hotelsCost = 0, flightsCost = 0, foodCost = 0, activityCost = 0;
+          data.hotels?.forEach((h: any) => hotelsCost += (h.pricePerNight * (data.totalDays || 1)));
+          data.flights?.forEach((f: any) => flightsCost += (f.price || 0));
+          
+          data.days?.forEach((day: any) => {
+            const slots = [...(day.morning || []), ...(day.afternoon || []), ...(day.evening || []), ...(day.night || []), ...(day.activities || [])];
+            slots.forEach((act: any) => {
+              const c = Number(act.cost) || 0;
+              if (act.type === 'meal') foodCost += c;
+              else if (act.type === 'transfer' || act.type === 'travel' || act.type === 'flight') flightsCost += c;
+              else if (act.type === 'hotel') hotelsCost += c;
+              else activityCost += c;
+            });
           });
-        });
-        
-        setSpentHotels(hotelsCost);
-        setSpentTransport(flightsCost);
-        setSpentFood(foodCost);
-        setSpentActivities(activityCost);
+          
+          setSpentHotels(hotelsCost);
+          setSpentTransport(flightsCost);
+          setSpentFood(foodCost);
+          setSpentActivities(activityCost);
+        }
+      } catch (e) {
+        console.error("Failed to load live trip data:", e);
       }
-    } catch (e) {
-      console.error("Failed to parse real trip data:", e);
     }
-  }, []);
+    loadLiveTrip();
+  }, [id]);
 
   // Dynamic Simulators
   const [scubaAdded, setScubaAdded] = useState(false);

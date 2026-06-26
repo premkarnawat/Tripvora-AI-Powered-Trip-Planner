@@ -196,7 +196,7 @@ CREATE TABLE marketplace_leads (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 7. AI Caching
+-- 7. AI & Travel Intelligence OS Caching (Permanent Reusable Intelligence)
 CREATE TABLE destination_cache (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     destination_name TEXT UNIQUE NOT NULL,
@@ -214,6 +214,115 @@ CREATE TABLE ai_generation_logs (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE destination_intelligence (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    destination_name TEXT UNIQUE NOT NULL,
+    overview TEXT,
+    popular_attractions JSONB DEFAULT '[]'::jsonb,
+    historical_sites JSONB DEFAULT '[]'::jsonb,
+    adventure_activities JSONB DEFAULT '[]'::jsonb,
+    nature JSONB DEFAULT '[]'::jsonb,
+    shopping JSONB DEFAULT '[]'::jsonb,
+    nightlife JSONB DEFAULT '[]'::jsonb,
+    family_places JSONB DEFAULT '[]'::jsonb,
+    hidden_gems JSONB DEFAULT '[]'::jsonb,
+    photography_spots JSONB DEFAULT '[]'::jsonb,
+    best_season TEXT,
+    local_customs TEXT,
+    safety_notes TEXT,
+    travel_tips TEXT,
+    average_costs JSONB DEFAULT '{}'::jsonb,
+    recommended_trip_duration INTEGER DEFAULT 4,
+    emergency_info JSONB DEFAULT '{}'::jsonb,
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE weather_cache (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    destination_name TEXT UNIQUE NOT NULL,
+    current_weather JSONB DEFAULT '{}'::jsonb,
+    hourly_forecast JSONB DEFAULT '[]'::jsonb,
+    daily_forecast JSONB DEFAULT '[]'::jsonb,
+    rain_probability NUMERIC DEFAULT 10,
+    temperature NUMERIC DEFAULT 27,
+    wind NUMERIC DEFAULT 12,
+    humidity NUMERIC DEFAULT 65,
+    uv_index NUMERIC DEFAULT 6,
+    sunrise TEXT DEFAULT '06:00 AM',
+    sunset TEXT DEFAULT '06:30 PM',
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE restaurant_cache (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    destination_name TEXT NOT NULL,
+    name TEXT NOT NULL,
+    cuisine TEXT,
+    is_veg BOOLEAN DEFAULT false,
+    is_non_veg BOOLEAN DEFAULT true,
+    is_jain_friendly BOOLEAN DEFAULT false,
+    is_vegan BOOLEAN DEFAULT false,
+    is_family_friendly BOOLEAN DEFAULT true,
+    price_range TEXT DEFAULT '₹₹₹',
+    speciality TEXT,
+    must_try_dish TEXT,
+    opening_hours TEXT DEFAULT '11:00 AM - 11:00 PM',
+    distance TEXT DEFAULT 'Central',
+    meal_type TEXT DEFAULT 'Dinner',
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(destination_name, name)
+);
+
+CREATE TABLE food_intelligence (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    destination_name TEXT UNIQUE NOT NULL,
+    local_specialities TEXT[] DEFAULT '{}',
+    must_try_foods TEXT[] DEFAULT '{}',
+    best_veg_options TEXT[] DEFAULT '{}',
+    best_non_veg_options TEXT[] DEFAULT '{}',
+    budget_food TEXT[] DEFAULT '{}',
+    premium_restaurants TEXT[] DEFAULT '{}',
+    street_food TEXT[] DEFAULT '{}',
+    desserts TEXT[] DEFAULT '{}',
+    traditional_cuisine TEXT,
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE attraction_cache (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    destination_name TEXT NOT NULL,
+    name TEXT NOT NULL,
+    category TEXT,
+    opening_hours TEXT DEFAULT '09:00 AM - 06:00 PM',
+    approx_visit_duration TEXT DEFAULT '2 Hours',
+    best_visiting_time TEXT DEFAULT 'Morning',
+    photography_score NUMERIC DEFAULT 4.8,
+    is_family_friendly BOOLEAN DEFAULT true,
+    adventure_level TEXT DEFAULT 'Moderate',
+    crowd_level TEXT DEFAULT 'Medium',
+    entry_fee NUMERIC DEFAULT 500,
+    coordinates JSONB DEFAULT '{"lat": 0, "lng": 0}'::jsonb,
+    distance TEXT DEFAULT '10km',
+    travel_time TEXT DEFAULT '25 mins',
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(destination_name, name)
+);
+
+CREATE TABLE emergency_cache (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    destination_name TEXT UNIQUE NOT NULL,
+    hospitals JSONB DEFAULT '[]'::jsonb,
+    police JSONB DEFAULT '[]'::jsonb,
+    atm JSONB DEFAULT '[]'::jsonb,
+    fuel_stations JSONB DEFAULT '[]'::jsonb,
+    pharmacies JSONB DEFAULT '[]'::jsonb,
+    tourist_help JSONB DEFAULT '[]'::jsonb,
+    embassy JSONB DEFAULT '[]'::jsonb,
+    emergency_numbers JSONB DEFAULT '{"police": "112", "ambulance": "102"}'::jsonb,
+    nearest_medical_facilities JSONB DEFAULT '[]'::jsonb,
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- Enable RLS on all tables
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE agencies ENABLE ROW LEVEL SECURITY;
@@ -228,3 +337,11 @@ ALTER TABLE trip_components ENABLE ROW LEVEL SECURITY;
 ALTER TABLE quotations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bookings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE marketplace_leads ENABLE ROW LEVEL SECURITY;
+ALTER TABLE destination_cache ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ai_generation_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE destination_intelligence ENABLE ROW LEVEL SECURITY;
+ALTER TABLE weather_cache ENABLE ROW LEVEL SECURITY;
+ALTER TABLE restaurant_cache ENABLE ROW LEVEL SECURITY;
+ALTER TABLE food_intelligence ENABLE ROW LEVEL SECURITY;
+ALTER TABLE attraction_cache ENABLE ROW LEVEL SECURITY;
+ALTER TABLE emergency_cache ENABLE ROW LEVEL SECURITY;
