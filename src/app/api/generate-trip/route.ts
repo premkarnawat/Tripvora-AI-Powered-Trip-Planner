@@ -124,9 +124,9 @@ function buildRealDestinationIntelligence(origin: string, dest: string, budget: 
       { provider: "Goibibo", url: "https://www.goibibo.com", price: hotelBasePrice }
     ],
     alternatives: [
-      { name: `The Westin ${dest}`, rating: 4.8, pricePerNight: Math.floor(hotelBasePrice * 1.1), starTier: "5-Star" },
-      { name: `JW Marriott ${dest}`, rating: 4.9, pricePerNight: Math.floor(hotelBasePrice * 1.25), starTier: "5-Star" },
-      { name: `Sheraton Grand ${dest}`, rating: 4.7, pricePerNight: Math.floor(hotelBasePrice * 0.9), starTier: "5-Star" }
+      { name: `The Westin ${dest}`, rating: 4.8, pricePerNight: Math.floor(hotelBasePrice * 1.1), starTier: "5-Star", amenities: ["Spa Sanctuary", "Riverside Deck", "Pool"], imageUrl: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=800&q=80" },
+      { name: `JW Marriott ${dest}`, rating: 4.9, pricePerNight: Math.floor(hotelBasePrice * 1.25), starTier: "5-Star", amenities: ["Rooftop Lounge", "Pool", "Bakery"], imageUrl: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80" },
+      { name: `Sheraton Grand ${dest}`, rating: 4.7, pricePerNight: Math.floor(hotelBasePrice * 0.9), starTier: "5-Star", amenities: ["Heritage Architecture", "Pool", "Club Lounge"], imageUrl: "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=800&q=80" }
     ],
     budgetOption: {
       name: `Treebo Trend Serene ${dest}`, rating: 4.3, pricePerNight: Math.floor(hotelBasePrice * 0.3), starTier: "3-Star Boutique",
