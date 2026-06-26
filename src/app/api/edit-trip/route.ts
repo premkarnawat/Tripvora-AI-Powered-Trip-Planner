@@ -10,17 +10,17 @@ function recalculateBudgetTotals(itinerary: any): any {
   let activityCost = 0;
   let miscCost = 0;
 
-  itinerary.hotels?.forEach(h => {
+  itinerary.hotels?.forEach((h: any) => {
     hotelCost += (h.pricePerNight * (itinerary.totalDays || 1));
   });
 
-  itinerary.flights?.forEach(f => {
+  itinerary.flights?.forEach((f: any) => {
     transportCost += (f.price || 0);
   });
 
-  itinerary.days?.forEach(day => {
+  itinerary.days?.forEach((day: any) => {
     const slots = [...(day.morning || []), ...(day.afternoon || []), ...(day.evening || []), ...(day.night || [])];
-    slots.forEach(act => {
+    slots.forEach((act: any) => {
       const c = Number(act.cost) || 0;
       if (act.type === 'meal') foodCost += c;
       else if (act.type === 'travel' || act.type === 'transfer' || act.type === 'flight') transportCost += c;

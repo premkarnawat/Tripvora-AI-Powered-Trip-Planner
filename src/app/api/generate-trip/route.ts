@@ -192,22 +192,22 @@ export async function POST(request: Request) {
 
     // Stage 3-11: Query Permanent Reusable Supabase Intelligence Caches
     const [destRow, weatherRow, emergRow] = await Promise.all([
-      supabase.from('destination_intelligence').select('*').eq('destination_name', normDest).single().then(r => r.data),
-      supabase.from('weather_cache').select('*').eq('destination_name', normDest).single().then(r => r.data),
-      supabase.from('emergency_cache').select('*').eq('destination_name', normDest).single().then(r => r.data)
+      supabase.from('destination_intelligence').select('*').eq('destination_name', normDest).single().then((r: any) => r.data),
+      supabase.from('weather_cache').select('*').eq('destination_name', normDest).single().then((r: any) => r.data),
+      supabase.from('emergency_cache').select('*').eq('destination_name', normDest).single().then((r: any) => r.data)
     ]);
 
     // Stage 3-11 Cache Miss Failover: Build Permanent Intelligence Once
     let weatherData = weatherRow;
     if (!weatherData) {
       weatherData = buildSyntheticWeather(body.destination);
-      supabase.from('weather_cache').insert(weatherData).then(({ error }) => { if (error) console.warn("Weather cache insert error:", error.message); });
+      supabase.from('weather_cache').insert(weatherData).then(({ error }: any) => { if (error) console.warn("Weather cache insert error:", error.message); });
     }
 
     let emergData = emergRow;
     if (!emergData) {
       emergData = buildSyntheticEmergency(body.destination);
-      supabase.from('emergency_cache').insert(emergData).then(({ error }) => { if (error) console.warn("Emergency cache insert error:", error.message); });
+      supabase.from('emergency_cache').insert(emergData).then(({ error }: any) => { if (error) console.warn("Emergency cache insert error:", error.message); });
     }
 
     // Stage 12: AI Context Builder Orchestration Payload
@@ -302,11 +302,11 @@ Return pure valid JSON matching ItineraryData interface without markdown code fe
       // Stage 15: Database Caching Writes
       supabase.from('ai_generation_logs').insert({
         prompt_hash: promptHash, prompt_text: userPrompt, response_json: validated, token_count: tokenCount
-      }).then(({ error }) => { if (error) console.warn("Log write error:", error.message); });
+      }).then(({ error }: any) => { if (error) console.warn("Log write error:", error.message); });
 
       supabase.from('destination_cache').upsert({
         destination_name: normDest, overview: validated.tripOverview || validated.destinationSummary, tags: [body.travelType, "Travel OS"]
-      }, { onConflict: 'destination_name' }).then(({ error }) => { if (error) console.warn("Dest cache upsert error:", error.message); });
+      }, { onConflict: 'destination_name' }).then(({ error }: any) => { if (error) console.warn("Dest cache upsert error:", error.message); });
 
       return validated;
     })();
