@@ -497,6 +497,7 @@ export default function TripPlannerPage() {
                     </div>
                   </div>
 
+                  <div className="space-y-4 pt-4 border-t border-slate-100">
                     <div>
                       <p className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider mb-2">Popular & Trending Destinations</p>
                       <div className="flex flex-wrap gap-2">
