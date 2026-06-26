@@ -293,8 +293,8 @@ function buildRealDestinationIntelligence(body: any): ItineraryData {
       { provider: "MakeMyTrip", url: "https://www.makemytrip.com", price: hotelBasePrice }
     ],
     alternatives: [
-      { name: `Budget Stay ${dest}`, rating: 4.2, pricePerNight: Math.floor(hotelBasePrice * 0.6), starTier: "Budget Hotel" },
-      { name: `Premium Stay ${dest}`, rating: 4.8, pricePerNight: Math.floor(hotelBasePrice * 1.4), starTier: "Premium Resort" }
+      { name: `Budget Stay ${dest}`, rating: 4.2, pricePerNight: Math.floor(hotelBasePrice * 0.6), starTier: "Budget Hotel", amenities: ["Free Wi-Fi", "Clean AC Room"], imageUrl: "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=800&q=80" },
+      { name: `Premium Stay ${dest}`, rating: 4.8, pricePerNight: Math.floor(hotelBasePrice * 1.4), starTier: "Premium Resort", amenities: ["Infinity Pool", "Spa Lounge"], imageUrl: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=800&q=80" }
     ],
     budgetOption: {
       name: `Economy Lodge ${dest}`, rating: 4.1, pricePerNight: Math.floor(hotelBasePrice * 0.45), starTier: "Budget Lodge",
