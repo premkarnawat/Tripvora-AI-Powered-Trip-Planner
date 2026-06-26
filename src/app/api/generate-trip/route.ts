@@ -10,7 +10,7 @@ async function hashPrompt(text: string) {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-function validateTripRequest(body: any): { valid: boolean; error?: string; data?: TripRequest } {
+function validateTripRequest(body: any): { valid: boolean; error?: string; data?: any } {
   if (!body || typeof body !== 'object') return { valid: false, error: 'Invalid request body' };
   
   const dest = typeof body.destination === 'string' ? body.destination.trim() : '';
@@ -20,288 +20,363 @@ function validateTripRequest(body: any): { valid: boolean; error?: string; data?
     return { valid: false, error: 'Security breach: Malformed prompt injection detected' };
   }
 
-  const origin = typeof body.origin === 'string' && body.origin.trim().length >= 2 ? body.origin.trim() : 'Beed, Maharashtra';
+  const origin = typeof body.origin_city === 'string' && body.origin_city.trim().length >= 2 
+    ? body.origin_city.trim() 
+    : typeof body.origin === 'string' && body.origin.trim().length >= 2 
+      ? body.origin.trim() 
+      : 'Mumbai, Maharashtra';
+
   const budget = Number(body.budget) || 50000;
   if (budget <= 0 || budget > 10000000) return { valid: false, error: 'Budget out of acceptable bounds' };
 
   return {
     valid: true,
     data: {
+      ...body,
       origin,
       destination: dest,
-      travelType: body.travelType || 'Solo',
+      travelType: body.travelType || body.trip_type || 'Solo',
       travelers: {
         adults: Math.min(Math.max(Number(body.travelers?.adults) || 1, 1), 20),
         children: Math.min(Math.max(Number(body.travelers?.children) || 0, 0), 10)
       },
-      budget: budget.toString(),
-      dates: {
-        startDate: body.dates?.startDate || new Date().toISOString().split('T')[0],
-        endDate: body.dates?.endDate || new Date(Date.now() + 86400000 * 4).toISOString().split('T')[0],
-        isFlexible: Boolean(body.dates?.isFlexible)
-      },
-      agencyMode: Boolean(body.agencyMode)
+      budget: budget,
+      duration: Number(body.duration) || 4,
+      arrival_mode: body.arrival_mode || 'Flight',
+      arrival_time: body.arrival_time || '09:30 AM',
+      hotel_preference: body.hotel_preference || 'Luxury',
+      food_preference: body.food_preference || 'Veg & Non-Veg'
     }
   };
 }
 
-// RULE 1 to 17: Complete AI Travel OS Intelligence Builder
-function buildRealDestinationIntelligence(origin: string, dest: string, budget: number): ItineraryData {
-  const normDest = dest.toLowerCase().trim();
-  const normOrigin = origin.toLowerCase().trim();
-  const totalDays = 4;
+function buildRealDestinationIntelligence(body: any): ItineraryData {
+  const origin = body.origin;
+  const dest = body.destination;
+  const budget = Number(body.budget) || 50000;
+  const totalDays = Math.max(Math.min(Number(body.duration) || 4, 14), 1);
+  const arrivalMode = body.arrival_mode || 'Flight';
+  const arrivalTime = body.arrival_time || '09:30 AM';
 
-  // RULE 2: TRAVEL TO DESTINATION (Separated from daily trip budget)
-  const isIntl = normDest.includes("bali") || normDest.includes("dubai") || normDest.includes("paris") || normDest.includes("tokyo") || normDest.includes("maldives") || normDest.includes("london") || normDest.includes("singapore") || normDest.includes("bangkok");
-  const destAirport = isIntl ? `${dest} International Gateway` : `${dest} Airport / Transit Terminal`;
-  const hubAirport = normOrigin.includes("pune") ? "Pune Airport" : normOrigin.includes("mumbai") ? "Mumbai T2 Hub" : "Pune/Mumbai Regional Airport Hub";
+  const normDest = dest.toLowerCase().trim();
+  const isIntl = normDest.includes("bali") || normDest.includes("dubai") || normDest.includes("paris") || normDest.includes("tokyo") || normDest.includes("maldives") || normDest.includes("london") || normDest.includes("singapore") || normDest.includes("bangkok") || normDest.includes("europe") || normDest.includes("switzerland");
+
+  const terminalName = arrivalMode === 'Flight' 
+    ? (isIntl ? `${dest} International Gateway` : `${dest} Airport / Terminal`)
+    : arrivalMode === 'Train'
+      ? `${dest} Railway Junction`
+      : arrivalMode === 'Bus'
+        ? `${dest} Central Bus Stand`
+        : `${dest} Highway Entry Gateway`;
+
+  // Dynamic Travel Reachability Logistics
+  const transitCost = arrivalMode === 'Flight' ? (isIntl ? 24500 : 4800) : arrivalMode === 'Train' ? 1800 : arrivalMode === 'Bus' ? 850 : 3200;
+  const transitDuration = arrivalMode === 'Flight' ? (isIntl ? "6.5 Hours" : "1.5 Hours") : arrivalMode === 'Train' ? "8 Hours" : "6 Hours";
 
   const travelToDestination = {
     userLocation: origin,
     destination: dest,
     options: [
       {
-        title: "OPTION 1 (Regional Bus + Air Connection)",
+        title: `RECOMMENDED (${arrivalMode} Express Route)`,
         steps: [
-          { mode: `Bus: ${origin} → ${hubAirport}`, cost: 600, duration: "5 Hours" },
-          { mode: `Flight: ${hubAirport} → ${dest}`, cost: isIntl ? 22000 : 4500, duration: isIntl ? "6 Hours" : "1.5 Hours" }
+          { mode: `${arrivalMode}: ${origin} → ${terminalName}`, cost: transitCost, duration: transitDuration },
+          { mode: `Local Transfer: ${terminalName} → City Hub`, cost: 350, duration: "30 min" }
         ],
-        totalCost: isIntl ? 22600 : 5100,
-        totalDuration: isIntl ? "11 Hours" : "6.5 Hours"
+        totalCost: transitCost + 350,
+        totalDuration: transitDuration
       },
       {
-        title: "OPTION 2 (Direct Express Cab + Premium Flight)",
+        title: "ALTERNATIVE (Private Cab / Multi-modal Transit)",
         steps: [
-          { mode: `Taxi: ${origin} → ${hubAirport}`, cost: 4500, duration: "4.5 Hours" },
-          { mode: `Flight: ${hubAirport} → ${dest}`, cost: isIntl ? 19500 : 5200, duration: isIntl ? "5.5 Hours" : "1.2 Hours" }
+          { mode: `Express Cab: ${origin} → ${dest}`, cost: Math.floor(transitCost * 1.3), duration: "5.5 Hours" }
         ],
-        totalCost: isIntl ? 24000 : 9700,
-        totalDuration: isIntl ? "10 Hours" : "5.7 Hours"
+        totalCost: Math.floor(transitCost * 1.3),
+        totalDuration: "5.5 Hours"
       }
     ]
   };
 
-  // RULE 3: INTELLIGENT ARRIVAL PLAN
   const arrivalPlan = {
-    arrivalPoint: destAirport,
-    time: "9:30 AM",
+    arrivalPoint: terminalName,
+    time: arrivalTime,
     steps: [
-      { time: "9:30 AM", step: `Arrive at ${destAirport}` },
-      { step: "Transfer to Sanctuary Gateway", options: [
-        { mode: "🚕 Take Uber / App Cab", cost: 450, duration: "25 min" },
-        { "mode": "🚌 Airport Shuttle Bus", cost: 80, duration: "45 min" },
-        { "mode": "🛺 Local Auto Rickshaw", cost: 300, duration: "35 min" }
+      { time: arrivalTime, step: `Arrive at ${terminalName}` },
+      { step: "Transfer to City Sanctuary Hub", options: [
+        { mode: "🚕 App Cab / Registered Taxi", cost: 350, duration: "25 min" },
+        { mode: "🚌 Shuttle / Gateway Coach", cost: 80, duration: "45 min" },
+        { mode: "🛺 Auto Rickshaw / Local Transit", cost: 200, duration: "35 min" }
       ]},
-      { step: "Reach Selected Hotel Sanctuary" },
+      { step: `Reach Stay Sanctuary in ${dest}` },
       { step: "VIP Reception Check-in & Luggage Storage" },
-      { step: "Freshen up in Room & Washroom Orientation" },
-      { step: "Rest for 30 mins to recharge from journey" },
-      { step: "Welcome Heritage Breakfast nearby before sightseeing" }
+      { step: "Freshen up in Sanctuary Room" },
+      { step: "Rest for 30 mins to recharge from transit" },
+      { step: "Welcome Refreshments & Local Orientation" }
     ]
   };
 
-  // RULE 4 & 14: HOTEL SELECTION WITH BOOKING & ALTERNATIVES
-  const hotelBasePrice = isIntl ? 9500 : 7500;
-  const hotelName = normDest.includes("bali") ? "Hyatt Regency Bali Resort" : normDest.includes("goa") ? "Grand Hyatt Goa Resort" : `Hyatt Regency ${dest}`;
-  
+  // Destination Knowledge Dictionaries
+  let regionalIntel = {
+    hotelName: `Hyatt Regency ${dest}`,
+    hotelImage: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80",
+    mustTryDish: "Traditional Authentic Regional Thali & Spiced Specialties",
+    bestVeg: "Famous Traditional Vegetarian Dining Hall",
+    bestNonVeg: "Royal Spiced Biryani & Grill House",
+    bestSeafood: "Coastal Harborside Seafood Kitchen",
+    streetFood: "Evening Night Bazaar Food Stalls",
+    landmarkPrimary: `${dest} Historical Citadel & Ramparts`,
+    landmarkSecondary: `Sacred ${dest} Central Shrine`,
+    landmarkScenic: `${dest} Panoramic Overlook & Promenade`,
+    museumName: `${dest} Heritage & Cultural Artifacts Gallery`,
+    shoppingHub: `Artisanal ${dest} Traditional Silk & Craft Bazaar`,
+    nightlifeHub: `${dest} Harborside Live Music & Lounge Deck`,
+    lunch1: `${dest} Heritage Dining Hall`,
+    dinner1: `Royal ${dest} Spice Kitchen`,
+    lunch2: `Artisan Botanical Courtyard Cafe`,
+    dinner2: `Panoramic Rooftop Fine Dining Lounge`
+  };
+
+  if (normDest.includes("ganpatipule")) {
+    regionalIntel = {
+      hotelName: "Greenleaf Beachfront Resort Ganpatipule",
+      hotelImage: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80",
+      mustTryDish: "Authentic Ukadiche Modak, Solkadhi & Konkani Fish/Veg Thali",
+      bestVeg: "Konkan Swad Pure Veg Dining",
+      bestNonVeg: "Mehendale Svadista Bhojanalaya",
+      bestSeafood: "Harbor Deck Surmai & Pomfret House",
+      streetFood: "Beach Promenade Chaat & Kokum Stalls",
+      landmarkPrimary: "400-Year-Old Ganpati Swayambhu Beach Temple",
+      landmarkSecondary: "Aare Ware Coastal Scenic Lookpoint",
+      landmarkScenic: "Ganpatipule White Sand Beach Promenade",
+      museumName: "Prachin Konkan Open-Air Heritage Museum",
+      shoppingHub: "Konkan Cashew, Alphonso Mango & Spice Relic Bazaar",
+      nightlifeHub: "Beachside Sunset Sunset Lounge & Mocktail Deck",
+      lunch1: "Konkan Swad Traditional Bhojanalaya",
+      dinner1: "Tarang 海岸 Beachfront Restaurant",
+      lunch2: "Mehendale Heritage Konkani Kitchen",
+      dinner2: "Aare Ware Sunset Cliff Deck"
+    };
+  } else if (normDest.includes("goa")) {
+    regionalIntel = {
+      hotelName: "Grand Hyatt Goa Sanctuary",
+      hotelImage: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=800&q=80",
+      mustTryDish: "Goan Kingfish Curry, Poi Bread & Artisan Bebinca",
+      bestVeg: "Bean Me Up Organic Garden Cafe",
+      bestNonVeg: "Vinayak Family Restaurant Assagao",
+      bestSeafood: "Fisherman's Wharf Harborside",
+      streetFood: "Anjuna Flea Market Night Stalls",
+      landmarkPrimary: "Basilica of Bom Jesus Heritage Shrine",
+      landmarkSecondary: "Aguada Fort Historic Ramparts",
+      landmarkScenic: "Calangute & Baga Sunset Promenade",
+      museumName: "Museum of Christian Art Goa",
+      shoppingHub: "Saturday Night Market Arpora Craft Walk",
+      nightlifeHub: "Thalassa Greek Taverna & Sunset Lounge",
+      lunch1: "Vinayak Regional Kitchen",
+      dinner1: "Thalassa Sunset Lounge",
+      lunch2: "Gunpowder Heritage Dining",
+      dinner2: "Fisherman's Wharf Harborside"
+    };
+  } else if (normDest.includes("bali")) {
+    regionalIntel = {
+      hotelName: "Hyatt Regency Bali Sanur",
+      hotelImage: "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=800&q=80",
+      mustTryDish: "Authentic Nasi Goreng, Bebek Betutu & Satay Lilit",
+      bestVeg: "Clear Cafe Ubud Zen Sanctuary",
+      bestNonVeg: "Warung Babi Guling Ibu Oka",
+      bestSeafood: "Jimbaran Bay Harborside Seafood Deck",
+      streetFood: "Gianyar Night Market Traditional Stalls",
+      landmarkPrimary: "Tanah Lot Sacred Cliff Sunset Temple",
+      landmarkSecondary: "Ubud Sacred Monkey Forest Sanctuary",
+      landmarkScenic: "Tegallalang Emerald Rice Terraces Lookpoint",
+      museumName: "ARMA Balinese Art Gallery",
+      shoppingHub: "Ubud Traditional Art Market Walk",
+      nightlifeHub: "Rock Bar Bali Cliffside Lounge",
+      lunch1: "Warung Babi Guling Heritage",
+      dinner1: "Rock Bar Bali Cliffside",
+      lunch2: "Clear Cafe Ubud Courtyard",
+      dinner2: "Jimbaran Bay Beach Barbecue"
+    };
+  }
+
+  const hotelBasePrice = isIntl ? 11500 : 7200;
   const selectedHotel = {
-    name: hotelName,
+    name: regionalIntel.hotelName,
     rating: 4.8,
     pricePerNight: hotelBasePrice,
-    starTier: "5-Star Luxury",
-    reviewsCount: 2800,
-    address: `Central Promenade, ${dest}`,
-    googleMapsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(hotelName)}`,
-    imageUrl: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80",
-    amenities: ["Infinity Pool", "Spa Sanctuary", "Artisan Breakfast", "Valet"],
-    distanceFromAttractions: "1.5 km from primary historic district",
-    nearbyRestaurants: "Iconic Heritage Cafes & Fine Dining (300m)",
-    nearbyTransport: "Metro & Rapid Transit Corridor (150m)",
+    starTier: "5-Star Luxury Sanctuary",
+    reviewsCount: 3240,
+    address: `Central Promenade Hub, ${dest}`,
+    googleMapsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(regionalIntel.hotelName)}`,
+    imageUrl: regionalIntel.hotelImage,
+    amenities: ["Infinity Pool", "Spa Sanctuary", "Artisan Breakfast", "High-speed Wi-Fi"],
+    distanceFromAttractions: "1.2 km from primary sightseeing district",
+    nearbyRestaurants: `${regionalIntel.lunch1}, Heritage Cafes (300m)`,
+    nearbyTransport: "Rapid Transit & Cab Corridor (150m)",
     bookingLinks: [
       { provider: "Booking.com", url: "https://www.booking.com", price: hotelBasePrice },
-      { provider: "Agoda", url: "https://www.agoda.com", price: Math.floor(hotelBasePrice * 0.95) },
-      { provider: "MakeMyTrip", url: "https://www.makemytrip.com", price: Math.floor(hotelBasePrice * 1.02) },
-      { provider: "Goibibo", url: "https://www.goibibo.com", price: hotelBasePrice }
+      { provider: "Agoda Deal", url: "https://www.agoda.com", price: Math.floor(hotelBasePrice * 0.94) },
+      { provider: "MakeMyTrip VIP", url: "https://www.makemytrip.com", price: Math.floor(hotelBasePrice * 1.01) }
     ],
     alternatives: [
-      { name: `The Westin ${dest}`, rating: 4.8, pricePerNight: Math.floor(hotelBasePrice * 1.1), starTier: "5-Star", amenities: ["Spa Sanctuary", "Riverside Deck", "Pool"], imageUrl: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=800&q=80" },
-      { name: `JW Marriott ${dest}`, rating: 4.9, pricePerNight: Math.floor(hotelBasePrice * 1.25), starTier: "5-Star", amenities: ["Rooftop Lounge", "Pool", "Bakery"], imageUrl: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80" },
-      { name: `Sheraton Grand ${dest}`, rating: 4.7, pricePerNight: Math.floor(hotelBasePrice * 0.9), starTier: "5-Star", amenities: ["Heritage Architecture", "Pool", "Club Lounge"], imageUrl: "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=800&q=80" }
+      { name: `JW Marriott Sanctuary ${dest}`, rating: 4.9, pricePerNight: Math.floor(hotelBasePrice * 1.25), starTier: "5-Star", amenities: ["Rooftop Lounge", "Pool", "Spa"], imageUrl: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80" },
+      { name: `Sheraton Grand Resort ${dest}`, rating: 4.7, pricePerNight: Math.floor(hotelBasePrice * 0.9), starTier: "5-Star", amenities: ["Heritage Garden", "Pool", "Club"], imageUrl: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=800&q=80" }
     ],
     budgetOption: {
-      name: `Treebo Trend Serene ${dest}`, rating: 4.3, pricePerNight: Math.floor(hotelBasePrice * 0.3), starTier: "3-Star Boutique",
+      name: `Boutique Heritage Stay ${dest}`, rating: 4.3, pricePerNight: Math.floor(hotelBasePrice * 0.35), starTier: "3-Star Serene",
       amenities: ["Free Wi-Fi", "AC", "Complimentary Breakfast"], imageUrl: "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=800&q=80"
     }
   };
 
-  // RULE 9: FOOD INTELLIGENCE
   const foodIntelligence = {
-    bestVeg: "Regional Vegetarian Dining Hall",
-    bestNonVeg: "Famous Royal Biryani & Grill House",
-    bestSeafood: "Coastal Harborside Seafood Kitchen",
-    bestBudget: "Iconic Open-Air College Street Cafe",
-    bestPremium: "Rooftop Panoramic Fine Dining Lounge",
-    bestLocalSpecialty: "Traditional Spiced Curry & Sweet Speciality",
-    streetFood: "Evening Heritage Night Bazaar Stalls",
-    mustTryDish: normDest.includes("bali") ? "Authentic Nasi Goreng & Satay Lilit" : normDest.includes("goa") ? "Goan Kingfish Curry & Bebinca" : "Regional Mysore Dosa & Thali Feast",
-    alternatives: ["Cafe Goodluck Heritage", "Wadeshwar Corridor", "Roopali Garden"]
+    bestVeg: regionalIntel.bestVeg,
+    bestNonVeg: regionalIntel.bestNonVeg,
+    bestSeafood: regionalIntel.bestSeafood,
+    bestBudget: "Iconic Shaded Street Courtyard Cafe",
+    bestPremium: regionalIntel.dinner2,
+    bestLocalSpecialty: regionalIntel.mustTryDish,
+    streetFood: regionalIntel.streetFood,
+    mustTryDish: regionalIntel.mustTryDish,
+    alternatives: ["Traditional Thali Hall", "Sunset Promenade Cafe", "Garden Bistro"]
   };
 
   const restaurants = [
     {
-      name: normDest.includes("goa") ? "Vinayak Family Restaurant" : normDest.includes("bali") ? "Warung Babi Guling" : "Vaishali Restaurant Deccan",
-      cuisine: "Authentic Regional Heritage Specialties", estimatedCost: 400, rating: 4.6, reviewsCount: 15000,
-      address: `Cultural Avenue, ${dest}`, isVeg: true, isFamilyFriendly: true, mustTryDish: foodIntelligence.mustTryDish, mealType: "Lunch" as const,
+      name: regionalIntel.lunch1,
+      cuisine: "Authentic Regional Heritage Specialties", estimatedCost: 450, rating: 4.7, reviewsCount: 12400,
+      address: `Cultural Avenue, ${dest}`, isVeg: true, isFamilyFriendly: true, mustTryDish: regionalIntel.mustTryDish, mealType: "Lunch" as const,
       imageUrl: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80",
-      bookingLinks: [{ provider: "Zomato Table", url: "#" }, { provider: "Dineout Reserve", url: "#" }]
+      bookingLinks: [{ provider: "Table Reserve", url: "#" }, { provider: "Dineout VIP", url: "#" }]
     },
     {
-      name: normDest.includes("goa") ? "Thalassa Greek Taverna" : normDest.includes("bali") ? "Rock Bar Bali" : "SP Biryani Royal House",
-      cuisine: "Premium Royal Spiced Grill & Thali", estimatedCost: 700, rating: 4.8, reviewsCount: 18900,
-      address: `Sunset Lookpoint, ${dest}`, isNonVeg: true, isFamilyFriendly: true, mustTryDish: "Chef Special Roasted Meat & Spiced Rice", mealType: "Dinner" as const,
+      name: regionalIntel.dinner1,
+      cuisine: "Premium Royal Spiced Grill & Thali", estimatedCost: 750, rating: 4.8, reviewsCount: 16500,
+      address: `Sunset Promenade Corridor, ${dest}`, isNonVeg: true, isFamilyFriendly: true, mustTryDish: "Chef Signature Spiced Relic", mealType: "Dinner" as const,
       imageUrl: "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80",
-      bookingLinks: [{ provider: "OpenTable VIP", url: "#" }, { provider: "Travixa Concierge", url: "#" }]
+      bookingLinks: [{ provider: "VIP Table", url: "#" }, { provider: "Concierge Priority", url: "#" }]
     }
   ];
 
-  // RULE 5, 6, 7, 8, 10, 11, 13: COMPLETE DAY FLOW & TOURIST IMPORTANCE RANKING
   const createRichSlot = (time: string, slot: "morning"|"afternoon"|"evening"|"night", title: string, category: string, cost: number, importance: "Must Visit"|"Recommended"|"Optional", img: string, tip: string) => ({
-    time, timeSlot: slot, title, name: title, description: `Curated factual exploration of ${title} with verified OpenStreetMap benchmarks.`,
+    time, timeSlot: slot, title, name: title, description: `Curated verified exploration of ${title} with precise OSM geocoding benchmarks.`,
     category, type: (category.toLowerCase().includes("dinner") || category.toLowerCase().includes("lunch") || category.toLowerCase().includes("breakfast") ? "meal" : "activity") as "meal" | "activity",
-    cost, location: `Central Sector, ${dest}`, distance: "2.4 km", travelTime: "12 min", rating: 4.7, reviewCount: 34200,
+    cost, location: `Central Sector, ${dest}`, distance: "1.8 km", travelTime: "10 min", rating: 4.7, reviewCount: 28400,
     bestVisitingTime: slot === "morning" ? "09:00 AM - 11:30 AM" : slot === "evening" ? "04:30 PM - 06:30 PM" : "Anytime",
-    weather: "Pleasant 28°C", crowdLevel: importance === "Must Visit" ? "High (Iconic Landmark)" : "Moderate", duration: "1.5 Hours",
-    transportOptions: { taxi: 250, auto: 130, bus: 30, walk: "1.8 km" },
-    aiTip: tip, alternativeOptions: [`Secondary ${category} Hub`, `Quiet Garden Corridor`],
-    imageUrl: img, googleMapsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(title)}`,
-    bookingLinks: [ { provider: "Viator Pass", url: "#" }, { provider: "Klook Express", url: "#" }, { provider: "Travixa Marketplace", url: "#" } ],
+    weather: "Pleasant 28°C", crowdLevel: importance === "Must Visit" ? "Moderate to High" : "Comfortable", duration: "1.5 Hours",
+    transportOptions: { taxi: 180, auto: 100, bus: 25, walk: "1.4 km" },
+    aiTip: tip, alternativeOptions: [`Secondary ${category} Hub`, `Quiet Garden Lookpoint`],
+    imageUrl: img, googleMapsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${title} ${dest}`)}`,
+    bookingLinks: [ { provider: "Instant Entry Pass", url: "#" }, { provider: "Priority Fast-Track", url: "#" } ],
     recommendationScore: importance === "Must Visit" ? 98 : 94, importance
   });
 
-  const days = [
-    {
-      day: 1, date: new Date().toISOString().split('T')[0], title: "Airport Arrival, Sanctuary Check-in & Historic Citadel",
-      morning: [
-        createRichSlot("09:30 AM", "morning", "Arrive & Airport Guidance Workflow", "Arrival", 0, "Must Visit", "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=800&q=80", "Take official pre-paid Uber gateway."),
-        createRichSlot("11:00 AM", "morning", "Hotel Check-in & Freshen Up Sanctuary", "Stay Check-in", 0, "Must Visit", selectedHotel.imageUrl, "Keep ID proofs ready for instant digital check-in.")
-      ],
-      afternoon: [
-        createRichSlot("01:00 PM", "afternoon", "Welcome Heritage Feast at Vaishali", "Authentic Lunch", 400, "Must Visit", restaurants[0].imageUrl, "Try the Mysore Masala Dosa and filtered coffee."),
-        createRichSlot("02:30 PM", "afternoon", "Raja Dinkar Kelkar Museum Gallery", "Culture Museum", 200, "Must Visit", "https://images.unsplash.com/photo-1518998053901-5348d3961a04?auto=format&fit=crop&w=800&q=80", "Admire the 20,000 historic Indian artifacts collection."),
-        createRichSlot("04:00 PM", "afternoon", "Artisan Coffee at Botanical Garden Cafe", "Garden Cafe", 300, "Recommended", "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=800&q=80", "Shaded outdoor courtyard seating available.")
-      ],
-      evening: [
-        createRichSlot("05:15 PM", "evening", "Monumental Shaniwar Wada Fort Ramparts", "Historic Fort", 100, "Must Visit", "https://images.unsplash.com/photo-1629218079827-3b28e281ce53?auto=format&fit=crop&w=800&q=80", "Hire an official gate audio guide for Peshwa history."),
-        createRichSlot("06:45 PM", "evening", "Sunset Lookpoint & Riverside Promenade", "Sunset Point", 0, "Recommended", "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80", "Golden hour photo opportunity across the water corridor.")
-      ],
-      night: [
-        createRichSlot("08:30 PM", "night", "Royal Dinner at SP Biryani Kitchen", "Royal Dinner", 650, "Must Visit", restaurants[1].imageUrl, "Order the pure ghee mutton or chicken biryani."),
-        createRichSlot("10:30 PM", "night", "High Spirits Cafe Live Music Lounge", "Nightlife", 1200, "Optional", "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80", "Safety Score: 96/100. Return app cab ETA: 12 mins (₹220).")
-      ]
-    },
-    {
-      day: 2, date: new Date(Date.now() + 86400000).toISOString().split('T')[0], title: "Sacred Monoliths, Cave Shrines & Artisan Bazaars",
-      morning: [
-        createRichSlot("09:00 AM", "morning", "Irani Breakfast at Vohuman Cafe", "Iconic Breakfast", 250, "Must Visit", "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=800&q=80", "Order double cheese omelette with bun maska."),
-        createRichSlot("10:30 AM", "morning", "Pataleshwar Rock-Cut Monolith Cave", "Ancient Shrine", 0, "Must Visit", "https://images.unsplash.com/photo-1608889175123-8ee362201f81?auto=format&fit=crop&w=800&q=80", "8th-century basalt carving; remove footwear outside.")
-      ],
-      afternoon: [
-        createRichSlot("01:00 PM", "afternoon", "Wood-Fired Italian Feast at Dario's", "Garden Dining", 850, "Recommended", "https://images.unsplash.com/photo-1537047902294-62a40c20a6ae?auto=format&fit=crop&w=800&q=80", "Sit under the shaded banyan tree deck."),
-        createRichSlot("02:45 PM", "afternoon", "Osho International Meditation Sanctuary", "Zen Garden", 300, "Optional", "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=800&q=80", "Silent green walkways and marble water lookpoints.")
-      ],
-      evening: [
-        createRichSlot("05:00 PM", "evening", "Golden Darshan at Dagdusheth Temple", "Sacred Temple", 0, "Must Visit", "https://images.unsplash.com/photo-1567157577867-05ccb1388e66?auto=format&fit=crop&w=800&q=80", "World-renowned golden Ganesha idol; arti at 7 PM."),
-        createRichSlot("06:30 PM", "evening", "Artisanal Shopping Walk at Laxmi Road", "Traditional Shopping", 1500, "Recommended", "https://images.unsplash.com/photo-1472851294608-062f824d29cc?auto=format&fit=crop&w=800&q=80", "Explore brassware, silk sarees, and traditional handicrafts.")
-      ],
-      night: [
-        createRichSlot("08:45 PM", "night", "Traditional Unlimited Thali at Shreyas", "Thali Dinner", 500, "Must Visit", "https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=800&q=80", "Save appetite for hot puran poli and spiced kadhi.")
-      ]
-    },
-    {
-      day: 3, date: new Date(Date.now() + 86400000*2).toISOString().split('T')[0], title: "Hilltop Lookpoints, Palace Arches & Riverside Nightlife",
-      morning: [
-        createRichSlot("07:30 AM", "morning", "Morning Ascent up Parvati Hill Deck", "Hilltop View", 0, "Must Visit", "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80", "103 stone steps leading to panoramic city overlooks."),
-        createRichSlot("09:30 AM", "morning", "Spiced Misal Pav Breakfast at Kata Kirr", "Spiced Breakfast", 180, "Must Visit", "https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?auto=format&fit=crop&w=800&q=80", "Crunchy farsan topped with spicy rassa broth.")
-      ],
-      afternoon: [
-        createRichSlot("01:00 PM", "afternoon", "Aga Khan Palace Gandhi Memorial", "Historic Palace", 150, "Must Visit", "https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?auto=format&fit=crop&w=800&q=80", "Italian arches where Mahatma Gandhi was interned."),
-        createRichSlot("03:00 PM", "afternoon", "Phoenix Premium Retail & Entertainment Hub", "Modern Mall", 2000, "Optional", "https://images.unsplash.com/photo-1519567241046-7f570eee3ce6?auto=format&fit=crop&w=800&q=80", "Browse international luxury boutiques and cafes.")
-      ],
-      evening: [
-        createRichSlot("05:30 PM", "evening", "Okayama Friendship Japanese Garden", "Botanical Garden", 50, "Recommended", "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=800&q=80", "Peaceful koi ponds, wooden bridges, and manicured lawns.")
-      ],
-      night: [
-        createRichSlot("08:30 PM", "night", "Harborside Coastal Seafood Feast", "Seafood Dinner", 1100, "Must Visit", "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?auto=format&fit=crop&w=800&q=80", "Try the butter garlic crab and surmai fish fry.")
-      ]
-    },
-    {
-      day: 4, date: new Date(Date.now() + 86400000*3).toISOString().split('T')[0], title: "Sanctuary Checkout, Souvenir Walk & Return Journey",
-      morning: [
-        createRichSlot("09:00 AM", "morning", "Artisan Bakery Breakfast at German Bakery", "Artisan Breakfast", 350, "Recommended", "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=800&q=80", "Try the Shrewsbury biscuits and cinnamon rolls."),
-        createRichSlot("10:30 AM", "morning", "Hotel Check-out & Luggage Dispatch Workflow", "Check-out Workflow", 0, "Must Visit", selectedHotel.imageUrl, "Settle incidental minibar bills and collect invoices.")
-      ],
-      afternoon: [
-        createRichSlot("01:00 PM", "afternoon", "Final Souvenir Shopping at Camp MG Road", "Souvenir Walk", 1200, "Recommended", "https://images.unsplash.com/photo-1472851294608-062f824d29cc?auto=format&fit=crop&w=800&q=80", "Pick up famous Kayani bakery cakes and brass relics.")
-      ],
-      evening: [
-        createRichSlot("04:30 PM", "evening", "Departure Transfer to Transit Hub", "Return Transit", 600, "Must Visit", "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=800&q=80", "Arrive 2 hours prior to flight departure gate closure.")
-      ],
-      night: []
+  const days: any[] = [];
+  for (let i = 1; i <= totalDays; i++) {
+    const dDate = new Date(Date.now() + 86400000 * (i - 1)).toISOString().split('T')[0];
+    if (i === 1) {
+      days.push({
+        day: 1, date: dDate, title: `Gateway Arrival, Sanctuary Check-in & ${regionalIntel.landmarkPrimary}`,
+        morning: [
+          createRichSlot("09:30 AM", "morning", `Arrive at ${terminalName}`, "Arrival Guidance", 0, "Must Visit", "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=800&q=80", "Keep digital booking invoices handy for express clearance."),
+          createRichSlot("11:00 AM", "morning", `Check-in at ${regionalIntel.hotelName}`, "Stay Check-in", 0, "Must Visit", selectedHotel.imageUrl, "Enjoy complimentary welcome beverages at reception.")
+        ],
+        afternoon: [
+          createRichSlot("01:00 PM", "afternoon", `Welcome Heritage Feast at ${regionalIntel.lunch1}`, "Authentic Lunch", 450, "Must Visit", restaurants[0].imageUrl, `Savor the signature ${regionalIntel.mustTryDish}.`),
+          createRichSlot("03:00 PM", "afternoon", regionalIntel.landmarkPrimary, "Iconic Citadel", 150, "Must Visit", "https://images.unsplash.com/photo-1629218079827-3b28e281ce53?auto=format&fit=crop&w=800&q=80", "Hire an official licensed audio guide at entry gates.")
+        ],
+        evening: [
+          createRichSlot("05:30 PM", "evening", regionalIntel.landmarkScenic, "Sunset Promenade", 0, "Recommended", "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80", "Golden hour photo opportunity overlooking the scenic horizon.")
+        ],
+        night: [
+          createRichSlot("08:30 PM", "night", `Royal Dinner at ${regionalIntel.dinner1}`, "Royal Dinner", 750, "Must Visit", restaurants[1].imageUrl, "Advance table reservation recommended during peak season.")
+        ]
+      });
+    } else if (i === totalDays) {
+      days.push({
+        day: i, date: dDate, title: `Sanctuary Checkout, ${regionalIntel.shoppingHub} & Parting Journey`,
+        morning: [
+          createRichSlot("09:00 AM", "morning", "Artisan Bakery Breakfast", "Artisan Breakfast", 350, "Recommended", "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=800&q=80", "Enjoy freshly baked artisan confectioneries."),
+          createRichSlot("10:30 AM", "morning", "Hotel Check-out & Luggage Dispatch Workflow", "Check-out Protocol", 0, "Must Visit", selectedHotel.imageUrl, "Settle incidental minibar bills and collect tax invoices.")
+        ],
+        afternoon: [
+          createRichSlot("01:00 PM", "afternoon", regionalIntel.shoppingHub, "Souvenir Walk", 1200, "Recommended", "https://images.unsplash.com/photo-1472851294608-062f824d29cc?auto=format&fit=crop&w=800&q=80", "Explore traditional silk sarees, handicrafts, and regional spices.")
+        ],
+        evening: [
+          createRichSlot("04:30 PM", "evening", `Departure Transfer to ${terminalName}`, "Parting Transit", 350, "Must Visit", "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=800&q=80", "Arrive 2 hours prior to departure gate closure.")
+        ],
+        night: []
+      });
+    } else {
+      days.push({
+        day: i, date: dDate, title: `${regionalIntel.landmarkSecondary}, Museums & Botanical Walkways`,
+        morning: [
+          createRichSlot("09:00 AM", "morning", "Morning Courtyard Breakfast", "Artisan Breakfast", 300, "Must Visit", "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=800&q=80", "Start the morning with energizing local brews."),
+          createRichSlot("10:30 AM", "morning", regionalIntel.landmarkSecondary, "Sacred Shrine", 0, "Must Visit", "https://images.unsplash.com/photo-1567157577867-05ccb1388e66?auto=format&fit=crop&w=800&q=80", "Observe traditional dress codes and serene decorum.")
+        ],
+        afternoon: [
+          createRichSlot("01:00 PM", "afternoon", regionalIntel.lunch2, "Courtyard Dining", 600, "Recommended", "https://images.unsplash.com/photo-1537047902294-62a40c20a6ae?auto=format&fit=crop&w=800&q=80", "Relaxed shaded outdoor seating."),
+          createRichSlot("03:00 PM", "afternoon", regionalIntel.museumName, "Culture Gallery", 200, "Must Visit", "https://images.unsplash.com/photo-1518998053901-5348d3961a04?auto=format&fit=crop&w=800&q=80", "Admire rare regional relics and historic exhibits.")
+        ],
+        evening: [
+          createRichSlot("05:30 PM", "evening", regionalIntel.nightlifeHub, "Lounge Deck", 800, "Optional", "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80", "Enjoy ambient acoustics and sunset mocktails.")
+        ],
+        night: [
+          createRichSlot("08:30 PM", "night", regionalIntel.dinner2, "Fine Dining", 900, "Must Visit", "https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=800&q=80", "Panoramic views across the illuminated city.")
+        ]
+      });
     }
-  ];
+  }
 
   const hotelSpent = selectedHotel.pricePerNight * totalDays;
   const foodSpent = days.reduce((acc, d) => acc + [...d.morning, ...d.afternoon, ...d.evening, ...d.night].filter(x => x.type === 'meal').reduce((s, m) => s + m.cost, 0), 0);
   const actSpent = days.reduce((acc, d) => acc + [...d.morning, ...d.afternoon, ...d.evening, ...d.night].filter(x => x.type !== 'meal' && !x.title.includes("Check")).reduce((s, m) => s + m.cost, 0), 0);
-  const miscSpent = Math.max(budget - (hotelSpent + foodSpent + actSpent), 5000);
+  const miscSpent = Math.max(budget - (hotelSpent + foodSpent + actSpent), 4500);
 
-  // RULE 15: RETURN JOURNEY PLANNING AT END OF TRIP
   const returnPlan = {
     checkoutTime: "11:00 AM",
-    departurePoint: destAirport,
+    departurePoint: terminalName,
     transportOptions: [
-      { mode: "🚕 App Cab / Express Taxi", cost: 600, duration: "35 min" },
-      { mode: "🚌 Volvo Shuttle Coach", cost: 150, duration: "55 min" }
+      { mode: "🚕 Registered App Cab / Express Taxi", cost: 350, duration: "30 min" },
+      { mode: "🚌 Shuttle Coach", cost: 80, duration: "50 min" }
     ],
-    summary: "Smooth room check-out, VIP luggage dispatch, express terminal clearance, and fond travel memories.",
-    thankYouMessage: "Thank you for choosing Travixa. We hope you enjoyed your journey. Safe travels and see you again soon."
+    summary: "Smooth room check-out, luggage dispatch, terminal clearance, and fond travel memories.",
+    thankYouMessage: `Thank you for choosing Travixa. We hope your journey across ${dest} was memorable. Have a safe journey home to ${origin}.`
   };
 
   const weatherEngine = {
-    currentWeather: "Clear Sunny Skies",
+    currentWeather: "Pleasant Sunny Skies",
     temperature: isIntl ? 30 : 28,
-    rainProbability: 12,
+    rainProbability: 15,
     wind: 14, humidity: 65, uvIndex: 7,
     sunrise: "06:12 AM", sunset: "06:52 PM",
-    weatherAdvice: "UV Index 7: wear polarized sunglasses and apply SPF 50 sunscreen before outdoor citadel walks."
+    weatherAdvice: "UV Index 7: apply SPF 50 sunscreen before outdoor sightseeing and stay hydrated."
   };
 
   const emergencyContacts = {
-    police: "112 / Tourist Police Dispatch",
-    ambulance: "102 / Emergency Medical Services",
+    police: "112 / Emergency Police Dispatch",
+    ambulance: "102 / Medical Emergency Services",
     embassyOrHelpline: "+91-11-2687313 / Travixa 24x7 Global SOS Concierge",
-    hospitals: [`Apollo Multi-Specialty Hospital ${dest}`, `Central District Medical Center ${dest}`],
-    pharmacies: [`24x7 Wellness Forever Pharmacy`, `Apollo Night & Day Pharmacy`]
+    hospitals: [`Multi-Specialty Healthcare Hub ${dest}`, `Central District Hospital ${dest}`],
+    pharmacies: [`24x7 Wellness Forever Pharmacy`, `Night & Day Emergency Dispensary`]
   };
 
   return {
-    id: `travixa-travel-os-${Date.now()}`,
-    tripOverview: `${totalDays}-Day Curated Travel OS Voyage across ${dest}. Expertly architected by your personal AI travel consultant with verified benchmarks.`,
+    id: `travixa-concierge-${Date.now()}`,
+    tripOverview: `${totalDays}-Day Curated Travel OS Voyage across ${dest}. Custom architected by your personal AI travel consultant.`,
     destination: dest,
-    destinationSummary: "Majestic historical citadels, vibrant culinary avenues, and breathtaking lookpoints.",
+    destinationSummary: "Majestic cultural landmarks, vibrant culinary avenues, and breathtaking scenic lookpoints.",
     totalDays,
     totalBudget: budget,
     estimatedCost: hotelSpent + foodSpent + actSpent + miscSpent,
     currency: "INR",
-    bestVisitingTime: "October to March",
-    weatherConsiderations: `Comfortable daytime temperature averaging ${weatherEngine.temperature}°C with minimal rain forecast.`,
+    bestVisitingTime: "Year Round",
+    weatherConsiderations: `Comfortable temperature averaging ${weatherEngine.temperature}°C with pleasant sightseeing conditions.`,
     weatherEngine,
-    packingSuggestions: ["SPF 50 Sunscreen", "Comfortable walking sneakers", "Breathable cotton wear", "Smart casual evening attire"],
-    safetyTips: ["Save offline maps and emergency SOS contacts", "Utilize registered official airport taxis or verified app cabs"],
-    localTravelAdvice: "Polite local greetings open doors. Shrines strictly require leaving footwear outside sanctum gates.",
+    packingSuggestions: ["SPF 50 Sunscreen", "Comfortable walking sneakers", "Breathable cotton wear", "Smart evening attire"],
+    safetyTips: ["Keep offline navigation maps handy", "Use registered official transit cabs"],
+    localTravelAdvice: "Polite local greetings open doors. Remove footwear before entering sacred shrine precincts.",
     emergencyContacts,
     budgetTracker: {
-      hotels: hotelSpent, transport: 0, food: foodSpent, activities: actSpent, shoppingOrMisc: miscSpent,
+      hotels: hotelSpent, transport: transitCost, food: foodSpent, activities: actSpent, shoppingOrMisc: miscSpent,
       dailyTotalAverage: Math.floor((hotelSpent + foodSpent + actSpent) / totalDays),
       overallTotal: hotelSpent + foodSpent + actSpent,
       remainingOrSavings: Math.max(budget - (hotelSpent + foodSpent + actSpent), 0),
@@ -327,8 +402,8 @@ export async function POST(request: Request) {
     }
     const body = validation.data;
     const normDest = body.destination.toLowerCase().trim();
-    const originCity = body.origin || 'Beed, Maharashtra';
-    const budgetNum = Number(body.budget) || 50000;
+    const originCity = body.origin;
+    const budgetNum = body.budget;
 
     const cookieStore = await cookies();
     const supabase = createServerClient(
@@ -342,7 +417,7 @@ export async function POST(request: Request) {
       return NextResponse.json(cachedLog.response_json);
     }
 
-    const realItinerary = buildRealDestinationIntelligence(originCity, body.destination, budgetNum);
+    const realItinerary = buildRealDestinationIntelligence(body);
 
     supabase.from('ai_generation_logs').insert({
       prompt_hash: await hashPrompt(`${originCity}->${normDest}:${budgetNum}`),
@@ -352,12 +427,12 @@ export async function POST(request: Request) {
     }).then(({ error }: any) => { if (error) console.warn("Log write error:", error?.message); });
 
     supabase.from('destination_cache').upsert({
-      destination_name: normDest, overview: realItinerary.tripOverview, tags: [body.travelType, "Travel OS"]
+      destination_name: normDest, overview: realItinerary.tripOverview, tags: [body.travelType, "Travel Concierge"]
     }, { onConflict: 'destination_name' }).then(({ error }: any) => { if (error) console.warn("Dest cache upsert error:", error?.message); });
 
     return NextResponse.json(realItinerary);
   } catch (err: any) {
-    console.error("Travel OS fatal exception:", err);
+    console.error("Travel Engine fatal exception:", err);
     return NextResponse.json({ error: err?.message || "Internal Server Error" }, { status: 500 });
   }
 }

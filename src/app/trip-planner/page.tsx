@@ -23,12 +23,19 @@ export default function TripPlannerPage() {
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingText, setLoadingText] = useState("");
 
-  // Step 1: Destination
-  const [destination, setDestination] = useState("");
+  // Step 1: Starting Location & Destination
+  const [originCity, setOriginCity] = useState("Beed");
+  const [destination, setDestination] = useState("Ganpatipule");
+  const [arrivalMode, setArrivalMode] = useState("Bus");
+  const [arrivalTime, setArrivalTime] = useState("08:30 AM");
+  const [hotelPreference, setHotelPreference] = useState("Midrange");
+  const [foodPreference, setFoodPreference] = useState("Veg");
+  const [transportPreference, setTransportPreference] = useState("Bus / Cab");
+  const [travelStyle, setTravelStyle] = useState("Relaxed Sightseeing");
   const [recentSearches, setRecentSearches] = useState<string[]>([
+    "Ganpatipule", 
     "Goa, India", 
-    "Bali, Indonesia", 
-    "Kyoto, Japan"
+    "Bali, Indonesia"
   ]);
 
   // Step 2: Dates
@@ -134,12 +141,22 @@ export default function TripPlannerPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          destination: destination || "Goa, India",
-          dates: { startDate: fromDate, endDate: toDate },
-          travelers: { adults: adultsCount, children: childrenCount },
-          travelType: travelerType,
+          origin_city: originCity || "Beed",
+          destination: destination || "Ganpatipule",
+          trip_type: travelerType,
           budget: budgetValue,
-          preferences: selectedPreferences
+          travelers: { adults: adultsCount, children: childrenCount, soloGender },
+          arrival_mode: arrivalMode,
+          arrival_time: arrivalTime,
+          hotel_preference: hotelPreference,
+          food_preference: foodPreference,
+          veg_nonveg: foodPreference === "Veg" ? "Pure Veg" : "Veg & Non-Veg",
+          interests: selectedPreferences,
+          duration: durationNights,
+          transport_preference: transportPreference,
+          travel_style: travelStyle,
+          dates: { startDate: fromDate, endDate: toDate },
+          travelType: travelerType
         })
       });
 
@@ -422,39 +439,63 @@ export default function TripPlannerPage() {
           <div className="flex-1 bg-white border border-[#E5E7EB] rounded-[32px] p-8 md:p-12 shadow-[0_4px_30px_rgba(0,0,0,0.02)] min-h-[460px] flex flex-col justify-between">
             <AnimatePresence mode="wait">
               
-              {/* STEP 1: DESTINATION SEARCH */}
+              {/* STEP 1: DESTINATION & STARTING LOCATION */}
               {step === 1 && (
                 <motion.div key="step1" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="space-y-6 flex-1">
                   <div className="flex items-center gap-1.5 text-teal-600 font-bold uppercase tracking-widest text-[10px]">
-                    <MapPin className="w-4 h-4" /> Step 1: Destination
+                    <MapPin className="w-4 h-4" /> Step 1: Starting Location & Destination
                   </div>
-                  <h2 className="text-2xl font-black text-slate-900 tracking-tight font-sora">Where are you heading?</h2>
                   
-                  <input 
-                    type="text"
-                    value={destination}
-                    onChange={(e) => setDestination(e.target.value)}
-                    placeholder="Search destination (e.g. Bali, Goa, Tokyo, Maldives)..."
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 px-6 text-base text-slate-900 font-bold focus:outline-none focus:border-teal-500 focus:bg-white transition-all shadow-inner"
-                    autoFocus
-                  />
-
-                  {/* Recently searched & Trending tags */}
-                  <div className="space-y-4 pt-2">
+                  <div className="space-y-4">
                     <div>
-                      <p className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider mb-2">Recent Searches</p>
-                      <div className="flex flex-wrap gap-2">
-                        {recentSearches.map(dest => (
+                      <label className="text-xs font-black text-slate-700 uppercase tracking-wider block mb-1.5">Starting Location (Mandatory)</label>
+                      <input 
+                        type="text"
+                        value={originCity}
+                        onChange={(e) => setOriginCity(e.target.value)}
+                        placeholder="Where are you travelling from? (e.g. Beed, Pune, Mumbai, Nagpur...)"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-5 text-sm text-slate-900 font-bold focus:outline-none focus:border-teal-500 focus:bg-white transition-all shadow-inner"
+                      />
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {["Beed", "Pune", "Mumbai", "Nagpur", "Aurangabad", "Indore"].map(city => (
                           <button
-                            key={dest}
-                            onClick={() => setDestination(dest)}
-                            className="px-4 py-2 bg-[#FAFBFD] border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold transition-all"
+                            key={city}
+                            onClick={() => setOriginCity(city)}
+                            className={`px-3 py-1 rounded-lg text-[11px] font-bold border transition-all ${
+                              originCity === city ? "bg-teal-600 text-white border-teal-600" : "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200"
+                            }`}
                           >
-                            🕒 {dest}
+                            📍 {city}
                           </button>
                         ))}
                       </div>
                     </div>
+
+                    <div>
+                      <label className="text-xs font-black text-slate-700 uppercase tracking-wider block mb-1.5">Target Destination (Mandatory)</label>
+                      <input 
+                        type="text"
+                        value={destination}
+                        onChange={(e) => setDestination(e.target.value)}
+                        placeholder="Where are you heading? (e.g. Ganpatipule, Goa, Bali, Mahabaleshwar...)"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 px-5 text-sm text-slate-900 font-bold focus:outline-none focus:border-teal-500 focus:bg-white transition-all shadow-inner"
+                        autoFocus
+                      />
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {["Ganpatipule", "Goa", "Mahabaleshwar", "Lonavala", "Bali", "Paris"].map(dest => (
+                          <button
+                            key={dest}
+                            onClick={() => setDestination(dest)}
+                            className={`px-3 py-1 rounded-lg text-[11px] font-bold border transition-all ${
+                              destination === dest ? "bg-teal-600 text-white border-teal-600" : "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200"
+                            }`}
+                          >
+                            🌴 {dest}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
 
                     <div>
                       <p className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider mb-2">Popular & Trending Destinations</p>
