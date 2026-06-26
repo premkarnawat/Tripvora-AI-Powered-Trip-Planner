@@ -167,7 +167,7 @@ function buildRealDestinationIntelligence(origin: string, dest: string, budget: 
   // RULE 5, 6, 7, 8, 10, 11, 13: COMPLETE DAY FLOW & TOURIST IMPORTANCE RANKING
   const createRichSlot = (time: string, slot: "morning"|"afternoon"|"evening"|"night", title: string, category: string, cost: number, importance: "Must Visit"|"Recommended"|"Optional", img: string, tip: string) => ({
     time, timeSlot: slot, title, name: title, description: `Curated factual exploration of ${title} with verified OpenStreetMap benchmarks.`,
-    category, type: category.toLowerCase().includes("dinner") || category.toLowerCase().includes("lunch") || category.toLowerCase().includes("breakfast") ? "meal" : "activity",
+    category, type: (category.toLowerCase().includes("dinner") || category.toLowerCase().includes("lunch") || category.toLowerCase().includes("breakfast") ? "meal" : "activity") as "meal" | "activity",
     cost, location: `Central Sector, ${dest}`, distance: "2.4 km", travelTime: "12 min", rating: 4.7, reviewCount: 34200,
     bestVisitingTime: slot === "morning" ? "09:00 AM - 11:30 AM" : slot === "evening" ? "04:30 PM - 06:30 PM" : "Anytime",
     weather: "Pleasant 28°C", crowdLevel: importance === "Must Visit" ? "High (Iconic Landmark)" : "Moderate", duration: "1.5 Hours",
