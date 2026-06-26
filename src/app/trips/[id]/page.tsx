@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 export default function TripItineraryPage() {
   const params = useParams();
   const router = useRouter();
-  const id = params.id as string;
+  const id = params?.id ? (params.id as string) : "";
 
   // Local state for active day summary tabs
   const [activeDay, setActiveDay] = useState(1);
@@ -42,7 +42,7 @@ export default function TripItineraryPage() {
   useEffect(() => {
     async function loadLiveTrip() {
       try {
-        if (id && id !== 'latest' && !id.startsWith('static-')) {
+        if (id && id !== 'latest' && id !== 'generated' && !id.startsWith('static-')) {
           const res = await fetch(`/api/trips/${id}`);
           if (res.ok) {
             const row = await res.json();
@@ -50,7 +50,7 @@ export default function TripItineraryPage() {
               setRealTripData(row.demographics);
               setRealTitle(row.title || "Curated Voyage");
               setRealDestination(row.destination || "Luxury Escape");
-              if (row.target_budget) setTotalBudget(Number(row.target_budget));
+              if (row.target_budget) setTotalBudget(Number(row.target_budget) || 50000);
               return;
             }
           }
@@ -60,31 +60,30 @@ export default function TripItineraryPage() {
         if (saved) {
           const data = JSON.parse(saved);
           setRealTripData(data);
-          if (data.totalBudget) setTotalBudget(Number(data.totalBudget));
-          if (data.destination) setRealDestination(data.destination);
-          if (data.tripOverview || data.destinationSummary) {
-            setRealTitle((data.tripOverview || data.destinationSummary).slice(0, 48) + "...");
-          }
+          if (data?.totalBudget) setTotalBudget(Number(data.totalBudget) || 50000);
+          if (data?.destination && typeof data.destination === 'string') setRealDestination(data.destination);
+          const titleStr = typeof data?.tripOverview === 'string' ? data.tripOverview : (typeof data?.destinationSummary === 'string' ? data.destinationSummary : "Curated Voyage");
+          setRealTitle(titleStr.slice(0, 48) + "...");
           
           let hotelsCost = 0, flightsCost = 0, foodCost = 0, activityCost = 0;
-          data.hotels?.forEach((h: any) => hotelsCost += (h.pricePerNight * (data.totalDays || 1)));
-          data.flights?.forEach((f: any) => flightsCost += (f.price || 0));
+          data?.hotels?.forEach((h: any) => hotelsCost += (Number(h?.pricePerNight || h?.price || 5000) * (Number(data?.totalDays) || 1)) || 0);
+          data?.flights?.forEach((f: any) => flightsCost += (Number(f?.price || f?.cost) || 0));
           
-          data.days?.forEach((day: any) => {
-            const slots = [...(day.morning || []), ...(day.afternoon || []), ...(day.evening || []), ...(day.night || []), ...(day.activities || [])];
-            slots.forEach((act: any) => {
-              const c = Number(act.cost) || 0;
-              if (act.type === 'meal') foodCost += c;
-              else if (act.type === 'transfer' || act.type === 'travel' || act.type === 'flight') flightsCost += c;
-              else if (act.type === 'hotel') hotelsCost += c;
+          data?.days?.forEach((day: any) => {
+            const slots = [...(day?.morning || []), ...(day?.afternoon || []), ...(day?.evening || []), ...(day?.night || []), ...(day?.activities || [])];
+            slots?.forEach((act: any) => {
+              const c = Number(act?.cost) || 0;
+              if (act?.type === 'meal') foodCost += c;
+              else if (act?.type === 'transfer' || act?.type === 'travel' || act?.type === 'flight') flightsCost += c;
+              else if (act?.type === 'hotel') hotelsCost += c;
               else activityCost += c;
             });
           });
           
-          setSpentHotels(hotelsCost);
-          setSpentTransport(flightsCost);
-          setSpentFood(foodCost);
-          setSpentActivities(activityCost);
+          setSpentHotels(hotelsCost || 0);
+          setSpentTransport(flightsCost || 0);
+          setSpentFood(foodCost || 0);
+          setSpentActivities(activityCost || 0);
         }
       } catch (e) {
         console.error("Failed to load live trip data:", e);
@@ -149,20 +148,23 @@ export default function TripItineraryPage() {
   };
 
   // Day-wise journey timeline data - use AI generated if available
-  const dayTimeline = realTripData?.days?.flatMap((d: any) => 
-    d.activities?.map((act: any) => ({
-      time: act.time || "10:00 AM",
-      title: act.title || "Activity",
-      distance: act.location || "Local",
-      duration: "Variable",
-      transport: act.type || "transit",
-      cost: act.cost || 0,
+  const parsedAiTimeline = realTripData?.days?.flatMap((d: any) => {
+    const slots = [...(d?.morning || []), ...(d?.afternoon || []), ...(d?.evening || []), ...(d?.night || []), ...(d?.activities || [])];
+    return slots.map((act: any, idx: number) => ({
+      time: act?.time || "10:00 AM",
+      title: act?.title || "Curated Activity",
+      distance: act?.location || "Local",
+      duration: act?.duration || "Variable",
+      transport: act?.type || "transit",
+      cost: Number(act?.cost) || 0,
       weather: "Sunny 28°C",
-      aiTip: act.description || "Generated by AI",
-      mapLink: `https://maps.google.com/?q=${encodeURIComponent(act.location || act.title)}`,
-      nodeId: act.title
-    }))
-  ) || [
+      aiTip: act?.description || act?.aiRecommendation || "Generated by AI",
+      mapLink: `https://maps.google.com/?q=${encodeURIComponent(act?.location || act?.title || "Goa")}`,
+      nodeId: act?.title || `node-${idx}`
+    }));
+  })?.filter(Boolean);
+
+  const dayTimeline = (parsedAiTimeline && parsedAiTimeline.length > 0) ? parsedAiTimeline : [
     {
       time: "06:30 AM",
       title: "Board Flight (BOM → GOI)",

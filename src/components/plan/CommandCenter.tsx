@@ -209,7 +209,7 @@ export function CommandCenter({ data }: CommandCenterProps) {
                     <div className={`w-2 h-2 rounded-full ${item.color}`} />
                     <span className="text-white/70">{item.label}</span>
                   </div>
-                  <span>₹{item.toLocaleString()}</span>
+                  <span>₹{item.val.toLocaleString()}</span>
                 </div>
               ))}
             </div>
