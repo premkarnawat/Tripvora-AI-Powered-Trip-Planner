@@ -252,7 +252,7 @@ function buildRealDestinationIntelligence(origin: string, dest: string, budget: 
 
   const hotelSpent = selectedHotel.pricePerNight * totalDays;
   const foodSpent = days.reduce((acc, d) => acc + [...d.morning, ...d.afternoon, ...d.evening, ...d.night].filter(x => x.type === 'meal').reduce((s, m) => s + m.cost, 0), 0);
-  const actSpent = days.reduce((acc, d) => acc + [...d.morning, ...d.afternoon, ...d.evening, ...d.night].filter(x => x.type !== 'meal' && x.type !== 'hotel' && !x.title.includes("Check")).reduce((s, m) => s + m.cost, 0), 0);
+  const actSpent = days.reduce((acc, d) => acc + [...d.morning, ...d.afternoon, ...d.evening, ...d.night].filter(x => x.type !== 'meal' && !x.title.includes("Check")).reduce((s, m) => s + m.cost, 0), 0);
   const miscSpent = Math.max(budget - (hotelSpent + foodSpent + actSpent), 5000);
 
   // RULE 15: RETURN JOURNEY PLANNING AT END OF TRIP
