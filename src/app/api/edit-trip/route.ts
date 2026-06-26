@@ -3,7 +3,7 @@ import type { ItineraryData } from '@/types/trip';
 import { ItinerarySchema } from '@/lib/validations/itinerary';
 
 // Automated Server-Side Budget Intelligence Recalculator
-function recalculateBudgetTotals(itinerary: ItineraryData): ItineraryData {
+function recalculateBudgetTotals(itinerary: any): any {
   let hotelCost = 0;
   let transportCost = 0;
   let foodCost = 0;

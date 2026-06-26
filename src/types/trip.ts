@@ -6,14 +6,17 @@ export interface TripRequest {
     children: number;
     males?: number;
     females?: number;
+    [key: string]: any;
   };
   budget: string;
   dates: {
     startDate: string | null;
     endDate: string | null;
     isFlexible: boolean;
+    [key: string]: any;
   };
   agencyMode?: boolean;
+  [key: string]: any;
 }
 
 export interface TransportLogistics {
@@ -22,11 +25,13 @@ export interface TransportLogistics {
   estimatedCost: number;
   recommendedMode?: string;
   reasoning?: string;
+  [key: string]: any;
 }
 
 export interface RouteGeoJSON {
   type: string;
   coordinates: number[][];
+  [key: string]: any;
 }
 
 export interface MapRoutingPayload {
@@ -36,6 +41,7 @@ export interface MapRoutingPayload {
   eta?: string;
   distance?: string;
   polyline?: string;
+  [key: string]: any;
 }
 
 export interface WeatherIntelligence {
@@ -50,6 +56,7 @@ export interface WeatherIntelligence {
   sunrise: string;
   sunset: string;
   weatherAdvice?: string;
+  [key: string]: any;
 }
 
 export interface AffiliateOffer {
@@ -60,6 +67,7 @@ export interface AffiliateOffer {
   aiRecommendation?: string;
   isBestDeal?: boolean;
   abstractLayer: boolean;
+  [key: string]: any;
 }
 
 export interface ActivityItem {
@@ -79,6 +87,7 @@ export interface ActivityItem {
   mustTryDish?: string;
   transportToNext?: TransportLogistics;
   routingMap?: MapRoutingPayload;
+  [key: string]: any;
 }
 
 export interface DayItinerary {
@@ -90,6 +99,7 @@ export interface DayItinerary {
   evening: ActivityItem[];
   night: ActivityItem[];
   activities?: ActivityItem[];
+  [key: string]: any;
 }
 
 export interface Hotel {
@@ -101,6 +111,7 @@ export interface Hotel {
   description?: string;
   affiliateOffer?: AffiliateOffer;
   agencyVendorId?: string;
+  [key: string]: any;
 }
 
 export interface Flight {
@@ -109,6 +120,7 @@ export interface Flight {
   duration: string;
   stops: number;
   affiliateOffer?: AffiliateOffer;
+  [key: string]: any;
 }
 
 export interface RestaurantRecommendation {
@@ -124,6 +136,7 @@ export interface RestaurantRecommendation {
   isFamilyFriendly?: boolean;
   mustTryDish?: string;
   mealType?: "Breakfast" | "Lunch" | "Dinner" | "Cafe" | "Street Food";
+  [key: string]: any;
 }
 
 export interface EmergencyContacts {
@@ -132,6 +145,7 @@ export interface EmergencyContacts {
   embassyOrHelpline: string;
   hospitals?: string[];
   pharmacies?: string[];
+  [key: string]: any;
 }
 
 export interface BudgetBreakdown {
@@ -146,6 +160,7 @@ export interface BudgetBreakdown {
   overallTotal: number;
   remainingOrSavings: number;
   budgetHealthScore: number;
+  [key: string]: any;
 }
 
 export interface ItineraryData {
@@ -171,4 +186,5 @@ export interface ItineraryData {
   flights: Flight[];
   restaurants: RestaurantRecommendation[];
   days: DayItinerary[];
+  [key: string]: any;
 }
