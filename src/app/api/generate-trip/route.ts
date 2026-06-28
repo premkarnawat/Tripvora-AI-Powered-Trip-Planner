@@ -422,6 +422,7 @@ function executeBudgetIntelligenceEngine(totalBudget: number, totalDays: number,
     let dAct = 0;
     let dTrans = Math.floor(actualTransport / safeDays);
     const allSlots = [...(d.morning || []), ...(d.afternoon || []), ...(d.evening || []), ...(d.night || [])];
+    allSlots.forEach(slot => {
       const catStr = (slot.category || "").toLowerCase();
       if (slot.type === "meal" || catStr.includes("lunch") || catStr.includes("dinner") || catStr.includes("breakfast")) {
         dFood += (slot.cost || 300);
