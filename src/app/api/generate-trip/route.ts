@@ -71,6 +71,7 @@ interface OSMNode {
   type: "hotel" | "restaurant" | "attraction" | "hospital" | "station" | "airport" | "bus" | "ferry" | "metro" | "toy_train" | "ropeway";
   cuisine?: string;
   distanceKm?: number;
+  rating?: number;
 }
 
 interface VerifiedGISPayload {
@@ -425,7 +426,8 @@ function executeHotelIntelligenceEngine(body: any, gis: VerifiedGISPayload, stay
   while (rawHotels.length < 4) {
     const idx = rawHotels.length + 1;
     rawHotels.push({
-      id: `osm_h_${idx}`,
+      id: -(idx + 100000),
+      type: "hotel",
       name: idx === 1 ? `Central Heritage Residency ${dest}` : idx === 2 ? `Grand Stay Hotel ${dest}` : idx === 3 ? `City Comfort Inn ${dest}` : `Express Lodge ${dest}`,
       lat: Number(gis.lat) + (Math.random() - 0.5) * 0.02,
       lon: Number(gis.lon) + (Math.random() - 0.5) * 0.02,
