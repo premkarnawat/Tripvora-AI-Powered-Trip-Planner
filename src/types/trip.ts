@@ -177,6 +177,14 @@ export interface BudgetBreakdown {
   [key: string]: any;
 }
 
+export interface DestinationItem {
+  name: string;
+  category: "iconic places" | "hidden gems" | "temples" | "beaches" | "mountains" | "museums" | "shopping" | "gardens" | "nightlife" | "adventure" | "viewpoints" | "sunrise" | "sunset" | string;
+  rank: "must visit" | "recommended" | "optional";
+  distance?: string;
+  description?: string;
+}
+
 export interface ItineraryData {
   id: string;
   tripOverview: string;
@@ -212,6 +220,7 @@ export interface ItineraryData {
     streetFood?: string;
     [key: string]: any;
   };
+  destinationIntelligence?: DestinationItem[];
   hotels: Hotel[];
   flights: Flight[];
   restaurants: RestaurantRecommendation[];
