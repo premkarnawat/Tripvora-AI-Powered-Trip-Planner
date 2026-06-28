@@ -200,9 +200,22 @@ export interface RecommendationItem {
   reviewsCount: number;
   distanceKm: number;
   popularityScore: number;
-  userPreferenceBonus: number;
   description?: string;
   badge?: string;
+}
+
+export interface ValidationBreakdown {
+  transportScore: number;
+  hotelScore: number;
+  foodScore: number;
+  activitiesScore: number;
+  mapsScore: number;
+  imagesScore: number;
+  weatherScore: number;
+  totalScore: number;
+  status: "RENDER_PERFECT" | "RENDER_WARNING" | "REJECTED";
+  warningMessage?: string;
+  missingPoints: string[];
 }
 
 export interface ItineraryData {
@@ -243,6 +256,7 @@ export interface ItineraryData {
   destinationIntelligence?: DestinationItem[];
   userPreferenceEngine?: UserPreferenceProfile;
   recommendationEngine?: RecommendationItem[];
+  validationEngine?: ValidationBreakdown;
   hotels: Hotel[];
   flights: Flight[];
   restaurants: RestaurantRecommendation[];

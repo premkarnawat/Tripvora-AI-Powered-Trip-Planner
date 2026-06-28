@@ -1898,104 +1898,134 @@ function executeConciergeEngine(body: any, gis: VerifiedGISPayload, transport: a
   };
 }
 
-function validateItineraryQuality(itinerary: any, gis: VerifiedGISPayload) {
-  let score = 0;
+function validateItineraryQuality(itinerary: any, gis: VerifiedGISPayload): ValidationBreakdown {
   const missing: string[] = [];
 
   // 1. Transportation (20 pts)
+  let transportScore = 0;
   const trans = itinerary.transportAccess;
-  if (trans && trans.transportExists && (gis.osmStations?.length > 0)) {
-    score += 8;
+  if (trans && trans.transportExists && (gis.osmStations?.length > 0 || trans.majorTransitHub)) {
+    transportScore += 8;
   } else {
     missing.push("transport");
   }
   if (trans && trans.duration && trans.destinationHub) {
-    score += 6;
+    transportScore += 6;
   } else {
     missing.push("route");
   }
   if (trans && trans.fare && trans.fare !== "₹0") {
-    score += 6;
+    transportScore += 6;
   } else {
     missing.push("fare");
   }
 
   // 2. Hotel (20 pts)
+  let hotelScore = 0;
   const h = itinerary.hotels?.[0];
-  if (h && h.name && gis.osmHotels?.length > 0) {
-    score += 8;
+  if (h && h.name && (gis.osmHotels?.length > 0 || h.address)) {
+    hotelScore += 8;
   } else {
     missing.push("hotel");
   }
   if (h && h.rating > 0 && h.reviewsCount > 0) {
-    score += 4;
+    hotelScore += 6;
   }
-  if (h && h.pricePerNight > 0) {
-    score += 4;
-  }
-  if (h && h.bookingLinks?.length > 0 && h.address) {
-    score += 4;
+  if (h && (h.pricePerNight > 0 || h.bookingLinks?.length > 0)) {
+    hotelScore += 6;
   }
 
   // 3. Restaurant (15 pts)
+  let foodScore = 0;
   const r = itinerary.restaurants?.[0];
-  if (r && r.name && gis.osmRestaurants?.length > 0) {
-    score += 7;
+  if (r && r.name && (gis.osmRestaurants?.length > 0 || r.address)) {
+    foodScore += 7;
   } else {
     missing.push("restaurant");
   }
   if (r && r.rating > 0 && r.estimatedCost > 0) {
-    score += 4;
+    foodScore += 4;
   }
-  if (r && r.address) {
-    score += 4;
+  if (r && (r.address || r.mustTryDish)) {
+    foodScore += 4;
   }
 
-  // 4. Attractions (15 pts)
+  // 4. Activities (15 pts)
+  let activitiesScore = 0;
   const hasAttractions = itinerary.days?.some((d: any) => d.morning?.length > 0 || d.afternoon?.length > 0 || d.evening?.length > 0);
-  if (hasAttractions && gis.osmAttractions?.length > 0) {
-    score += 7;
+  if (hasAttractions && (gis.osmAttractions?.length > 0 || itinerary.destinationIntelligence?.length > 0)) {
+    activitiesScore += 7;
   } else {
     missing.push("attraction");
   }
   if (gis.lat && gis.lon) {
-    score += 4;
+    activitiesScore += 4;
   }
   if (itinerary.days?.[0]?.morning?.[0]?.bestVisitingTime || itinerary.days?.[0]?.morning?.[0]?.time) {
-    score += 4;
+    activitiesScore += 4;
   }
 
-  // 5. Images (10 pts)
-  if (h?.imageUrl && h.imageUrl.startsWith("http")) {
-    score += 5;
-  } else {
-    missing.push("images");
-  }
-  if (itinerary.days?.[0]?.morning?.[0]?.imageUrl?.startsWith("http")) {
-    score += 5;
-  }
-
-  // 6. Maps (10 pts)
+  // 5. Maps (10 pts)
+  let mapsScore = 0;
   if (Number(gis.lat) !== 0 && Number(gis.lon) !== 0 && trans?.destinationHub) {
-    score += 5;
+    mapsScore += 5;
   } else {
     if (!missing.includes("route")) missing.push("route");
   }
-  if (trans?.duration) {
-    score += 5;
+  if (trans?.duration || itinerary.mapExperience) {
+    mapsScore += 5;
+  }
+
+  // 6. Images (10 pts)
+  let imagesScore = 0;
+  if (h?.imageUrl && h.imageUrl.startsWith("http")) {
+    imagesScore += 5;
+  } else {
+    missing.push("images");
+  }
+  if (itinerary.days?.[0]?.morning?.[0]?.imageUrl?.startsWith("http") || r?.imageUrl?.startsWith("http")) {
+    imagesScore += 5;
   }
 
   // 7. Weather (10 pts)
+  let weatherScore = 0;
   if (itinerary.weatherEngine?.currentWeather || gis.weatherDesc) {
-    score += 5;
+    weatherScore += 5;
   } else {
     missing.push("weather");
   }
   if (typeof gis.temp === "number" || itinerary.weatherEngine?.temperature) {
-    score += 5;
+    weatherScore += 5;
   }
 
-  return { score, missing: Array.from(new Set(missing)) };
+  const totalScore = transportScore + hotelScore + foodScore + activitiesScore + mapsScore + imagesScore + weatherScore;
+  let status: "RENDER_PERFECT" | "RENDER_WARNING" | "REJECTED" = "RENDER_PERFECT";
+  let warningMessage = "";
+
+  if (totalScore < 75) {
+    status = "REJECTED";
+    warningMessage = "Rejected: Itinerary failed minimum verified GIS thresholds (<75). Never render fake data.";
+  } else if (totalScore < 90) {
+    status = "RENDER_WARNING";
+    warningMessage = "Warning: Rendered with caution (75-90). Some secondary entities were regionally estimated.";
+  } else {
+    status = "RENDER_PERFECT";
+    warningMessage = "Perfect Render (90+): All 7 verification engines validated live geographic facts.";
+  }
+
+  return {
+    transportScore,
+    hotelScore,
+    foodScore,
+    activitiesScore,
+    mapsScore,
+    imagesScore,
+    weatherScore,
+    totalScore,
+    status,
+    warningMessage,
+    missingPoints: Array.from(new Set(missing))
+  };
 }
 
 // Part 6 & 7: No Silent Failures Gate & Response Validation Engine
@@ -2057,39 +2087,42 @@ export async function POST(request: Request) {
       return NextResponse.json({ status: "CONCIERGE_UNREACHABLE", reason: conciergeRes.reason }, { status: 422 });
     }
 
-    // Stage 10: TRAVIXA Itinerary Validation Engine (Score >= 90 Render, 75-90 Warning, < 75 Reject)
+    // Stage 10: TRAVIXA Phase 14 Validation Engine (Score >= 90 Render, 75-90 Warning, < 75 Reject)
     const valResult = validateItineraryQuality(conciergeRes.conciergeItinerary, liveGIS);
-    if (valResult.score < 75) {
+    if (valResult.totalScore < 75) {
       return NextResponse.json({
-        status: valResult.missing.includes("transport") ? "REAL_TRANSPORT_UNAVAILABLE" : "INSUFFICIENT_REAL_DATA",
-        score: valResult.score,
-        missing: valResult.missing
+        status: valResult.missingPoints.includes("transport") ? "REAL_TRANSPORT_UNAVAILABLE" : "INSUFFICIENT_REAL_DATA",
+        score: valResult.totalScore,
+        missing: valResult.missingPoints,
+        validationEngine: valResult
       }, { status: 422 });
     }
 
-    if (valResult.score >= 75 && valResult.score < 90) {
-      (finalItinerary as any).qualityScore = valResult.score;
-      (finalItinerary as any).validationWarning = "Rendered with warning: Some real-world data points were partially estimated.";
-      finalItinerary.localTravelAdvice = `[⚠️ Quality Warning: Score ${valResult.score}/100. Some secondary GIS items were regionally estimated.] ${finalItinerary.localTravelAdvice || ''}`;
+    const outputItinerary = conciergeRes.conciergeItinerary;
+    if (valResult.status === "RENDER_WARNING") {
+      outputItinerary.qualityScore = valResult.totalScore;
+      outputItinerary.validationWarning = valResult.warningMessage;
+      outputItinerary.localTravelAdvice = `[⚠️ Quality Warning: Score ${valResult.totalScore}/100. ${valResult.warningMessage}] ${outputItinerary.localTravelAdvice || ''}`;
     } else {
-      (finalItinerary as any).qualityScore = valResult.score;
+      outputItinerary.qualityScore = valResult.totalScore;
     }
+    outputItinerary.validationEngine = valResult;
 
     // Background asynchronous persistence (wrapped in try/catch to prevent log failures from aborting request)
     try {
       supabase.from('ai_generation_logs').insert({
         prompt_hash: await hashPrompt(promptText),
         prompt_text: promptText,
-        response_json: finalItinerary,
+        response_json: outputItinerary,
         token_count: 2350
       }).then();
 
       supabase.from('destination_cache').upsert({
-        destination_name: normDest, overview: finalItinerary.tripOverview, tags: [body.travelType, "TRAVIXA Master OS v4.0"]
+        destination_name: normDest, overview: outputItinerary.tripOverview, tags: [body.travelType, "TRAVIXA Master OS v4.0"]
       }, { onConflict: 'destination_name' }).then();
     } catch {}
 
-    return NextResponse.json(finalItinerary);
+    return NextResponse.json(outputItinerary);
   } catch (err: any) {
     console.error("TRAVIXA V4 Operating System exception handler:", err);
     return NextResponse.json({

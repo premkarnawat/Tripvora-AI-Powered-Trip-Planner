@@ -370,6 +370,61 @@ export default function TripViewerPage() {
           </div>
         )}
 
+        {/* PHASE 14: VALIDATION ENGINE SCORECARD */}
+        {trip.validationEngine && (
+          <div className="bg-gradient-to-br from-slate-900 to-indigo-950 text-white border border-indigo-500/30 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
+            <div className="border-b border-white/10 pb-4 flex justify-between items-center flex-wrap gap-4">
+              <div>
+                <span className="px-3 py-1 bg-emerald-500/20 border border-emerald-500/40 rounded-full text-[10px] font-black text-emerald-400 uppercase tracking-widest font-sora">
+                  Phase 14 Validation Engine
+                </span>
+                <h3 className="text-xl md:text-2xl font-black text-white mt-2 flex items-center gap-3">
+                  Forensic GIS Scorecard
+                  <span className={`px-3 py-1 rounded-full text-xs font-black uppercase ${
+                    trip.validationEngine.totalScore >= 90 ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/30" : "bg-amber-500 text-white shadow-lg shadow-amber-500/30"
+                  }`}>
+                    {trip.validationEngine.totalScore} / 100 • {trip.validationEngine.status === "RENDER_PERFECT" ? "90+ PERFECT RENDER" : "75-90 CAUTION WARNING"}
+                  </span>
+                </h3>
+              </div>
+              <div className="text-right text-xs font-bold text-slate-300 bg-white/5 px-3 py-1.5 rounded-xl border border-white/10">
+                Rule: 90+ Render | 75-90 Warning | &lt;75 Reject (No Fake Data)
+              </div>
+            </div>
+
+            {trip.validationEngine.warningMessage && (
+              <div className={`p-3 rounded-xl border text-xs font-bold ${
+                trip.validationEngine.totalScore >= 90 ? "bg-emerald-950/40 border-emerald-500/30 text-emerald-300" : "bg-amber-950/40 border-amber-500/30 text-amber-300"
+              }`}>
+                ℹ️ Protocol Status: {trip.validationEngine.warningMessage}
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3">
+              {[
+                { label: "Transport", score: trip.validationEngine.transportScore, max: 20 },
+                { label: "Hotel", score: trip.validationEngine.hotelScore, max: 20 },
+                { label: "Food", score: trip.validationEngine.foodScore, max: 15 },
+                { label: "Activities", score: trip.validationEngine.activitiesScore, max: 15 },
+                { label: "Maps", score: trip.validationEngine.mapsScore, max: 10 },
+                { label: "Images", score: trip.validationEngine.imagesScore, max: 10 },
+                { label: "Weather", score: trip.validationEngine.weatherScore, max: 10 },
+              ].map((item, idx) => (
+                <div key={idx} className="bg-white/5 border border-white/10 rounded-2xl p-3 flex flex-col justify-between items-center text-center">
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{item.label}</span>
+                  <div className="my-2">
+                    <span className="text-xl font-black text-white">{item.score}</span>
+                    <span className="text-xs text-slate-400"> /{item.max}</span>
+                  </div>
+                  <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
+                    <div className="bg-gradient-to-r from-teal-400 to-indigo-400 h-full rounded-full" style={{ width: `${(item.score / item.max) * 100}%` }}></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* PHASE 13: RECOMMENDATION ENGINE */}
         {trip.recommendationEngine && trip.recommendationEngine.length > 0 && (
           <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
