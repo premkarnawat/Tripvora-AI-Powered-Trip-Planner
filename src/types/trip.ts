@@ -192,6 +192,19 @@ export interface DestinationItem {
   description?: string;
 }
 
+export interface RecommendationItem {
+  name: string;
+  category: "must visit" | "hidden gems" | "trending" | "family" | "adventure" | "shopping" | "nightlife" | "wellness" | string;
+  score: number;
+  rating: number;
+  reviewsCount: number;
+  distanceKm: number;
+  popularityScore: number;
+  userPreferenceBonus: number;
+  description?: string;
+  badge?: string;
+}
+
 export interface ItineraryData {
   id: string;
   tripOverview: string;
@@ -229,6 +242,7 @@ export interface ItineraryData {
   };
   destinationIntelligence?: DestinationItem[];
   userPreferenceEngine?: UserPreferenceProfile;
+  recommendationEngine?: RecommendationItem[];
   hotels: Hotel[];
   flights: Flight[];
   restaurants: RestaurantRecommendation[];

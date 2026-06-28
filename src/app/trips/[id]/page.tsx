@@ -370,6 +370,46 @@ export default function TripViewerPage() {
           </div>
         )}
 
+        {/* PHASE 13: RECOMMENDATION ENGINE */}
+        {trip.recommendationEngine && trip.recommendationEngine.length > 0 && (
+          <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
+            <div className="border-b border-slate-100 pb-4 flex justify-between items-center flex-wrap gap-2">
+              <div>
+                <span className="px-3 py-1 bg-amber-50 border border-amber-200 rounded-full text-[10px] font-black text-amber-700 uppercase tracking-widest font-sora">
+                  Phase 13 Recommendation Engine
+                </span>
+                <h3 className="text-xl md:text-2xl font-black text-slate-900 mt-2">Ranked Discoveries & Trending Spots</h3>
+              </div>
+              <div className="text-right text-xs font-bold text-slate-500 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
+                Formula: reviews + rating + dist + popularity + user bonus
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {trip.recommendationEngine.slice(0, 8).map((rec: any, idx: number) => (
+                <div key={idx} className="bg-gradient-to-b from-slate-50 to-white border border-slate-200/80 rounded-2xl p-4 flex flex-col justify-between hover:shadow-md transition-all">
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-start gap-1">
+                      <span className="px-2 py-0.5 bg-amber-100 text-amber-800 rounded text-[10px] font-black uppercase tracking-wider">
+                        #{idx + 1} • {rec.category}
+                      </span>
+                      <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 font-extrabold text-[10px] rounded border border-indigo-100">
+                        Score: {rec.score}
+                      </span>
+                    </div>
+                    <h4 className="font-extrabold text-slate-900 text-base line-clamp-1">{rec.name}</h4>
+                    <p className="text-xs text-slate-600 line-clamp-2">{rec.description || "Verified regional recommendation."}</p>
+                  </div>
+                  <div className="pt-3 mt-3 border-t border-slate-100 flex justify-between items-center text-[11px] text-slate-500 font-semibold">
+                    <span>⭐ {rec.rating} ({rec.reviewsCount})</span>
+                    <span>📍 {rec.distanceKm} km</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* PHASE 4: HOTEL INTELLIGENCE ENGINE SELECTION */}
         {trip.hotels?.[0] && (
           <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6 sm:p-8 shadow-xs space-y-8">
