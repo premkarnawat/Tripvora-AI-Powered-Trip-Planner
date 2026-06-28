@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import type { TripRequest, ItineraryData, Hotel, ActivityItem, RestaurantRecommendation, DayItinerary } from '@/types/trip';
+import type { TripRequest, ItineraryData, Hotel, ActivityItem, RestaurantRecommendation, DayItinerary, DestinationItem, UserPreferenceProfile } from '@/types/trip';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
