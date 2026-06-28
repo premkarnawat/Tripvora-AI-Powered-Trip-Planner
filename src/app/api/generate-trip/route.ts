@@ -1330,18 +1330,27 @@ async function retryApi<T>(fn: () => Promise<T>): Promise<T> {
   throw new Error("SERVICE_UNAVAILABLE");
 }
 
-// Part 16: Multi-Model AI Orchestrator (Gemini 2.5 Pro -> Gemini Flash -> Claude -> DeepSeek)
+// Part 16: Phase 12 Multi-Model AI Orchestrator (Gemini 2.5 Pro -> Gemini Flash -> Claude -> DeepSeek)
 async function orchestrateGeminiIntelligence(body: any, gis: VerifiedGISPayload, basePlan: ItineraryData): Promise<ItineraryData> {
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || DEFAULT_GEMINI_KEY;
 
-  const realHotelsStr = gis.osmHotels.map(h => h.name).join(', ') || basePlan.hotels[0].name;
+  const realHotelsStr = gis.osmHotels.map(h => h.name).join(', ') || basePlan.hotels[0]?.name || "Verified Hotel";
   const realRestsStr = gis.osmRestaurants.map(r => `${r.name} (${r.cuisine})`).join(', ') || basePlan.restaurants.map(r => r.name).join(', ');
   const realAttrStr = gis.osmAttractions.map(a => a.name).join(', ') || basePlan.days.map(d => d.morning[0]?.title).join(', ');
   const realStationsStr = gis.osmStations.map(s => s.name).join(', ') || basePlan.arrivalPlan.arrivalPoint;
 
+  // Phase 12 Mandate: Gemini CANNOT generate hotels, restaurants, routes, prices, transport, stations.
+  // Gemini ONLY organize, optimize, summarize, personalize, explain.
   const prompt = `You are TRAVIXA V4 Principal Gemini Orchestrator.
-Your role is to organize and structure real verified external geographic objects into an executable itinerary.
-You MUST NOT invent non-existent hotels, restaurants, stations, or attractions.
+PHASE 12 MANDATE:
+You CANNOT and MUST NOT generate or alter any hotels, restaurants, routes, prices, transport, or stations.
+All deterministic GIS hotels, dining, transport, and prices have already been verified and locked by the Travixa OS.
+You MUST ONLY:
+1. ORGANIZE: Arrange daily itinerary activities logically.
+2. OPTIMIZE: Ensure optimal sightseeing sequence.
+3. SUMMARIZE: Write an engaging trip overview.
+4. PERSONALIZE: Tailor tips and activity advice based on user preference profile (${body.travelType}).
+5. EXPLAIN: Provide clear local travel and safety explanations.
 
 USER FORM MANDATE:
 Source: "${body.origin}"
@@ -1362,39 +1371,17 @@ Real Verified Attractions (≤5km cluster): ${realAttrStr}
 Real Verified Transport Stations/Airports: ${realStationsStr}
 Live Weather: ${gis.temp}°C, Rain Prob: ${gis.rainProb}%
 
-BUDGET ALLOCATION RULE:
-Hotels: 40% (₹${Math.floor(body.budget * 0.4)})
-Transport: 20% (₹${Math.floor(body.budget * 0.2)})
-Food: 20% (₹${Math.floor(body.budget * 0.2)})
-Activities: 10% (₹${Math.floor(body.budget * 0.1)})
-Emergency Reserve: 10% (₹${Math.floor(body.budget * 0.1)})
-
 PRACTICAL ENGLISH MANDATE:
 Enforce simple action verbs (*Visit here. Eat here.*). Banned words: curated, immersive, bespoke, gastronomic, sanctuary.
 
 Return ONLY valid JSON matching this exact structure:
 {
-  "tripOverview": "string", "localTravelAdvice": "string",
-  "arrivalPlan": { "arrivalPoint": "${realStationsStr.split(',')[0]}", "time": "${body.arrival_time}", "steps": [{ "time": "string", "step": "string" }] },
-  "returnPlan": { "checkoutTime": "11:00 AM", "departurePoint": "${realStationsStr.split(',')[0]}", "transportOptions": [{ "mode": "string", "cost": 300, "duration": "30 min" }], "summary": "string", "thankYouMessage": "Thank you for choosing Travixa. Have a safe journey. We hope to see you again." },
-  "foodIntelligence": { "bestVeg": "Real Place", "bestNonVeg": "Real Place", "bestSeafood": "Real Place", "bestBudget": "string", "bestPremium": "string", "bestLocalSpecialty": "Real Dish", "streetFood": "string" },
-  "hotels": [{
-    "name": "Real Main Hotel Name", "rating": 4.6, "pricePerNight": 3500, "starTier": "${body.hotel_preference} Category", "reviewsCount": 2400, "address": "Real Address", "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=...", "imageUrl": "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=800&q=80", "amenities": ["Free Wi-Fi", "Restaurant", "Breakfast Included"], "distanceFromAttractions": "1.2 km", "nearbyRestaurants": "string", "nearbyTransport": "string",
-    "bookingLinks": [{ "provider": "Booking.com Affiliate", "url": "https://www.booking.com", "price": 3500 }],
-    "alternatives": [
-      { "name": "Real Budget Hotel", "rating": 4.2, "pricePerNight": 2000, "starTier": "Budget Stay", "amenities": ["Free Wi-Fi"], "imageUrl": "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=800&q=80" },
-      { "name": "Real Premium Hotel", "rating": 4.8, "pricePerNight": 7000, "starTier": "Premium Stay", "amenities": ["Pool", "Spa"], "imageUrl": "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=800&q=80" }
-    ],
-    "budgetOption": { "name": "Real Budget Hotel", "rating": 4.1, "pricePerNight": 1800, "starTier": "Budget Lodge", "amenities": ["Clean Bed"], "imageUrl": "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=800&q=80" }
-  }],
-  "restaurants": [
-    { "name": "Real Veg Restaurant", "cuisine": "Famous for: Real Dish ⭐4.6 ₹300", "estimatedCost": 300, "rating": 4.6, "address": "Real Address", "isVeg": true, "mustTryDish": "Real Dish", "mealType": "Lunch" },
-    { "name": "Real NonVeg Restaurant", "cuisine": "Famous for: Real Dish ⭐4.7 ₹500", "estimatedCost": 500, "rating": 4.7, "address": "Real Address", "isNonVeg": true, "mustTryDish": "Real Dish", "mealType": "Dinner" }
-  ],
+  "tripOverview": "string (engaging summary of the verified trip)",
+  "localTravelAdvice": "string (practical transport and safety advice)",
   "days": [
     {
       "day": 1, "date": "2026-10-15", "title": "Day 1 Title",
-      "morning": [{ "time": "09:00 AM", "timeSlot": "morning", "title": "Real Landmark Name", "name": "Real Landmark Name", "description": "Visit Real Landmark. Clustered ≤5km.", "category": "Sightseeing", "type": "activity", "cost": 100, "location": "Real Cluster", "distance": "1.5 km", "travelTime": "10 min", "rating": 4.7, "reviewCount": 1200, "bestVisitingTime": "09:00 AM", "weather": "Pleasant", "duration": "1.5 Hours", "aiTip": "Tip", "alternativeOptions": ["Alt"], "imageUrl": "https://images.unsplash.com/photo-1629218079827-3b28e281ce53?auto=format&fit=crop&w=800&q=80" }],
+      "morning": [{ "time": "09:00 AM", "timeSlot": "morning", "title": "Real Landmark Name", "name": "Real Landmark Name", "description": "Visit Real Landmark. Clustered ≤5km.", "category": "Sightseeing", "type": "activity", "cost": 100, "location": "Real Cluster", "distance": "1.5 km", "travelTime": "10 min", "rating": 4.7, "reviewCount": 1200, "bestVisitingTime": "09:00 AM", "weather": "Pleasant", "duration": "1.5 Hours", "aiTip": "Tip personalized for ${body.travelType}", "alternativeOptions": ["Alt"] }],
       "afternoon": [], "evening": [], "night": []
     }
   ]
@@ -1403,7 +1390,7 @@ Return ONLY valid JSON matching this exact structure:
   const invokeModel = async (provider: string, modelName: string): Promise<ItineraryData> => {
     return await retryApi(async () => {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 26000);
+      const timeout = setTimeout(() => controller.abort(), 20000);
       let res: Response;
 
       if (provider === "google") {
@@ -1469,24 +1456,57 @@ Return ONLY valid JSON matching this exact structure:
 
       const cleanJsonStr = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
       const liveIntel = JSON.parse(cleanJsonStr);
-      if (!liveIntel.hotels?.[0]?.name || !liveIntel.days?.length) {
-        throw new Error(`Invalid itinerary structure from ${modelName}`);
+      if (!liveIntel || typeof liveIntel !== 'object') {
+        throw new Error(`Invalid JSON structure from ${modelName}`);
       }
 
+      // Enforce Phase 12 Locks: Keep deterministic GIS hotels, restaurants, flights, prices locked!
       return {
         ...basePlan,
         tripOverview: liveIntel.tripOverview || basePlan.tripOverview,
         localTravelAdvice: liveIntel.localTravelAdvice || basePlan.localTravelAdvice,
-        arrivalPlan: { ...basePlan.arrivalPlan, ...(liveIntel.arrivalPlan || {}), arrivalPoint: basePlan.arrivalPlan.arrivalPoint },
-        returnPlan: { ...basePlan.returnPlan, ...(liveIntel.returnPlan || {}), departurePoint: basePlan.returnPlan.departurePoint },
-        foodIntelligence: liveIntel.foodIntelligence || basePlan.foodIntelligence,
-        hotels: liveIntel.hotels,
-        restaurants: liveIntel.restaurants || basePlan.restaurants,
-        days: liveIntel.days
+        hotels: basePlan.hotels,
+        restaurants: basePlan.restaurants,
+        flights: basePlan.flights,
+        transportAccess: basePlan.transportAccess,
+        estimatedCost: basePlan.estimatedCost,
+        totalBudget: basePlan.totalBudget,
+        arrivalPlan: basePlan.arrivalPlan,
+        returnPlan: basePlan.returnPlan,
+        budgetTracker: basePlan.budgetTracker,
+        days: (liveIntel.days && Array.isArray(liveIntel.days) && liveIntel.days.length > 0)
+          ? liveIntel.days.map((d: any, idx: number) => {
+              const baseDay = basePlan.days[idx] || basePlan.days[0];
+              const mapSlots = (aiSlots: any[], baseSlots: any[]) => {
+                const b = baseSlots || [];
+                return (aiSlots || b).map((s: any, sIdx: number) => {
+                  const bs = b[sIdx] || s || {};
+                  return {
+                    ...bs,
+                    title: s.title || bs.title || "Sightseeing",
+                    description: s.description || bs.description || "Verified regional visit.",
+                    aiTip: s.aiTip || bs.aiTip || "Stay hydrated and carry walking shoes.",
+                    cost: bs.cost !== undefined ? bs.cost : (s.cost || 0),
+                    distance: bs.distance || s.distance || "1.2 km",
+                    travelTime: bs.travelTime || s.travelTime || "10 min"
+                  };
+                });
+              };
+              return {
+                ...baseDay,
+                title: d.title || baseDay.title,
+                morning: mapSlots(d.morning, baseDay.morning),
+                afternoon: mapSlots(d.afternoon, baseDay.afternoon),
+                evening: mapSlots(d.evening, baseDay.evening),
+                night: mapSlots(d.night, baseDay.night)
+              };
+            })
+          : basePlan.days
       };
     });
   };
 
+  // Model chain: Gemini 2.5 Pro -> Gemini Flash -> Claude -> DeepSeek
   const fallbackChain = [
     { provider: "google", model: "gemini-2.5-pro" },
     { provider: "google", model: "gemini-2.5-flash" },
@@ -1498,11 +1518,13 @@ Return ONLY valid JSON matching this exact structure:
     try {
       return await invokeModel(item.provider, item.model);
     } catch (err) {
-      console.warn(`Model fallback trigger: ${item.model} failed after retries:`, err);
+      console.warn(`Phase 12 Model fallback trigger: ${item.model} failed/timed out:`, err);
     }
   }
 
-  throw new Error("AI_UNAVAILABLE");
+  // If external LLMs fail or rate limit, return deterministic basePlan seamlessly (validated JSON only)
+  console.log("All external AI models unavailable or timed out; returning deterministic Travixa OS basePlan.");
+  return basePlan;
 }
 
 interface RouteOptimizationResult {
