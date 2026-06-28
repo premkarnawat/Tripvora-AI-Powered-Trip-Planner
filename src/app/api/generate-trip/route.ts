@@ -88,6 +88,10 @@ interface VerifiedGISPayload {
   uvIndex: number;
   wikiExtract: string;
   wikiThumbnail: string;
+  humidity?: number;
+  windSpeed?: number;
+  weatherCode?: number;
+  weatherAlert?: string;
 }
 
 async function executeGISDiscoveryEngine(destination: string, attempt = 1): Promise<VerifiedGISPayload> {
@@ -102,6 +106,10 @@ async function executeGISDiscoveryEngine(destination: string, attempt = 1): Prom
   let temp = 25;
   let rainProb = 15;
   let uvIndex = 6;
+  let humidity = 65;
+  let windSpeed = 14;
+  let weatherCode = 0;
+  let weatherAlert = "Normal Conditions";
   let wikiExtract = "";
   let wikiThumbnail = "";
 
@@ -188,12 +196,38 @@ async function executeGISDiscoveryEngine(destination: string, attempt = 1): Prom
     })(),
     (async () => {
       try {
-        const meteoRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code`);
+        const meteoRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m&daily=uv_index_max,precipitation_probability_max&timezone=auto`);
         if (meteoRes.ok) {
           const mJson = await meteoRes.json();
           const curr = mJson?.current;
-          if (curr?.temperature_2m) temp = Math.round(curr.temperature_2m);
-          if (curr?.relative_humidity_2m > 80) rainProb = 65;
+          const daily = mJson?.daily;
+          if (curr?.temperature_2m !== undefined) temp = Math.round(curr.temperature_2m);
+          if (curr?.relative_humidity_2m !== undefined) humidity = Math.round(curr.relative_humidity_2m);
+          if (curr?.wind_speed_10m !== undefined) windSpeed = Math.round(curr.wind_speed_10m);
+          if (curr?.weather_code !== undefined) weatherCode = Number(curr.weather_code);
+          
+          if (daily?.precipitation_probability_max?.[0] !== undefined) {
+            rainProb = Math.round(daily.precipitation_probability_max[0]);
+          } else if (curr?.precipitation > 0 || humidity > 85) {
+            rainProb = 65;
+          }
+          
+          if (daily?.uv_index_max?.[0] !== undefined) {
+            uvIndex = Math.round(daily.uv_index_max[0]);
+          }
+
+          if (weatherCode >= 95) {
+            weatherDesc = "Severe Thunderstorm / Squall";
+            weatherAlert = "STORM WARNING: Coastal & beach slots cancelled.";
+          } else if (weatherCode >= 50 && weatherCode <= 82) {
+            weatherDesc = "Rain / Showers";
+            if (rainProb > 60) weatherAlert = "HIGH RAIN ALERT (>60%): Outdoor slots moved inside.";
+          } else if (temp > 38) {
+            weatherDesc = "Extreme Heat / Sunny";
+            weatherAlert = "HEAT ALERT (>38°C): Afternoon outdoor slots moved to evening.";
+          } else if (weatherCode >= 1 && weatherCode <= 3) {
+            weatherDesc = "Partly Cloudy";
+          }
         }
       } catch (e) {}
     })(),
@@ -231,7 +265,7 @@ async function executeGISDiscoveryEngine(destination: string, attempt = 1): Prom
     return executeGISDiscoveryEngine(destination, attempt + 1);
   }
 
-  return { lat, lon, osmHotels, osmRestaurants, osmAttractions, osmHospitals, osmStations, weatherDesc, temp, rainProb, uvIndex, wikiExtract, wikiThumbnail };
+  return { lat, lon, osmHotels, osmRestaurants, osmAttractions, osmHospitals, osmStations, weatherDesc, temp, rainProb, uvIndex, humidity, windSpeed, weatherCode, weatherAlert, wikiExtract, wikiThumbnail };
 }
 
 interface TransportIntelligence {
@@ -488,6 +522,86 @@ function executeBudgetIntelligenceEngine(totalBudget: number, totalDays: number,
     dailySpend,
     categorySpend,
     budgetAlternatives
+  };
+}
+
+function executeWeatherIntelligenceEngine(gis: VerifiedGISPayload, days: DayItinerary[]) {
+  const temp = gis.temp || 26;
+  const rainProb = gis.rainProb || 15;
+  const humidity = gis.humidity || 65;
+  const uvIndex = gis.uvIndex || 6;
+  const wind = gis.windSpeed || 14;
+  const weatherCode = gis.weatherCode || 0;
+  const alerts: string[] = [];
+  let protocolTriggered = "Standard Optimal Weather Protocol";
+
+  // Phase 9 Rules:
+  // 1) Storm: Cancel beaches / coastal slots.
+  const isStorm = weatherCode >= 95 || (gis.weatherDesc || "").toLowerCase().includes("storm") || wind > 45;
+  if (isStorm) {
+    protocolTriggered = "⚠️ STORM PROTOCOL TRIGGERED: Coastal & beach slots cancelled.";
+    alerts.push("Severe thunderstorm or squall detected by Open-Meteo. All beach and open-water activities cancelled for safety.");
+  }
+
+  // 2) Rain > 60%: Move outdoor activity.
+  const isHighRain = rainProb > 60 || weatherCode >= 60;
+  if (isHighRain && !isStorm) {
+    protocolTriggered = "🌧️ RAIN PROTOCOL TRIGGERED (>60% Rain): Outdoor sightseeing moved to covered pavilions.";
+    alerts.push(`Rain probability at ${rainProb}%. Outdoor open-air sightseeing shifted to indoor cultural landmarks, covered markets, and galleries.`);
+  }
+
+  // 3) Heat > 38°: Move to evening.
+  const isExtremeHeat = temp > 38;
+  if (isExtremeHeat) {
+    protocolTriggered = "🔥 HEAT PROTOCOL TRIGGERED (>38°C): Afternoon outdoor activities shifted to cool evening hours.";
+    alerts.push(`Temperature at peak ${temp}°C. Afternoon outdoor explorations rescheduled after 05:30 PM.`);
+  }
+
+  // Modify days array in place to make it a weather-aware itinerary!
+  days.forEach(d => {
+    const allTimeSlots = [d.morning, d.afternoon, d.evening, d.night];
+    allTimeSlots.forEach((slotList, sIdx) => {
+      if (!slotList) return;
+      slotList.forEach(slot => {
+        const titleStr = (slot.title || "").toLowerCase();
+        const catStr = (slot.category || "").toLowerCase();
+        const isBeachOrWater = titleStr.includes("beach") || titleStr.includes("coast") || titleStr.includes("sea") || titleStr.includes("boat") || titleStr.includes("cruise") || titleStr.includes("water") || titleStr.includes("island");
+        const isOutdoor = !catStr.includes("restaurant") && !catStr.includes("meal") && !catStr.includes("hotel") && !catStr.includes("shopping") && !catStr.includes("cafe") && !titleStr.includes("lunch") && !titleStr.includes("dinner") && !titleStr.includes("breakfast");
+
+        if (isStorm && isBeachOrWater) {
+          slot.title = `[STORM CANCELLED] Indoor Heritage Museum & Cultural Center`;
+          slot.name = slot.title;
+          slot.description = `Replaced coastal activity due to severe storm forecast (${gis.weatherDesc}, ${wind} km/h winds). Safe indoor cultural exploration.`;
+          slot.aiTip = `⚠️ STORM SAFETY: Open-water/beach slot cancelled. Enjoy verified indoor art and history collections instead.`;
+        } else if (isHighRain && isOutdoor) {
+          slot.title = `[COVERED RAIN ROUTE] ${slot.title}`;
+          slot.description = `Weather-aware adaptation (${rainProb}% rain): Exploring covered architectural arcades and protected indoor viewing galleries.`;
+          slot.aiTip = `🌧️ RAIN PROTOCOL: Carry waterproof umbrella. Slot adapted for seamless indoor access.`;
+        } else if (isExtremeHeat && sIdx === 1 && isOutdoor) { // sIdx === 1 is afternoon
+          slot.title = `[EVENING SHIFTED] ${slot.title}`;
+          slot.time = "05:30 PM";
+          slot.description = `Weather-aware adaptation (${temp}°C heat): Rescheduled from peak afternoon heat to pleasant sunset cool hours.`;
+          slot.aiTip = `🔥 HEAT PROTOCOL: Stay hydrated in air-conditioned spaces during afternoon peak heat. Sightseeing moved to cool dusk hours.`;
+        }
+      });
+    });
+  });
+
+  const weatherAdvice = isStorm ? "Avoid coastal areas. Stay inside verified concrete structures." : isHighRain ? "Carry rain umbrella and waterproof footwear for afternoon outdoor slots." : isExtremeHeat ? "Keep walking sneakers, sunglasses, and stay hydrated with electrolytes." : "Comfortable weather conditions for sightseeing.";
+
+  return {
+    currentWeather: gis.weatherDesc || "Clear Skies",
+    temperature: temp,
+    rainProbability: rainProb,
+    humidity: humidity,
+    uvIndex: uvIndex,
+    wind: wind,
+    weatherCode: weatherCode,
+    weatherAdvice: weatherAdvice,
+    alerts: alerts,
+    protocolTriggered: protocolTriggered,
+    sunrise: "06:15 AM",
+    sunset: "06:45 PM"
   };
 }
 
@@ -949,15 +1063,18 @@ function assembleTravixaV4OperatingSystem(body: any, gis: VerifiedGISPayload, tr
   const hospName = gis.osmHospitals[0]?.name || "Emergency Medical Services 112";
   const overviewText = gis.wikiExtract ? `${gis.wikiExtract} Engineered by TRAVIXA Global Travel OS v4.0 across verified GIS coordinates (${gis.lat}, ${gis.lon}).` : `${totalDays}-Day Dynamic Real-World Travel Plan for ${dest}. Engineered by TRAVIXA Global Travel OS with live geographic coordinates (${gis.lat}, ${gis.lon}).`;
 
+  // Phase 9: Weather Intelligence Engine (Open-Meteo live metrics & weather-aware itinerary rescheduling)
+  const weatherEngineRes = executeWeatherIntelligenceEngine(gis, days);
+
   return {
     id: `travixa-os-${Date.now()}`,
     transportAccess: transportAccess,
     tripOverview: overviewText,
     destination: dest, destinationSummary: `${gis.wikiExtract ? gis.wikiExtract.slice(0, 180) + '... ' : ''}Top verified OSM landmarks: ${lms.slice(0,4).join(', ')}. Verified access routes and dining across ${dest}.`,
     totalDays, totalBudget: budget, estimatedCost: allocatedStay + allocatedFood + allocatedTransit + allocatedActivities + Math.min(allocatedMisc, 3000), currency: "INR", bestVisitingTime: "October to June",
-    weatherConsiderations: `Live Open-Meteo Forecast: ${gis.temp}°C with ${gis.rainProb}% rain probability.`,
-    weatherEngine: { currentWeather: gis.weatherDesc, temperature: gis.temp, rainProbability: gis.rainProb, wind: 14, humidity: 65, uvIndex: gis.uvIndex, sunrise: "06:15 AM", sunset: "06:45 PM", weatherAdvice: gis.rainProb > 50 ? "Carry rain umbrella for afternoon outdoor slots." : "Keep walking sneakers and stay hydrated." },
-    packingSuggestions: ["Comfortable walking sneakers", "Light cotton apparel", "Offline identification cards"], safetyTips: ["Save emergency helpline numbers offline"], localTravelAdvice: "Use registered official station taxis or autos.",
+    weatherConsiderations: `Live Open-Meteo Forecast: ${weatherEngineRes.temperature}°C with ${weatherEngineRes.rainProbability}% rain probability. Protocol: ${weatherEngineRes.protocolTriggered}`,
+    weatherEngine: weatherEngineRes,
+    packingSuggestions: weatherEngineRes.rainProbability > 60 ? ["Waterproof rain jacket", "Compact umbrella", "Quick-dry sneakers"] : ["Comfortable walking sneakers", "Light cotton apparel", "Offline identification cards"], safetyTips: ["Save emergency helpline numbers offline"], localTravelAdvice: "Use registered official station taxis or autos.",
     emergencyContacts: { police: "112", ambulance: "102", embassyOrHelpline: "1363", hospitals: [hospName], pharmacies: [`24x7 Emergency Medical Store`] },
     budgetTracker: executeBudgetIntelligenceEngine(budget, totalDays, selectedHotel, days, transportAccess),
     travelToDestination: { userLocation: origin, destination: dest, transportAccess, options: [{ title: `VERIFIED ACCESS GRAPH: ${accessRouteSummary}`, steps: [{ mode: accessRouteSummary, cost: allocatedTransit, duration: transportAccess.duration }], totalCost: allocatedTransit, totalDuration: transportAccess.duration }] },

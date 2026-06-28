@@ -237,15 +237,39 @@ export default function TripViewerPage() {
             </div>
           </div>
 
-          <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6 shadow-xs space-y-4 flex flex-col justify-between">
-            <div className="border-b border-slate-100 pb-3">
-              <h4 className="text-xs font-black uppercase text-slate-400 tracking-wider">Realtime Weather Report</h4>
-              <p className="text-sm font-extrabold text-slate-800 mt-1">{trip.weatherEngine?.weatherAdvice || "Comfortable climate for sightseeing."}</p>
+          {/* PHASE 9: WEATHER INTELLIGENCE ENGINE CARD */}
+          <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-sky-950 text-white border border-sky-500/30 rounded-3xl p-6 shadow-lg flex flex-col justify-between space-y-4">
+            <div>
+              <div className="flex justify-between items-start gap-2 border-b border-white/10 pb-3">
+                <div>
+                  <span className="px-2 py-0.5 bg-sky-500/20 border border-sky-400/30 rounded-full text-[9px] font-black text-sky-300 uppercase tracking-widest font-sora">
+                    Phase 9 Weather Engine (Open-Meteo)
+                  </span>
+                  <h4 className="text-sm font-black text-white mt-1">Live Meteo & Protocol Active</h4>
+                </div>
+                <div className="text-right shrink-0">
+                  <span className="text-2xl font-black font-mono text-amber-400">{trip.weatherEngine?.temperature || 26}°C</span>
+                  <span className="text-[10px] text-slate-300 block font-bold">{trip.weatherEngine?.currentWeather || "Clear Skies"}</span>
+                </div>
+              </div>
+
+              {/* Protocol Banner */}
+              <div className="mt-3 p-2.5 bg-sky-950/80 border border-sky-400/40 rounded-xl text-xs space-y-1">
+                <p className="font-extrabold text-sky-300 text-[11px] leading-snug">
+                  {trip.weatherEngine?.protocolTriggered || "✨ Standard Optimal Weather Protocol Active"}
+                </p>
+                <p className="text-[10px] text-slate-300 leading-tight">
+                  {trip.weatherEngine?.weatherAdvice || "Comfortable climate for sightseeing. Itinerary sequenced for optimal weather safety."}
+                </p>
+              </div>
             </div>
-            <div className="space-y-2 text-xs">
-              <div className="flex justify-between"><span className="text-slate-500">Rain Probability:</span><span className="font-bold">{trip.weatherEngine?.rainProbability || 15}%</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">UV Index:</span><span className="font-bold text-amber-600">{trip.weatherEngine?.uvIndex || 6} / 10</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">Best Season:</span><span className="font-bold text-teal-700">{trip.bestVisitingTime || "Year Round"}</span></div>
+
+            {/* 5 Requested Weather Metrics */}
+            <div className="grid grid-cols-2 gap-2 text-[11px] font-mono font-bold pt-2 border-t border-white/10">
+              <div className="bg-white/5 p-2 rounded-lg flex justify-between"><span className="text-slate-400">🌧️ Rain:</span><span className="text-sky-300">{trip.weatherEngine?.rainProbability || 15}%</span></div>
+              <div className="bg-white/5 p-2 rounded-lg flex justify-between"><span className="text-slate-400">💧 Humidity:</span><span className="text-teal-300">{trip.weatherEngine?.humidity || 65}%</span></div>
+              <div className="bg-white/5 p-2 rounded-lg flex justify-between"><span className="text-slate-400">☀️ UV Index:</span><span className="text-amber-400">{trip.weatherEngine?.uvIndex || 6}/10</span></div>
+              <div className="bg-white/5 p-2 rounded-lg flex justify-between"><span className="text-slate-400">💨 Wind:</span><span className="text-emerald-300">{trip.weatherEngine?.wind || 14} km/h</span></div>
             </div>
           </div>
         </div>
