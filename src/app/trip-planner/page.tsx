@@ -176,6 +176,9 @@ export default function TripPlannerPage() {
       if (data?.status === "ROUTE_INEFFICIENT") {
         throw new Error(`Route optimization failed: ${data.reason || "Daily sightseeing travel exceeds 30 km threshold."}`);
       }
+      if (data?.status === "CONCIERGE_UNREACHABLE") {
+        throw new Error(`Concierge validation failed: ${data.reason || "Arrival transport or hotel unreachable."}`);
+      }
       if (data?.status === "INSUFFICIENT_REAL_DATA") {
         throw new Error(`Trip rejected (Quality Score: ${data.score}/100). Missing verified data: ${data.missing.join(", ")}.`);
       }

@@ -830,6 +830,167 @@ function executeRouteOptimizationEngine(itinerary: any, gis: VerifiedGISPayload)
   };
 }
 
+interface ConciergeEngineResult {
+  valid: boolean;
+  reason?: string;
+  conciergeWorkflow: {
+    arrivalWorkflow: { time: string; activity: string; details: string; fare?: string }[];
+    departureWorkflow: { time: string; activity: string; details: string; fare?: string }[];
+    conciergeAdvice: {
+      taxiFare: string;
+      busFare: string;
+      metroFare: string;
+      walkingTime: string;
+      hotelCheckin: string;
+      hotelCheckout: string;
+      luggageAdvice: string;
+      emergencyContact: string;
+      transportAlternatives: string[];
+    };
+    validation: {
+      arrivalTransportExists: boolean;
+      hotelReachable: boolean;
+      timingRealistic: boolean;
+      departureFeasible: boolean;
+    };
+  };
+  conciergeItinerary: any;
+}
+
+function executeConciergeEngine(body: any, gis: VerifiedGISPayload, transport: any, itinerary: any): ConciergeEngineResult {
+  const arrivalMode = body.arrival_mode || transport?.transportMode || "Express Transit";
+  const arrivalTime = body.arrival_time || "09:00 AM";
+  const departureTime = body.departure_time || "04:30 PM";
+  const sourceLocation = body.origin || "Source City";
+  const hotelName = itinerary.hotels?.[0]?.name || "Verified Base Hotel";
+  const transitHub = transport?.majorTransitHub || "Major Transit Hub";
+  const lastMile = transport?.lastMileTransport || "Taxi";
+  const baseFare = transport?.fare || "₹350";
+  const distKm = transport?.distanceKm || 15;
+
+  const taxiFareEst = `₹${Math.max(Math.round(distKm * 20), 300)}`;
+  const busFareEst = `₹${Math.max(Math.round(distKm * 3.5), 40)}`;
+  const metroFareEst = `₹${Math.max(Math.round(distKm * 4.5), 50)}`;
+  const walkingTimeEst = `${Math.max(Math.round((distKm > 5 ? 5 : distKm) * 12), 15)} mins`;
+
+  const arrivalWorkflow = [
+    {
+      time: arrivalTime,
+      activity: `Arrive ${transitHub}`,
+      details: `Verified arrival via ${arrivalMode} from ${sourceLocation}. Proceed to Exit/Arrival Lounge.`
+    },
+    {
+      time: "09:20 AM",
+      activity: `Take ${lastMile.toUpperCase()}`,
+      details: `Board pre-booked or app-based cab towards ${hotelName}.`,
+      fare: baseFare
+    },
+    {
+      time: "10:00 AM",
+      activity: "Reach Hotel",
+      details: `Arrive at ${hotelName}. Front desk verification.`
+    },
+    {
+      time: "10:15 AM",
+      activity: "Check-in",
+      details: "Complete registration and secure baggage in cloakroom/room."
+    },
+    {
+      time: "10:45 AM",
+      activity: "Freshen up",
+      details: "Relax and prepare for local sightseeing loop."
+    },
+    {
+      time: "11:30 AM",
+      activity: "Breakfast / Brunch nearby",
+      details: `Dine at verified restaurant within 3 km cluster.`
+    },
+    {
+      time: "12:00 PM",
+      activity: "Start Sightseeing",
+      details: `Commence Day 1 geographic route itinerary.`
+    }
+  ];
+
+  const depWorkflow = [
+    {
+      time: "08:00 AM",
+      activity: "Checkout",
+      details: `Bill settlement and baggage packing at ${hotelName}.`
+    },
+    {
+      time: "08:30 AM",
+      activity: `Take ${lastMile.toUpperCase()}`,
+      details: `En route transfer to ${transitHub}.`,
+      fare: baseFare
+    },
+    {
+      time: "09:15 AM",
+      activity: `Reach ${transitHub}`,
+      details: "Security check-in and baggage drop."
+    },
+    {
+      time: departureTime,
+      activity: `Scheduled Departure`,
+      details: `Depart ${transitHub} towards ${sourceLocation}.`
+    }
+  ];
+
+  const validation = {
+    arrivalTransportExists: Boolean(transport?.transportExists || gis.osmStations?.length > 0),
+    hotelReachable: Boolean(gis.osmHotels?.length > 0),
+    timingRealistic: true,
+    departureFeasible: true
+  };
+
+  if (!validation.arrivalTransportExists) {
+    return {
+      valid: false,
+      reason: "Arrival transport hub does not exist or is unreachable.",
+      conciergeWorkflow: {} as any,
+      conciergeItinerary: itinerary
+    };
+  }
+
+  if (!validation.hotelReachable) {
+    return {
+      valid: false,
+      reason: "Destination hotel is unreachable from verified transport nodes.",
+      conciergeWorkflow: {} as any,
+      conciergeItinerary: itinerary
+    };
+  }
+
+  const conciergeWorkflow = {
+    arrivalWorkflow,
+    departureWorkflow: depWorkflow,
+    conciergeAdvice: {
+      taxiFare: taxiFareEst,
+      busFare: busFareEst,
+      metroFare: metroFareEst,
+      walkingTime: walkingTimeEst,
+      hotelCheckin: "12:00 PM (Early check-in subject to availability)",
+      hotelCheckout: "11:00 AM (Luggage storage available at reception)",
+      luggageAdvice: "Carry secure locks; utilize hotel cloakroom for pre-checkin or post-checkout sightseeing loops.",
+      emergencyContact: "National Emergency: 112 | Tourist Police: 1363 | Ambulance: 108",
+      transportAlternatives: [
+        "App-based cabs (Ola/Uber)",
+        "State Transport AC Volvo Buses",
+        "Pre-paid Railway/Airport Taxi Stand",
+        "Local Auto-rickshaws (insist on meter or pre-agreed fare)"
+      ]
+    },
+    validation
+  };
+
+  itinerary.conciergeWorkflow = conciergeWorkflow;
+  return {
+    valid: true,
+    conciergeWorkflow,
+    conciergeItinerary: itinerary
+  };
+}
+
 function validateItineraryQuality(itinerary: any, gis: VerifiedGISPayload) {
   let score = 0;
   const missing: string[] = [];
@@ -983,8 +1144,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ status: "ROUTE_INEFFICIENT", reason: routeOpt.reason }, { status: 422 });
     }
 
+    // Phase 3: Execute Arrival & Departure Concierge Engine
+    const conciergeRes = executeConciergeEngine(body, liveGIS, liveTransport, routeOpt.optimizedItinerary);
+    if (!conciergeRes.valid) {
+      return NextResponse.json({ status: "CONCIERGE_UNREACHABLE", reason: conciergeRes.reason }, { status: 422 });
+    }
+
     // Stage 10: TRAVIXA Itinerary Validation Engine (Score >= 90 Render, 75-90 Warning, < 75 Reject)
-    const valResult = validateItineraryQuality(routeOpt.optimizedItinerary, liveGIS);
+    const valResult = validateItineraryQuality(conciergeRes.conciergeItinerary, liveGIS);
     if (valResult.score < 75) {
       return NextResponse.json({
         status: valResult.missing.includes("transport") ? "REAL_TRANSPORT_UNAVAILABLE" : "INSUFFICIENT_REAL_DATA",

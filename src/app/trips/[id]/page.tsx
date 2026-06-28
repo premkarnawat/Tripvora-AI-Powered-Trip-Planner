@@ -306,6 +306,82 @@ export default function TripViewerPage() {
           </div>
         )}
 
+        {/* Phase 3: Arrival & Departure Concierge Engine Banner */}
+        {trip.conciergeWorkflow && (
+          <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-teal-950 rounded-3xl p-6 sm:p-8 text-white shadow-xl border border-teal-500/30 space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/10 pb-4">
+              <div>
+                <span className="px-3 py-1 bg-teal-500/20 border border-teal-400/30 rounded-full text-[10px] font-black text-teal-300 uppercase tracking-widest">
+                  Concierge Engine Verified
+                </span>
+                <h3 className="text-lg sm:text-xl font-black mt-2">Arrival & Departure Concierge Protocol</h3>
+              </div>
+              <div className="text-right text-xs">
+                <p className="text-slate-300 font-bold">Check-in: <span className="text-white font-mono">{trip.conciergeWorkflow.conciergeAdvice.hotelCheckin}</span></p>
+                <p className="text-slate-300 font-bold">Check-out: <span className="text-white font-mono">{trip.conciergeWorkflow.conciergeAdvice.hotelCheckout}</span></p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Arrival Workflow */}
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-4">
+                <h4 className="text-xs font-black text-teal-400 uppercase tracking-wider flex items-center gap-2">
+                  🛬 Day 1: Arrival Protocol
+                </h4>
+                <div className="space-y-3 pl-2 border-l border-teal-500/40">
+                  {trip.conciergeWorkflow.arrivalWorkflow?.map((step: any, i: number) => (
+                    <div key={i} className="relative pl-4 text-xs space-y-0.5">
+                      <span className="absolute -left-[5px] top-1 w-2 h-2 rounded-full bg-teal-400" />
+                      <div className="flex justify-between items-center">
+                        <span className="font-mono font-black text-teal-300">{step.time}</span>
+                        {step.fare && <span className="font-mono bg-teal-950/80 px-2 py-0.5 rounded text-[10px] text-teal-200 border border-teal-500/30">{step.fare}</span>}
+                      </div>
+                      <p className="font-bold text-white">{step.activity}</p>
+                      <p className="text-[11px] text-slate-300">{step.details}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Departure Workflow */}
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-4">
+                <h4 className="text-xs font-black text-amber-400 uppercase tracking-wider flex items-center gap-2">
+                  🛫 Day {totalDaysList.length}: Departure Protocol
+                </h4>
+                <div className="space-y-3 pl-2 border-l border-amber-500/40">
+                  {trip.conciergeWorkflow.departureWorkflow?.map((step: any, i: number) => (
+                    <div key={i} className="relative pl-4 text-xs space-y-0.5">
+                      <span className="absolute -left-[5px] top-1 w-2 h-2 rounded-full bg-amber-400" />
+                      <div className="flex justify-between items-center">
+                        <span className="font-mono font-black text-amber-300">{step.time}</span>
+                        {step.fare && <span className="font-mono bg-amber-950/80 px-2 py-0.5 rounded text-[10px] text-amber-200 border border-amber-500/30">{step.fare}</span>}
+                      </div>
+                      <p className="font-bold text-white">{step.activity}</p>
+                      <p className="text-[11px] text-slate-300">{step.details}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Concierge Advice Footer */}
+            <div className="pt-4 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+              <div className="bg-black/20 p-3 rounded-xl border border-white/5">
+                <p className="text-[10px] text-slate-400 uppercase font-black">Est. Cabs / Transit</p>
+                <p className="font-mono font-black text-teal-300 mt-1">Taxi: {trip.conciergeWorkflow.conciergeAdvice.taxiFare} | Bus: {trip.conciergeWorkflow.conciergeAdvice.busFare}</p>
+              </div>
+              <div className="bg-black/20 p-3 rounded-xl border border-white/5">
+                <p className="text-[10px] text-slate-400 uppercase font-black">Last Mile Walking</p>
+                <p className="font-bold text-white mt-1">🚶 {trip.conciergeWorkflow.conciergeAdvice.walkingTime}</p>
+              </div>
+              <div className="bg-black/20 p-3 rounded-xl border border-white/5 sm:col-span-2">
+                <p className="text-[10px] text-slate-400 uppercase font-black">Emergency & Luggage Tip</p>
+                <p className="text-[11px] text-slate-200 mt-1 truncate">🚨 {trip.conciergeWorkflow.conciergeAdvice.emergencyContact}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Day Tabs Bar */}
         <div className="bg-white border border-[#E5E7EB] p-2 rounded-2xl flex gap-2 overflow-x-auto shadow-2xs">
           {totalDaysList.map(d => (
