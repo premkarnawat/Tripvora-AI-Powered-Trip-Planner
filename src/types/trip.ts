@@ -200,6 +200,7 @@ export interface RecommendationItem {
   reviewsCount: number;
   distanceKm: number;
   popularityScore: number;
+  userPreferenceBonus: number;
   description?: string;
   badge?: string;
 }
