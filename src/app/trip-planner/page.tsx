@@ -173,6 +173,9 @@ export default function TripPlannerPage() {
       if (data?.status === "REAL_TRANSPORT_UNAVAILABLE") {
         throw new Error("Transport unavailable: No verified transit route or stations discovered for this trip.");
       }
+      if (data?.status === "ROUTE_INEFFICIENT") {
+        throw new Error(`Route optimization failed: ${data.reason || "Daily sightseeing travel exceeds 30 km threshold."}`);
+      }
       if (data?.status === "INSUFFICIENT_REAL_DATA") {
         throw new Error(`Trip rejected (Quality Score: ${data.score}/100). Missing verified data: ${data.missing.join(", ")}.`);
       }
