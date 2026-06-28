@@ -214,5 +214,6 @@ export interface ItineraryData {
   flights: Flight[];
   restaurants: RestaurantRecommendation[];
   days: DayItinerary[];
+  mapExperience?: any;
   [key: string]: any;
 }
