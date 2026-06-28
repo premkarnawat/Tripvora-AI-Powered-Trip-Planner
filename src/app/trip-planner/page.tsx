@@ -169,10 +169,10 @@ export default function TripPlannerPage() {
         })
       });
 
-      if (!response.ok) throw new Error("Failed to generate itinerary");
-      
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
+      if (data?.status?.startsWith("MISSING_")) throw new Error(`Cannot plan itinerary: ${data.status.replace("MISSING_", "Missing ")} in this region.`);
       if (data?.status === "FAILED") throw new Error(data.reason || "AI_UNAVAILABLE");
+      if (!response.ok) throw new Error(data?.reason || "Failed to generate itinerary");
       
       // Store locally so the /trips page can read the real generated data
       localStorage.setItem('last_generated_trip', JSON.stringify(data));

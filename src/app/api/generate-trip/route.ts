@@ -251,28 +251,26 @@ function assembleTravixaV4OperatingSystem(body: any, gis: VerifiedGISPayload): I
   const stayImg = gis.wikiThumbnail || "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80";
 
   // Part 3 & 4: Destination Access Engine & Transport Graph Engine (Zero Hallucinated Transport Nodes)
-  const realStations = gis.osmStations || [];
-  const primaryHub = realStations.length > 0 ? realStations[0] : null;
-  const destinationHub = primaryHub ? `${primaryHub.name}${primaryHub.distanceKm && primaryHub.distanceKm > 3 ? ` (${primaryHub.distanceKm} km transfer)` : ''}` : `${dest} Regional Bus Stand`;
+  const realStations = gis.osmStations;
+  const primaryHub = realStations[0];
+  const destinationHub = `${primaryHub.name}${primaryHub.distanceKm && primaryHub.distanceKm > 3 ? ` (${primaryHub.distanceKm} km transfer)` : ''}`;
   
   let transportMode = body.arrival_mode || "Express Transit";
-  if (primaryHub) {
-    if (primaryHub.type === "airport") transportMode = "Flight + Airport Transfer";
-    else if (primaryHub.type === "toy_train") transportMode = "Scenic Toy Train";
-    else if (primaryHub.type === "station") transportMode = primaryHub.distanceKm && primaryHub.distanceKm > 15 ? "Express Train + Local Bus / Cab Transfer" : "Direct Railway Transit";
-    else if (primaryHub.type === "ferry") transportMode = "Coastal Ferry Service";
-    else if (primaryHub.type === "ropeway") transportMode = "Aerial Cable Car / Ropeway";
-    else if (primaryHub.type === "bus") transportMode = "State / Intercity Bus Service";
-  }
+  if (primaryHub.type === "airport") transportMode = "Flight + Airport Transfer";
+  else if (primaryHub.type === "toy_train") transportMode = "Scenic Toy Train";
+  else if (primaryHub.type === "station") transportMode = primaryHub.distanceKm && primaryHub.distanceKm > 15 ? "Express Train + Local Bus / Cab Transfer" : "Direct Railway Transit";
+  else if (primaryHub.type === "ferry") transportMode = "Coastal Ferry Service";
+  else if (primaryHub.type === "ropeway") transportMode = "Aerial Cable Car / Ropeway";
+  else if (primaryHub.type === "bus") transportMode = "State / Intercity Bus Service";
 
   const transportAccess = {
-    transportExists: realStations.length > 0,
+    transportExists: true,
     transportMode: transportMode,
     sourceHub: `${origin} Major Transit Hub`,
     destinationHub: destinationHub,
     fare: `₹${Math.floor(budget * 0.20)}`,
-    duration: `${Math.max(Math.round((primaryHub?.distanceKm || 150) / 40), 2)} Hours`,
-    confidence: realStations.length > 0 ? 0.96 : 0.85
+    duration: `${Math.max(Math.round((primaryHub.distanceKm || 150) / 40), 2)} Hours`,
+    confidence: 0.96
   };
 
   const accessRouteSummary = `${transportAccess.transportMode}: ${transportAccess.sourceHub} → ${transportAccess.destinationHub}`;
@@ -287,9 +285,9 @@ function assembleTravixaV4OperatingSystem(body: any, gis: VerifiedGISPayload): I
   const nightlyRate = Math.floor(allocatedStay / totalDays);
 
   // Part 8: Hotel Engine
-  const mainHotelName = gis.osmHotels[0]?.name || `${dest} Verified GIS Stay Cluster`;
-  const budgetHotelName = gis.osmHotels[1]?.name || `${dest} Tourist Lodge`;
-  const premiumHotelName = gis.osmHotels[2]?.name || `${dest} Palace Suites`;
+  const mainHotelName = gis.osmHotels[0].name;
+  const budgetHotelName = gis.osmHotels[1]?.name || mainHotelName;
+  const premiumHotelName = gis.osmHotels[2]?.name || mainHotelName;
 
   const selectedHotel: Hotel = {
     name: mainHotelName, rating: 4.6, pricePerNight: nightlyRate, starTier: `${body.hotel_preference} Category`, reviewsCount: 3840,
@@ -308,8 +306,8 @@ function assembleTravixaV4OperatingSystem(body: any, gis: VerifiedGISPayload): I
   };
 
   // Part 9: Food Engine
-  const vegPlace = gis.osmRestaurants.find(r => r.cuisine?.toLowerCase().includes("veg"))?.name || gis.osmRestaurants[0]?.name || `${dest} Pure Veg Bhojnalaya`;
-  const nonVegPlace = gis.osmRestaurants[1]?.name || `${dest} Spice & Grill Kitchen`;
+  const vegPlace = gis.osmRestaurants.find(r => r.cuisine?.toLowerCase().includes("veg"))?.name || gis.osmRestaurants[0].name;
+  const nonVegPlace = gis.osmRestaurants[1]?.name || gis.osmRestaurants[0].name;
 
   const restaurants: RestaurantRecommendation[] = [
     { name: vegPlace, cuisine: `Local Specialties ⭐4.6 ₹250`, estimatedCost: 250, rating: 4.6, address: `Market Sector, ${dest}`, isVeg: true, mustTryDish: "Chef Special Thali", mealType: "Lunch" },
@@ -317,7 +315,7 @@ function assembleTravixaV4OperatingSystem(body: any, gis: VerifiedGISPayload): I
   ];
 
   // Part 10 & 14: Daily Itinerary Experience & Spatial Clustering (Wake up -> Travel -> Breakfast -> Attraction -> Temple -> Museum -> Lunch -> Cafe -> Shopping -> Activity -> Sunset -> Dinner -> Nightlife -> Sleep)
-  const lms = gis.osmAttractions.length > 0 ? gis.osmAttractions.map(a => a.name) : [`${dest} Lookout Point`, `${dest} Heritage Landmark`, `${dest} Promenade Garden`, `${dest} Bazaar Promenade`];
+  const lms = gis.osmAttractions.map(a => a.name);
 
   const createSlot = (time: string, slot: "morning"|"afternoon"|"evening"|"night", title: string, cat: string, cost: number, tip: string, img: string): ActivityItem => ({
     time, timeSlot: slot, title, name: title, description: `Experience ${title}. Sequenced strictly within ≤5 km local travel cluster radius.`, category: cat,
@@ -340,29 +338,29 @@ function assembleTravixaV4OperatingSystem(body: any, gis: VerifiedGISPayload): I
           createSlot("01:15 PM", "afternoon", `Lunch at ${vegPlace}`, "Lunch", 250, `Eat here. Authentic verified local dining.`, diningImg),
           createSlot("03:30 PM", "afternoon", spot1, "Top Attraction", Math.floor(allocatedActivities / totalDays), "Tickets available at entry counter. ≤5 km cluster.", activityImg)
         ],
-        evening: [ createSlot("05:30 PM", "evening", `${dest} Sunset Lookout`, "Sunset Point", 0, "Great evening photography point.", activityImg) ],
+        evening: [ createSlot("05:30 PM", "evening", spot2 || spot1, "Sunset Point", 0, "Great evening viewpoint.", activityImg) ],
         night: [ createSlot("08:30 PM", "night", `Dinner at ${nonVegPlace}`, "Dinner", 450, "Eat here. Great evening ambiance.", diningImg) ]
       });
     } else if (i === totalDays) {
       days.push({
         day: i, date: dDate, title: `Morning Breakfast, ${spot2} & Departure`,
         morning: [ createSlot("08:30 AM", "morning", "Wake up & Morning Breakfast", "Breakfast & Checkout", 250, "Complete hotel checkout by 11:00 AM.", diningImg) ],
-        afternoon: [ createSlot("12:00 PM", "afternoon", spot2, "Final Sightseeing & Shopping", Math.floor(allocatedMisc * 0.5), "Buy local souvenirs and treats.", shoppingImg) ],
+        afternoon: [ createSlot("12:00 PM", "afternoon", spot2 || spot1, "Final Sightseeing & Shopping", Math.floor(allocatedMisc * 0.5), "Buy local souvenirs and treats.", shoppingImg) ],
         evening: [ createSlot(departureTime, "evening", `Proceed to ${transportAccess.destinationHub} for Return`, "Departure Logistics", 250, "Board return transit. Safe travels!", transportImg) ],
         night: []
       });
     } else {
       days.push({
-        day: i, date: dDate, title: `${spot1}, ${spot2} & Clustered Exploration`,
+        day: i, date: dDate, title: `${spot1}, ${spot2 || spot1} & Clustered Exploration`,
         morning: [ createSlot("09:00 AM", "morning", spot1, "Top Landmark", 0, "Visit this place. Serene morning views.", activityImg) ],
-        afternoon: [ createSlot("01:00 PM", "afternoon", `${dest} Courtyard Cafe`, "Lunch", 300, "Eat here. Comfortable outdoor seating.", diningImg) ],
-        evening: [ createSlot("04:30 PM", "evening", spot2, "Evening Landmark", 100, "Visit here. Pleasant evening atmosphere.", activityImg) ],
-        night: [ createSlot("08:30 PM", "night", `${dest} Dining Lounge`, "Dinner", 500, "Eat here for tasty dinner.", diningImg) ]
+        afternoon: [ createSlot("01:00 PM", "afternoon", `Lunch at ${vegPlace}`, "Lunch", 300, "Eat here. Authentic verified dining.", diningImg) ],
+        evening: [ createSlot("04:30 PM", "evening", spot2 || spot1, "Evening Landmark", 100, "Visit here. Pleasant evening atmosphere.", activityImg) ],
+        night: [ createSlot("08:30 PM", "night", `Dinner at ${nonVegPlace}`, "Dinner", 500, "Eat here for tasty dinner.", diningImg) ]
       });
     }
   }
 
-  const hospName = gis.osmHospitals[0]?.name || `${dest} District Civil Hospital`;
+  const hospName = gis.osmHospitals[0]?.name || "Emergency Medical Services 112";
   const overviewText = gis.wikiExtract ? `${gis.wikiExtract} Engineered by TRAVIXA Global Travel OS v4.0 across verified GIS coordinates (${gis.lat}, ${gis.lon}).` : `${totalDays}-Day Dynamic Real-World Travel Plan for ${dest}. Engineered by TRAVIXA Global Travel OS with live geographic coordinates (${gis.lat}, ${gis.lon}).`;
 
   return {
@@ -594,6 +592,16 @@ export async function POST(request: Request) {
 
     // Stage 2–5: Execute GIS Discovery Engine (Nominatim + Overpass OSM + Open-Meteo + Wikipedia) with 3x Retry Loop
     const liveGIS = await executeGISDiscoveryEngine(body.destination);
+
+    if (!liveGIS.osmStations || liveGIS.osmStations.length === 0) {
+      return NextResponse.json({ status: "MISSING_TRANSPORT" }, { status: 404 });
+    }
+    if (!liveGIS.osmHotels || liveGIS.osmHotels.length === 0) {
+      return NextResponse.json({ status: "MISSING_HOTEL" }, { status: 404 });
+    }
+    if (!liveGIS.osmRestaurants || liveGIS.osmRestaurants.length === 0) {
+      return NextResponse.json({ status: "MISSING_RESTAURANT" }, { status: 404 });
+    }
 
     // Stage 6–8: Assemble TRAVIXA V4 Operating System Base (Hotels 40%, ≤5km Cluster, Distinct Thumbnails)
     const factualBase = assembleTravixaV4OperatingSystem(body, liveGIS);
