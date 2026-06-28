@@ -710,6 +710,117 @@ function executeWeatherIntelligenceEngine(gis: VerifiedGISPayload, days: DayItin
   };
 }
 
+function executeUserPreferenceEngine(
+  travelType: string,
+  travelers: { adults?: number; children?: number; seniors?: number },
+  interests: string[],
+  accessibility: string,
+  days: DayItinerary[],
+  destIntelligence: DestinationItem[]
+): UserPreferenceProfile {
+  const normType = (travelType || "").toLowerCase();
+  const childrenCount = Number(travelers?.children) || 0;
+  const seniorsCount = Number(travelers?.seniors) || 0;
+
+  let detectedProfile = "Couple";
+  let preferredCategories: string[] = ["cafes", "sunset", "romantic places", "viewpoints"];
+  let paceAndComfort = "Balanced pacing with scenic sunset viewpoints and intimate dining.";
+  const specialRulesApplied: string[] = [];
+
+  // Determine exact profile
+  if (seniorsCount > 0 || normType.includes("senior") || accessibility.toLowerCase().includes("wheelchair")) {
+    detectedProfile = "Senior";
+    preferredCategories = ["low walking", "temples", "comfort", "gardens", "iconic places"];
+    paceAndComfort = "Relaxed comfort pacing with ≤500m direct dropoffs and zero steep inclines.";
+    specialRulesApplied.push("Low Walking Protocol: Avoided steep hillside trails and stairs.");
+    specialRulesApplied.push("Spiritual & Comfort Focus: Prioritized serene temples, gardens, and shaded seating.");
+  } else if (childrenCount > 0 || normType.includes("family") || normType.includes("children") || normType.includes("kid")) {
+    detectedProfile = "Family";
+    preferredCategories = ["malls", "parks", "attractions", "gardens", "toy train"];
+    paceAndComfort = "Family-friendly interactive pacing with stroller-accessible walking areas.";
+    specialRulesApplied.push("Kid-Friendly Attractions: Included interactive parks, toy trains, and shopping arcades.");
+    specialRulesApplied.push("Flexible Dining Timings: Scheduled family dining spots with broad menu choices.");
+  } else if (normType.includes("solo")) {
+    detectedProfile = "Solo";
+    preferredCategories = ["hidden gems", "cafes", "adventure", "viewpoints", "nightlife"];
+    paceAndComfort = "Agile solo pacing maximizing cultural exploration and spontaneous hidden gems.";
+    specialRulesApplied.push("Solo Explorer Protocol: Focus on safe public transit hubs and social cafes.");
+  } else if (normType.includes("friend") || normType.includes("group")) {
+    detectedProfile = "Friends";
+    preferredCategories = ["adventure", "nightlife", "beaches", "viewpoints", "street food"];
+    paceAndComfort = "High-energy social pacing with outdoor viewpoints and vibrant nightlife lanes.";
+    specialRulesApplied.push("Group Social Protocol: Integrated nightlife lounges, street food crawls, and adventure points.");
+  } else if (normType.includes("luxury")) {
+    detectedProfile = "Luxury";
+    preferredCategories = ["premium dining", "iconic places", "comfort", "viewpoints", "shopping"];
+    paceAndComfort = "Premium unhurried pacing with private vehicle transfers and fine dining.";
+    specialRulesApplied.push("Luxury Concierge Protocol: Exclusive rooftop lounges and high-end shopping galleries.");
+  } else if (normType.includes("budget") || normType.includes("backpack")) {
+    detectedProfile = "Budget";
+    preferredCategories = ["street food", "hidden gems", "viewpoints", "gardens", "temples"];
+    paceAndComfort = "Economical pacing utilizing public transit and authentic street food hubs.";
+    specialRulesApplied.push("Smart Saver Protocol: Free entry gardens, scenic viewpoints, and heritage walking tours.");
+  } else if (normType.includes("adventure") || normType.includes("trek")) {
+    detectedProfile = "Adventure";
+    preferredCategories = ["adventure", "mountains", "viewpoints", "sunrise", "hidden gems"];
+    paceAndComfort = "Strenuous active pacing featuring nature exploration and outdoor trails.";
+    specialRulesApplied.push("Outdoor Thrill Protocol: Prioritized early morning sunrises, hill peaks, and nature treks.");
+  } else if (normType.includes("pilgrim") || normType.includes("religi")) {
+    detectedProfile = "Pilgrimage";
+    preferredCategories = ["temples", "iconic places", "comfort", "sunrise", "gardens"];
+    paceAndComfort = "Devotional pacing centered around sacred shrines, morning aartis, and calm sanctuaries.";
+    specialRulesApplied.push("Sacred Sanctuary Protocol: Early morning spiritual visits and verified vegetarian dining.");
+  } else if (normType.includes("wellness") || normType.includes("relax")) {
+    detectedProfile = "Wellness";
+    preferredCategories = ["gardens", "hidden gems", "sunset", "comfort", "beaches"];
+    paceAndComfort = "Rejuvenating slow pacing focusing on nature reserves, quiet lakes, and sunset meditation.";
+    specialRulesApplied.push("Mindful Rest Protocol: Ample downtime amidst natural greenery and scenic waterfronts.");
+  } else {
+    detectedProfile = "Couple";
+    preferredCategories = ["cafes", "sunset", "romantic places", "viewpoints", "hidden gems"];
+    paceAndComfort = "Balanced romantic pacing with golden hour viewpoints and intimate dining.";
+    specialRulesApplied.push("Romantic Escape Protocol: Handpicked sunset cliffs and cozy dining atmospheres.");
+  }
+
+  // Customize days itinerary according to detected profile!
+  days.forEach(d => {
+    const allSlots = [d.morning, d.afternoon, d.evening, d.night];
+    allSlots.forEach((slotList, sIdx) => {
+      if (!slotList) return;
+      slotList.forEach(slot => {
+        if (detectedProfile === "Senior") {
+          if (slot.type !== "meal") {
+            slot.description = `${slot.description} Adjusted for Senior Profile: Low walking distance with shaded rest stops.`;
+            slot.aiTip = `🧓 SENIOR COMFORT: Direct vehicle access ≤100m from entry gate. Shaded benches available.`;
+          }
+        } else if (detectedProfile === "Family") {
+          if (sIdx === 1 && slot.type !== "meal") { // afternoon
+            slot.description = `${slot.description} Family Profile adaptation: Includes nearby children's park area and shopping plaza.`;
+            slot.aiTip = `👨‍👩‍👧‍👦 FAMILY FRIENDLY: Engaging interactive exhibits and stroller-friendly walkways.`;
+          }
+        } else if (detectedProfile === "Couple") {
+          if (sIdx === 2 && slot.type !== "meal") { // evening
+            slot.description = `${slot.description} Couple Profile adaptation: Prime golden hour viewing spot for couples.`;
+            slot.aiTip = `💑 ROMANTIC SUNSET: Arrive 30 mins before dusk for breathtaking romantic photos.`;
+          }
+        } else if (detectedProfile === "Friends" || detectedProfile === "Adventure") {
+          if (sIdx === 3 && slot.type === "meal") { // night
+            slot.description = `${slot.description} Vibrant group dining ambiance with music and local specialties.`;
+            slot.aiTip = `🎒 GROUP SOCIAL: Great social energy and lively regional hospitality.`;
+          }
+        }
+      });
+    });
+  });
+
+  return {
+    detectedProfile,
+    preferredCategories,
+    paceAndComfort,
+    specialRulesApplied
+  };
+}
+
 function executeImageIntelligenceEngine(
   category: "hotelImage" | "transportImage" | "restaurantImage" | "attractionImage" | "shoppingImage" | "activityImage",
   dest: string,
@@ -1174,6 +1285,9 @@ function assembleTravixaV4OperatingSystem(body: any, gis: VerifiedGISPayload, tr
   // Phase 10: Destination Intelligence Engine (Overpass + Wikipedia + OSM destination discovery across 13 ranked categories)
   const destinationIntelligenceRes = executeDestinationIntelligenceEngine(dest, gis);
 
+  // Phase 11: User Preference Engine (Profile adaptation across Solo, Couple, Family, Friends, Senior, Luxury, Budget, Adventure, etc.)
+  const userPreferenceEngineRes = executeUserPreferenceEngine(body.travelType, body.travelers, body.interests, body.accessibility, days, destinationIntelligenceRes);
+
   return {
     id: `travixa-os-${Date.now()}`,
     transportAccess: transportAccess,
@@ -1199,6 +1313,7 @@ function assembleTravixaV4OperatingSystem(body: any, gis: VerifiedGISPayload, tr
       streetFood: restaurants.find(r => r.categoryLabel === "Street Food")?.name || "Verified Chowk Snacks"
     },
     destinationIntelligence: destinationIntelligenceRes,
+    userPreferenceEngine: userPreferenceEngineRes,
     mapExperience: executeMapExperienceEngine(dest, gis, totalDays),
     hotels: [selectedHotel], flights: [{ airline: `${body.arrival_mode} Transit`, price: allocatedTransit, duration: transportAccess.duration, stops: 0 }], restaurants, days
   };

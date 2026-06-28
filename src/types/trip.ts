@@ -177,6 +177,13 @@ export interface BudgetBreakdown {
   [key: string]: any;
 }
 
+export interface UserPreferenceProfile {
+  detectedProfile: "Solo" | "Couple" | "Family" | "Friends" | "Senior" | "Children" | "Luxury" | "Budget" | "Adventure" | "Pilgrimage" | "Wellness" | string;
+  preferredCategories: string[];
+  paceAndComfort: string;
+  specialRulesApplied: string[];
+}
+
 export interface DestinationItem {
   name: string;
   category: "iconic places" | "hidden gems" | "temples" | "beaches" | "mountains" | "museums" | "shopping" | "gardens" | "nightlife" | "adventure" | "viewpoints" | "sunrise" | "sunset" | string;
@@ -221,6 +228,7 @@ export interface ItineraryData {
     [key: string]: any;
   };
   destinationIntelligence?: DestinationItem[];
+  userPreferenceEngine?: UserPreferenceProfile;
   hotels: Hotel[];
   flights: Flight[];
   restaurants: RestaurantRecommendation[];

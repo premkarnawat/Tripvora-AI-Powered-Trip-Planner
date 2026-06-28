@@ -322,6 +322,54 @@ export default function TripViewerPage() {
           </div>
         )}
 
+        {/* PHASE 11: USER PREFERENCE ENGINE */}
+        {trip.userPreferenceEngine && (
+          <div className="bg-gradient-to-br from-indigo-950 via-slate-900 to-purple-950 text-white border border-indigo-500/30 rounded-3xl p-6 sm:p-8 shadow-lg space-y-6">
+            <div className="border-b border-white/10 pb-4 flex justify-between items-center flex-wrap gap-2">
+              <div>
+                <span className="px-3 py-1 bg-indigo-500/20 border border-indigo-400/30 rounded-full text-[10px] font-black text-indigo-300 uppercase tracking-widest font-sora">
+                  Phase 11 User Preference Engine
+                </span>
+                <h3 className="text-xl md:text-2xl font-black text-white mt-2 flex items-center gap-2">
+                  <span>🎯 Active Profile:</span>
+                  <span className="text-amber-400 underline decoration-amber-400/50">{trip.userPreferenceEngine.detectedProfile} Traveler</span>
+                </h3>
+              </div>
+              <div className="text-xs font-bold text-indigo-200 bg-indigo-900/50 px-3 py-1.5 rounded-xl border border-indigo-400/30">
+                Tailored Itinerary & Pace Active
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+              <div className="bg-white/5 p-4 rounded-2xl border border-white/10 space-y-2">
+                <span className="text-[10px] font-black uppercase tracking-wider text-indigo-300">Pace & Comfort Standard</span>
+                <p className="text-sm font-bold text-slate-200">{trip.userPreferenceEngine.paceAndComfort}</p>
+              </div>
+              <div className="bg-white/5 p-4 rounded-2xl border border-white/10 space-y-2">
+                <span className="text-[10px] font-black uppercase tracking-wider text-purple-300">Preferred Categories Focus</span>
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {trip.userPreferenceEngine.preferredCategories?.map((cat: string, cIdx: number) => (
+                    <span key={cIdx} className="px-2 py-0.5 bg-white/10 rounded-md text-[11px] font-bold text-amber-300 uppercase">
+                      {cat}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {trip.userPreferenceEngine.specialRulesApplied && trip.userPreferenceEngine.specialRulesApplied.length > 0 && (
+              <div className="bg-indigo-900/30 border border-indigo-500/20 rounded-2xl p-4 space-y-2">
+                <span className="text-[10px] font-black uppercase tracking-wider text-amber-400">⚡ Automated Profile Rules Triggered</span>
+                <ul className="list-disc list-inside space-y-1 text-xs text-slate-300 font-medium">
+                  {trip.userPreferenceEngine.specialRulesApplied.map((rule: string, rIdx: number) => (
+                    <li key={rIdx}>{rule}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* PHASE 4: HOTEL INTELLIGENCE ENGINE SELECTION */}
         {trip.hotels?.[0] && (
           <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6 sm:p-8 shadow-xs space-y-8">
