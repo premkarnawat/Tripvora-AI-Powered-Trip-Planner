@@ -384,12 +384,20 @@ function assembleTravixaV4OperatingSystem(body: any, gis: VerifiedGISPayload): I
   };
 }
 
-// Part 16: Gemini Orchestrator Mandate (Strictly organizing real GIS objects without inventing places)
+async function retryApi<T>(fn: () => Promise<T>): Promise<T> {
+  for (let i = 0; i < 3; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      await new Promise(res => setTimeout(res, Math.pow(2, i) * 1000));
+    }
+  }
+  throw new Error("SERVICE_UNAVAILABLE");
+}
+
+// Part 16: Multi-Model AI Orchestrator (Gemini 2.5 Pro -> Gemini Flash -> Claude -> DeepSeek)
 async function orchestrateGeminiIntelligence(body: any, gis: VerifiedGISPayload, basePlan: ItineraryData): Promise<ItineraryData> {
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || DEFAULT_GEMINI_KEY;
-  if (!apiKey) return basePlan;
-
-  const modelsToTry = ["gemini-2.5-pro", "gemini-1.5-pro", "gemini-2.5-flash", "gemini-1.5-flash"];
 
   const realHotelsStr = gis.osmHotels.map(h => h.name).join(', ') || basePlan.hotels[0].name;
   const realRestsStr = gis.osmRestaurants.map(r => `${r.name} (${r.cuisine})`).join(', ') || basePlan.restaurants.map(r => r.name).join(', ');
@@ -457,49 +465,109 @@ Return ONLY valid JSON matching this exact structure:
   ]
 }`;
 
-  for (const modelName of modelsToTry) {
-    try {
+  const invokeModel = async (provider: string, modelName: string): Promise<ItineraryData> => {
+    return await retryApi(async () => {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 26000);
+      let res: Response;
 
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { responseMimeType: "application/json", temperature: 0.1 }
-        }),
-        signal: controller.signal
-      });
-      clearTimeout(timeout);
-
-      if (res.ok) {
-        const data = await res.json();
-        const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (rawText) {
-          const cleanJsonStr = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
-          const liveIntel = JSON.parse(cleanJsonStr);
-          if (liveIntel.hotels?.[0]?.name && liveIntel.days?.length > 0) {
-            return {
-              ...basePlan,
-              tripOverview: liveIntel.tripOverview || basePlan.tripOverview,
-              localTravelAdvice: liveIntel.localTravelAdvice || basePlan.localTravelAdvice,
-              arrivalPlan: { ...basePlan.arrivalPlan, ...(liveIntel.arrivalPlan || {}), arrivalPoint: basePlan.arrivalPlan.arrivalPoint },
-              returnPlan: { ...basePlan.returnPlan, ...(liveIntel.returnPlan || {}), departurePoint: basePlan.returnPlan.departurePoint },
-              foodIntelligence: liveIntel.foodIntelligence || basePlan.foodIntelligence,
-              hotels: liveIntel.hotels,
-              restaurants: liveIntel.restaurants || basePlan.restaurants,
-              days: liveIntel.days
-            };
-          }
-        }
+      if (provider === "google") {
+        if (!apiKey) throw new Error("Missing Google API Key");
+        res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { responseMimeType: "application/json", temperature: 0.1 }
+          }),
+          signal: controller.signal
+        });
+      } else if (provider === "anthropic") {
+        const anthropicKey = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
+        if (!anthropicKey) throw new Error("Missing Anthropic API Key");
+        res = await fetch(`https://api.anthropic.com/v1/messages`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': anthropicKey,
+            'anthropic-version': '2023-06-01'
+          },
+          body: JSON.stringify({
+            model: modelName,
+            max_tokens: 4000,
+            temperature: 0.1,
+            messages: [{ role: 'user', content: prompt + "\nRespond strictly in JSON without markdown fence." }]
+          }),
+          signal: controller.signal
+        });
+      } else if (provider === "deepseek") {
+        const deepseekKey = process.env.DEEPSEEK_API_KEY;
+        if (!deepseekKey) throw new Error("Missing DeepSeek API Key");
+        res = await fetch(`https://api.deepseek.com/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${deepseekKey}`
+          },
+          body: JSON.stringify({
+            model: modelName,
+            temperature: 0.1,
+            response_format: { type: "json_object" },
+            messages: [{ role: 'user', content: prompt }]
+          }),
+          signal: controller.signal
+        });
+      } else {
+        throw new Error("Unknown provider");
       }
-    } catch (e) {
-      console.warn(`Model ${modelName} orchestrator skip:`, e);
+
+      clearTimeout(timeout);
+      if (!res.ok) throw new Error(`HTTP ${res.status} from ${modelName}`);
+
+      const data = await res.json();
+      let rawText = "";
+      if (provider === "google") rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      else if (provider === "anthropic") rawText = data.content?.[0]?.text;
+      else if (provider === "deepseek") rawText = data.choices?.[0]?.message?.content;
+
+      if (!rawText) throw new Error(`Empty response from ${modelName}`);
+
+      const cleanJsonStr = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+      const liveIntel = JSON.parse(cleanJsonStr);
+      if (!liveIntel.hotels?.[0]?.name || !liveIntel.days?.length) {
+        throw new Error(`Invalid itinerary structure from ${modelName}`);
+      }
+
+      return {
+        ...basePlan,
+        tripOverview: liveIntel.tripOverview || basePlan.tripOverview,
+        localTravelAdvice: liveIntel.localTravelAdvice || basePlan.localTravelAdvice,
+        arrivalPlan: { ...basePlan.arrivalPlan, ...(liveIntel.arrivalPlan || {}), arrivalPoint: basePlan.arrivalPlan.arrivalPoint },
+        returnPlan: { ...basePlan.returnPlan, ...(liveIntel.returnPlan || {}), departurePoint: basePlan.returnPlan.departurePoint },
+        foodIntelligence: liveIntel.foodIntelligence || basePlan.foodIntelligence,
+        hotels: liveIntel.hotels,
+        restaurants: liveIntel.restaurants || basePlan.restaurants,
+        days: liveIntel.days
+      };
+    });
+  };
+
+  const fallbackChain = [
+    { provider: "google", model: "gemini-2.5-pro" },
+    { provider: "google", model: "gemini-2.5-flash" },
+    { provider: "anthropic", model: "claude-3-5-sonnet-20241022" },
+    { provider: "deepseek", model: "deepseek-chat" }
+  ];
+
+  for (const item of fallbackChain) {
+    try {
+      return await invokeModel(item.provider, item.model);
+    } catch (err) {
+      console.warn(`Model fallback trigger: ${item.model} failed after retries:`, err);
     }
   }
 
-  return basePlan;
+  throw new Error("AI_UNAVAILABLE");
 }
 
 // Part 6 & 7: No Silent Failures Gate & Response Validation Engine
@@ -530,7 +598,7 @@ export async function POST(request: Request) {
     // Stage 6–8: Assemble TRAVIXA V4 Operating System Base (Hotels 40%, ≤5km Cluster, Distinct Thumbnails)
     const factualBase = assembleTravixaV4OperatingSystem(body, liveGIS);
 
-    // Stage 9: Execute Gemini Orchestrator (gemini-2.5-pro / 1.5-pro -> flash fallback)
+    // Stage 9: Execute AI Orchestrator (Gemini Pro -> Flash -> Claude -> DeepSeek)
     const finalItinerary = await orchestrateGeminiIntelligence(body, liveGIS, factualBase);
 
     // Background asynchronous persistence (wrapped in try/catch to prevent log failures from aborting request)
@@ -550,16 +618,9 @@ export async function POST(request: Request) {
     return NextResponse.json(finalItinerary);
   } catch (err: any) {
     console.error("TRAVIXA V4 Operating System exception handler:", err);
-    // Guarantee HTTP 200 OK fallback so frontend UI never displays error screens
     return NextResponse.json({
-      id: `travixa-os-${Date.now()}`,
-      transportAccess: { transportExists: false, transportMode: "Regional Road / Bus Transit", sourceHub: "Origin Transit Hub", destinationHub: "Regional Transit Depot", fare: "₹1,500", duration: "5 Hours", confidence: 0.80 },
-      tripOverview: `Dynamic Real-World Travel Plan engineered by TRAVIXA Global Travel Operating System.`,
-      destination: "Your Destination", destinationSummary: `Verified travel anchors and accessible transit routes.`,
-      totalDays: 5, totalBudget: 30000, estimatedCost: 28000, currency: "INR", bestVisitingTime: "October to June",
-      hotels: [{ name: "Verified Stay Cluster", rating: 4.5, pricePerNight: 2400, starTier: "Standard Category", address: "City Center", amenities: ["Free Wi-Fi", "Restaurant"], imageUrl: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=800&q=80" }],
-      restaurants: [{ name: "Verified Dining Sector", cuisine: "Local Specialties", estimatedCost: 300, rating: 4.6, address: "Market Sector", mealType: "Lunch" }],
-      days: [{ day: 1, date: new Date().toISOString().split('T')[0], title: "Arrival & Sightseeing Exploration", morning: [], afternoon: [], evening: [], night: [] }]
-    });
+      status: "FAILED",
+      reason: "AI_UNAVAILABLE"
+    }, { status: 500 });
   }
 }

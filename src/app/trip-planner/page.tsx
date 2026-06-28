@@ -172,6 +172,7 @@ export default function TripPlannerPage() {
       if (!response.ok) throw new Error("Failed to generate itinerary");
       
       const data = await response.json();
+      if (data?.status === "FAILED") throw new Error(data.reason || "AI_UNAVAILABLE");
       
       // Store locally so the /trips page can read the real generated data
       localStorage.setItem('last_generated_trip', JSON.stringify(data));
