@@ -150,7 +150,7 @@ export function StoryScroll() {
             {stages.map((stage, index) => (
               <div 
                 key={index}
-                className={`absolute inset-1.5 transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                className={`absolute inset-1.5 transition-all duration-700 ease-out ${
                   index === activeIndex ? "opacity-100 scale-100 z-10" : "opacity-0 scale-95 z-0"
                 }`}
               >
