@@ -170,6 +170,9 @@ export default function TripPlannerPage() {
       });
 
       const data = await response.json().catch(() => ({}));
+      if (data?.status === "REAL_TRANSPORT_UNAVAILABLE") {
+        throw new Error("Transport unavailable: No verified transit route or stations discovered for this trip.");
+      }
       if (data?.status === "INSUFFICIENT_REAL_DATA") {
         throw new Error(`Trip rejected (Quality Score: ${data.score}/100). Missing verified data: ${data.missing.join(", ")}.`);
       }
