@@ -202,6 +202,7 @@ export interface ItineraryData {
     totalTransitCost: number;
   };
   foodIntelligence?: {
+    mustTryDish?: string;
     bestVeg?: string;
     bestNonVeg?: string;
     bestSeafood?: string;
@@ -209,6 +210,7 @@ export interface ItineraryData {
     bestPremium?: string;
     bestLocalSpecialty?: string;
     streetFood?: string;
+    [key: string]: any;
   };
   hotels: Hotel[];
   flights: Flight[];
