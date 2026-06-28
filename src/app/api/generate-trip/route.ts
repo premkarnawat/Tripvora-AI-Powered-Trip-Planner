@@ -287,9 +287,11 @@ async function executeTransportIntelligenceEngine(origin: string, destination: s
 
   if (distanceKm === 0) {
     const rad = Math.PI / 180;
-    const dLat = (destGIS.lat - originLat) * rad;
-    const dLon = (destGIS.lon - originLon) * rad;
-    const a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(originLat*rad)*Math.cos(destGIS.lat*rad)*Math.sin(dLon/2)*Math.sin(dLon/2);
+    const destLatNum = Number(destGIS.lat) || 0;
+    const destLonNum = Number(destGIS.lon) || 0;
+    const dLat = (destLatNum - originLat) * rad;
+    const dLon = (destLonNum - originLon) * rad;
+    const a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(originLat*rad)*Math.cos(destLatNum*rad)*Math.sin(dLon/2)*Math.sin(dLon/2);
     distanceKm = Math.round(6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
     durationHrs = Math.max(Math.round((distanceKm / 45) * 10) / 10, 1);
   }
@@ -791,7 +793,7 @@ function validateItineraryQuality(itinerary: any, gis: VerifiedGISPayload) {
   }
 
   // 6. Maps (10 pts)
-  if (gis.lat !== 0 && gis.lon !== 0 && trans?.destinationHub) {
+  if (Number(gis.lat) !== 0 && Number(gis.lon) !== 0 && trans?.destinationHub) {
     score += 5;
   } else {
     if (!missing.includes("route")) missing.push("route");
