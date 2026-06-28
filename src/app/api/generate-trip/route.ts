@@ -568,6 +568,106 @@ Return ONLY valid JSON matching this exact structure:
   throw new Error("AI_UNAVAILABLE");
 }
 
+function validateItineraryQuality(itinerary: any, gis: VerifiedGISPayload) {
+  let score = 0;
+  const missing: string[] = [];
+
+  // 1. Transportation (20 pts)
+  const trans = itinerary.transportAccess;
+  if (trans && trans.transportExists && (gis.osmStations?.length > 0)) {
+    score += 8;
+  } else {
+    missing.push("transport");
+  }
+  if (trans && trans.duration && trans.destinationHub) {
+    score += 6;
+  } else {
+    missing.push("route");
+  }
+  if (trans && trans.fare && trans.fare !== "₹0") {
+    score += 6;
+  } else {
+    missing.push("fare");
+  }
+
+  // 2. Hotel (20 pts)
+  const h = itinerary.hotels?.[0];
+  if (h && h.name && gis.osmHotels?.length > 0) {
+    score += 8;
+  } else {
+    missing.push("hotel");
+  }
+  if (h && h.rating > 0 && h.reviewsCount > 0) {
+    score += 4;
+  }
+  if (h && h.pricePerNight > 0) {
+    score += 4;
+  }
+  if (h && h.bookingLinks?.length > 0 && h.address) {
+    score += 4;
+  }
+
+  // 3. Restaurant (15 pts)
+  const r = itinerary.restaurants?.[0];
+  if (r && r.name && gis.osmRestaurants?.length > 0) {
+    score += 7;
+  } else {
+    missing.push("restaurant");
+  }
+  if (r && r.rating > 0 && r.estimatedCost > 0) {
+    score += 4;
+  }
+  if (r && r.address) {
+    score += 4;
+  }
+
+  // 4. Attractions (15 pts)
+  const hasAttractions = itinerary.days?.some((d: any) => d.morning?.length > 0 || d.afternoon?.length > 0 || d.evening?.length > 0);
+  if (hasAttractions && gis.osmAttractions?.length > 0) {
+    score += 7;
+  } else {
+    missing.push("attraction");
+  }
+  if (gis.lat && gis.lon) {
+    score += 4;
+  }
+  if (itinerary.days?.[0]?.morning?.[0]?.bestVisitingTime || itinerary.days?.[0]?.morning?.[0]?.time) {
+    score += 4;
+  }
+
+  // 5. Images (10 pts)
+  if (h?.imageUrl && h.imageUrl.startsWith("http")) {
+    score += 5;
+  } else {
+    missing.push("images");
+  }
+  if (itinerary.days?.[0]?.morning?.[0]?.imageUrl?.startsWith("http")) {
+    score += 5;
+  }
+
+  // 6. Maps (10 pts)
+  if (gis.lat !== 0 && gis.lon !== 0 && trans?.destinationHub) {
+    score += 5;
+  } else {
+    if (!missing.includes("route")) missing.push("route");
+  }
+  if (trans?.duration) {
+    score += 5;
+  }
+
+  // 7. Weather (10 pts)
+  if (itinerary.weatherEngine?.currentWeather || gis.weatherDesc) {
+    score += 5;
+  } else {
+    missing.push("weather");
+  }
+  if (typeof gis.temp === "number" || itinerary.weatherEngine?.temperature) {
+    score += 5;
+  }
+
+  return { score, missing: Array.from(new Set(missing)) };
+}
+
 // Part 6 & 7: No Silent Failures Gate & Response Validation Engine
 export async function POST(request: Request) {
   try {
@@ -608,6 +708,24 @@ export async function POST(request: Request) {
 
     // Stage 9: Execute AI Orchestrator (Gemini Pro -> Flash -> Claude -> DeepSeek)
     const finalItinerary = await orchestrateGeminiIntelligence(body, liveGIS, factualBase);
+
+    // Stage 10: TRAVIXA Itinerary Validation Engine (Score >= 90 Render, 75-90 Warning, < 75 Reject)
+    const valResult = validateItineraryQuality(finalItinerary, liveGIS);
+    if (valResult.score < 75) {
+      return NextResponse.json({
+        status: "INSUFFICIENT_REAL_DATA",
+        score: valResult.score,
+        missing: valResult.missing
+      }, { status: 422 });
+    }
+
+    if (valResult.score >= 75 && valResult.score < 90) {
+      (finalItinerary as any).qualityScore = valResult.score;
+      (finalItinerary as any).validationWarning = "Rendered with warning: Some real-world data points were partially estimated.";
+      finalItinerary.localTravelAdvice = `[⚠️ Quality Warning: Score ${valResult.score}/100. Some secondary GIS items were regionally estimated.] ${finalItinerary.localTravelAdvice || ''}`;
+    } else {
+      (finalItinerary as any).qualityScore = valResult.score;
+    }
 
     // Background asynchronous persistence (wrapped in try/catch to prevent log failures from aborting request)
     try {

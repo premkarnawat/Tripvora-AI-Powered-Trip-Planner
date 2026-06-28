@@ -170,6 +170,9 @@ export default function TripPlannerPage() {
       });
 
       const data = await response.json().catch(() => ({}));
+      if (data?.status === "INSUFFICIENT_REAL_DATA") {
+        throw new Error(`Trip rejected (Quality Score: ${data.score}/100). Missing verified data: ${data.missing.join(", ")}.`);
+      }
       if (data?.status?.startsWith("MISSING_")) throw new Error(`Cannot plan itinerary: ${data.status.replace("MISSING_", "Missing ")} in this region.`);
       if (data?.status === "FAILED") throw new Error(data.reason || "AI_UNAVAILABLE");
       if (!response.ok) throw new Error(data?.reason || "Failed to generate itinerary");
