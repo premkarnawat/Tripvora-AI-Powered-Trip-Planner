@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { 
   MapPin, Clock, ShieldAlert, Award, Calendar, Wallet, CloudSun, 
   ArrowLeft, Share2, Download, Plane, Utensils, ExternalLink, Navigation, Heart, Compass, Train,
-  Play, Pause, RotateCcw, Map as MapIcon, Car, Footprints
+  Play, Pause, RotateCcw, Map as MapIcon, Car, Footprints, MessageSquare, Send, X, Bot, Sparkles, CheckCircle2, AlertTriangle
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,12 @@ export default function TripViewerPage() {
   const [mapDayRoute, setMapDayRoute] = useState(1);
   const [activeStepIdx, setActiveStepIdx] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+
+  const [showConcierge, setShowConcierge] = useState(false);
+  const [conciergeInput, setConciergeInput] = useState("");
+  const [conciergeHistory, setConciergeHistory] = useState<Array<{role: string, text: string}>>([
+    { role: "assistant", text: "👋 Hello! I am your local travel expert for this trip. Ask me for real-time luggage advice, transit tips, or dining alternatives!" }
+  ]);
 
   useEffect(() => {
     let timer: any;
@@ -628,6 +634,28 @@ export default function TripViewerPage() {
           ))}
         </div>
 
+        {/* Phase 15: Travel Progress Indicator */}
+        <div className="bg-gradient-to-r from-slate-900 via-teal-950 to-slate-900 text-white p-4 rounded-2xl border border-teal-500/30 flex flex-col sm:flex-row justify-between items-center gap-4 shadow-md">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-teal-500/20 rounded-xl border border-teal-400/30">
+              <Compass className="w-5 h-5 text-teal-400 animate-spin" style={{ animationDuration: '10s' }} />
+            </div>
+            <div>
+              <h4 className="text-xs font-black uppercase tracking-wider text-teal-300">Regional Trip Progress</h4>
+              <p className="text-sm font-bold text-white mt-0.5">Day {activeDay} of {totalDaysList.length} • {currentSlots.length} Verified Stops Sequenced</p>
+            </div>
+          </div>
+          <div className="w-full sm:w-64 space-y-1.5">
+            <div className="flex justify-between text-[11px] font-mono text-slate-300">
+              <span>Execution Status</span>
+              <span className="text-teal-400 font-bold">{Math.round((activeDay / totalDaysList.length) * 100)}% Completed</span>
+            </div>
+            <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden p-0.5 border border-slate-700">
+              <div className="bg-gradient-to-r from-teal-400 to-emerald-400 h-full rounded-full transition-all duration-500" style={{ width: `${(activeDay / totalDaysList.length) * 100}%` }} />
+            </div>
+          </div>
+        </div>
+
         {/* Triple Panel Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           
@@ -1131,6 +1159,85 @@ export default function TripViewerPage() {
         <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="flex flex-col items-center text-teal-600 font-bold"><Clock className="w-5 h-5" /><span className="text-[10px] mt-1">Timeline</span></button>
         <button onClick={() => window.print()} className="flex flex-col items-center text-slate-400 hover:text-teal-600"><Download className="w-5 h-5" /><span className="text-[10px] font-bold mt-1">Export</span></button>
       </nav>
+
+      {/* PHASE 15 FLOATING AI CONCIERGE WIDGET */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+        {showConcierge && (
+          <div className="w-80 sm:w-96 bg-slate-900 border border-teal-500/40 rounded-3xl shadow-2xl overflow-hidden mb-4 animate-fade-in text-white flex flex-col max-h-[480px]">
+            <div className="bg-gradient-to-r from-teal-600 to-indigo-600 p-4 flex justify-between items-center">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-white/20 rounded-full"><Bot className="w-5 h-5 text-white" /></div>
+                <div>
+                  <h4 className="text-sm font-black font-sora">Travixa AI Local Expert</h4>
+                  <p className="text-[10px] text-teal-100 font-bold flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" /> Live Regional Concierge
+                  </p>
+                </div>
+              </div>
+              <button onClick={() => setShowConcierge(false)} className="p-1 hover:bg-white/20 rounded-full transition-colors text-white">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-4 overflow-y-auto space-y-3 flex-1 bg-slate-950/80 text-xs">
+              {conciergeHistory.map((msg, idx) => (
+                <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[85%] p-3 rounded-2xl ${
+                    msg.role === 'user' 
+                      ? 'bg-teal-600 text-white rounded-br-none font-medium' 
+                      : 'bg-slate-800 text-slate-200 border border-slate-700 rounded-bl-none leading-relaxed'
+                  }`}>
+                    {msg.text}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="p-3 bg-slate-900 border-t border-slate-800 space-y-2">
+              <div className="flex gap-1.5 overflow-x-auto pb-1 text-[10px]">
+                <button onClick={() => setConciergeInput("Best cab app here?")} className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-teal-300 rounded-full shrink-0 border border-slate-700 font-bold">🚕 Cab App?</button>
+                <button onClick={() => setConciergeInput("Where to keep luggage?")} className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-teal-300 rounded-full shrink-0 border border-slate-700 font-bold">🎒 Luggage storage?</button>
+                <button onClick={() => setConciergeInput("Emergency tourist help")} className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-teal-300 rounded-full shrink-0 border border-slate-700 font-bold">🚨 Emergency?</button>
+              </div>
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                if (!conciergeInput.trim()) return;
+                const newQuery = conciergeInput;
+                setConciergeInput("");
+                setConciergeHistory(prev => [...prev, { role: "user", text: newQuery }]);
+                setTimeout(() => {
+                  let reply = "As your local expert, I advise using verified app cabs like Ola or Uber for transparent metering. Always carry some small cash bills for local auto rickshaws!";
+                  if (newQuery.toLowerCase().includes("luggage")) reply = `You can securely store your luggage at ${trip.hotels?.[0]?.name || "your hotel reception"} before check-in or utilize the station cloakroom for ₹30/bag.`;
+                  if (newQuery.toLowerCase().includes("emergency")) reply = `Dial 112 for national emergency or 1363 for 24/7 Tourist Police assistance in ${trip.destination}.`;
+                  setConciergeHistory(prev => [...prev, { role: "assistant", text: reply }]);
+                }, 600);
+              }} className="flex gap-2">
+                <input
+                  type="text"
+                  value={conciergeInput}
+                  onChange={(e) => setConciergeInput(e.target.value)}
+                  placeholder="Ask local expert anything..."
+                  className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-teal-500"
+                />
+                <button type="submit" className="p-2 bg-teal-500 hover:bg-teal-400 text-slate-950 rounded-xl transition-transform active:scale-95 font-bold">
+                  <Send className="w-4 h-4" />
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+
+        <button
+          onClick={() => setShowConcierge(!showConcierge)}
+          className="group flex items-center gap-3 px-5 py-3.5 bg-gradient-to-r from-teal-500 via-emerald-500 to-indigo-600 hover:from-teal-400 hover:to-indigo-500 text-white rounded-full shadow-2xl border-2 border-white/20 transition-all transform hover:scale-105 active:scale-95 cursor-pointer"
+        >
+          <div className="relative">
+            <Sparkles className="w-5 h-5 animate-spin text-amber-300" style={{ animationDuration: '4s' }} />
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-slate-900 animate-ping" />
+          </div>
+          <span className="text-xs font-black uppercase tracking-wider font-sora pr-1">Ask AI Local Expert</span>
+        </button>
+      </div>
     </div>
   );
 }
