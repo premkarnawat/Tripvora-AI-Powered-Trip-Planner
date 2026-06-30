@@ -265,14 +265,16 @@ async function executeGISDiscoveryEngine(destination: string, attempt = 1): Prom
     return executeGISDiscoveryEngine(destination, attempt + 1);
   }
 
+  const numLat = Number(lat) || 18.5204;
+  const numLon = Number(lon) || 73.8567;
   if (osmHotels.length === 0) {
-    osmHotels.push({ id: 101, lat, lon, name: `${destination} Heritage Stay & Resort`, type: "hotel", distanceKm: 1.2 });
+    osmHotels.push({ id: 101, lat: numLat, lon: numLon, name: `${destination} Heritage Stay & Resort`, type: "hotel", distanceKm: 1.2 });
   }
   if (osmRestaurants.length === 0) {
-    osmRestaurants.push({ id: 102, lat, lon, name: `${destination} Central Dining & Bistro`, type: "restaurant", cuisine: "Regional Specialties", distanceKm: 0.8 });
+    osmRestaurants.push({ id: 102, lat: numLat, lon: numLon, name: `${destination} Central Dining & Bistro`, type: "restaurant", cuisine: "Regional Specialties", distanceKm: 0.8 });
   }
   if (osmStations.length === 0) {
-    osmStations.push({ id: 103, lat, lon, name: `${destination} Central Transit Hub`, type: "bus", distanceKm: 2.0 });
+    osmStations.push({ id: 103, lat: numLat, lon: numLon, name: `${destination} Central Transit Hub`, type: "bus", distanceKm: 2.0 });
   }
 
   return { lat, lon, osmHotels, osmRestaurants, osmAttractions, osmHospitals, osmStations, weatherDesc, temp, rainProb, uvIndex, humidity, windSpeed, weatherCode, weatherAlert, wikiExtract, wikiThumbnail };
