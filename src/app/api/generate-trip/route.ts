@@ -1861,7 +1861,7 @@ function validateItineraryQuality(itinerary: any, gis: VerifiedGISPayload): Vali
   // 1. Transportation (20 pts)
   let transportScore = 0;
   const trans = itinerary.transportAccess;
-  if (trans && (trans.transportExists || trans.destinationHub || gis.lat !== 0)) {
+  if (trans && (trans.transportExists || trans.destinationHub || Number(gis.lat) !== 0)) {
     transportScore += 8;
   } else {
     missing.push("transport");
