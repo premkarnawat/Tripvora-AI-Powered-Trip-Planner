@@ -197,11 +197,11 @@ export default function TripPlannerPage() {
         router.push("/trips/generated"); // Send to a dynamic trips viewer
       }, 400);
       
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
       clearInterval(interval);
-      setLoadingText("Error generating trip. Please try again.");
-      setTimeout(() => setLoadingPhase(false), 2000);
+      setLoadingText(err?.message || "Error generating trip. Please try again.");
+      setTimeout(() => setLoadingPhase(false), 3000);
     }
   };
 
