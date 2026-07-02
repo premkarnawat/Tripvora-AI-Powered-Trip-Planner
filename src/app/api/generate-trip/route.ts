@@ -116,7 +116,7 @@ async function executeGISDiscoveryEngine(destination: string, attempt = 1): Prom
   try {
     // Stage 1: Nominatim Geocoding
     const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(destination)}&format=json&limit=1`, {
-      headers: { 'User-Agent': 'Travixa-Global-OS/4.0' }
+      headers: { 'User-Agent': 'Travixa-Global-OS/4.0' }, signal: AbortSignal.timeout(1500)
     });
     if (geoRes.ok) {
       const geoJson = await geoRes.json();
@@ -150,7 +150,7 @@ async function executeGISDiscoveryEngine(destination: string, attempt = 1): Prom
           out body 60;
         `;
         const opRes = await fetch(`https://overpass-api.de/api/interpreter`, {
-          method: 'POST', body: overpassQuery
+          method: 'POST', body: overpassQuery, signal: AbortSignal.timeout(2000)
         });
         if (opRes.ok) {
           const opJson = await opRes.json();
@@ -196,7 +196,7 @@ async function executeGISDiscoveryEngine(destination: string, attempt = 1): Prom
     })(),
     (async () => {
       try {
-        const meteoRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m&daily=uv_index_max,precipitation_probability_max&timezone=auto`);
+        const meteoRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m&daily=uv_index_max,precipitation_probability_max&timezone=auto`, { signal: AbortSignal.timeout(1500) });
         if (meteoRes.ok) {
           const mJson = await meteoRes.json();
           const curr = mJson?.current;
@@ -234,7 +234,7 @@ async function executeGISDiscoveryEngine(destination: string, attempt = 1): Prom
     (async () => {
       try {
         const sumRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(destination)}`, {
-          headers: { 'User-Agent': 'Travixa-Global-OS/4.0' }
+          headers: { 'User-Agent': 'Travixa-Global-OS/4.0' }, signal: AbortSignal.timeout(1500)
         });
         if (sumRes.ok) {
           const sJson = await sumRes.json();
@@ -246,7 +246,7 @@ async function executeGISDiscoveryEngine(destination: string, attempt = 1): Prom
       // Reliable Wikipedia CDN Geosearch if Overpass OSM community server lags
       if (osmAttractions.length < 3) {
         try {
-          const wRes = await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=${lat}|${lon}&gsradius=10000&gslimit=15&format=json`);
+          const wRes = await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gscoord=${lat}|${lon}&gsradius=10000&gslimit=15&format=json`, { signal: AbortSignal.timeout(1500) });
           if (wRes.ok) {
             const wJson = await wRes.json();
             const items = wJson?.query?.geosearch || [];
@@ -303,7 +303,7 @@ async function executeTransportIntelligenceEngine(origin: string, destination: s
 
   try {
     const originGeoRes = await retryApi(() => fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(origin)}&format=json&limit=1`, {
-      headers: { 'User-Agent': 'Travixa-Transport-Engine/4.0' }
+      headers: { 'User-Agent': 'Travixa-Transport-Engine/4.0' }, signal: AbortSignal.timeout(1500)
     }));
     if (originGeoRes.ok) {
       const geoJson = await originGeoRes.json();
@@ -320,7 +320,7 @@ async function executeTransportIntelligenceEngine(origin: string, destination: s
 
   try {
     const osrmRes = await retryApi(() => fetch(`https://router.project-osrm.org/route/v1/driving/${originLon},${originLat};${destGIS.lon},${destGIS.lat}?overview=false`, {
-      headers: { 'User-Agent': 'Travixa-Transport-Engine/4.0' }
+      headers: { 'User-Agent': 'Travixa-Transport-Engine/4.0' }, signal: AbortSignal.timeout(1500)
     }));
     if (osrmRes.ok) {
       const osrmJson = await osrmRes.json();
@@ -1413,11 +1413,11 @@ function assembleTravixaV4OperatingSystem(body: any, gis: VerifiedGISPayload, tr
 }
 
 async function retryApi<T>(fn: () => Promise<T>): Promise<T> {
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 2; i++) {
     try {
       return await fn();
     } catch (err) {
-      await new Promise(res => setTimeout(res, Math.pow(2, i) * 1000));
+      await new Promise(res => setTimeout(res, 200));
     }
   }
   throw new Error("SERVICE_UNAVAILABLE");
@@ -1483,7 +1483,7 @@ Return ONLY valid JSON matching this exact structure:
   const invokeModel = async (provider: string, modelName: string): Promise<ItineraryData> => {
     return await retryApi(async () => {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 20000);
+      const timeout = setTimeout(() => controller.abort(), 3500);
       let res: Response;
 
       if (provider === "google") {
