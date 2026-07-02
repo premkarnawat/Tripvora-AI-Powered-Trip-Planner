@@ -81,7 +81,7 @@ export default function TripViewerPage() {
     return (
       <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center p-6 text-center space-y-4 font-inter">
         <div className="w-12 h-12 border-4 border-teal-600 border-t-transparent rounded-full animate-spin mx-auto" />
-        <h2 className="text-lg font-bold text-slate-800 font-sora">Loading Travixa Travel Operating System...</h2>
+        <h2 className="text-lg font-bold text-slate-800 font-sora">Loading your trip...</h2>
         <p className="text-xs text-slate-500">Calculating real access routes, transport fares, and clustered daily schedules.</p>
       </div>
     );
@@ -124,9 +124,9 @@ export default function TripViewerPage() {
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xs bg-teal-50 text-teal-700 px-2 py-0.5 rounded-md font-black uppercase tracking-wider flex items-center gap-1">
-                <Award className="w-3.5 h-3.5 text-teal-600" /> Travixa Travel OS
+                <Award className="w-3.5 h-3.5 text-teal-600" /> Tripvora
               </span>
-              <span className="text-xs text-slate-400 font-bold">• Factual Real-Time Engine</span>
+              <span className="text-xs text-slate-400 font-bold">• AI Travel Planner</span>
             </div>
             <h1 className="text-base md:text-xl font-black text-slate-900 font-sora tracking-tight">{trip.destination} Travel Guide</h1>
           </div>
@@ -230,8 +230,8 @@ export default function TripViewerPage() {
           <div className="lg:col-span-2 bg-white border border-[#E5E7EB] rounded-3xl p-6 shadow-xs flex flex-col justify-between space-y-4">
             <div className="space-y-2">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="px-2.5 py-1 bg-emerald-100 text-emerald-800 font-black text-[10px] uppercase rounded-full">Verified Geocoding</span>
-                <span className="px-2.5 py-1 bg-sky-100 text-sky-800 font-black text-[10px] uppercase rounded-full">Optimized Route</span>
+                <span className="px-2.5 py-1 bg-emerald-100 text-emerald-800 font-black text-[10px] uppercase rounded-full">Trip Overview</span>
+                <span className="px-2.5 py-1 bg-sky-100 text-sky-800 font-black text-[10px] uppercase rounded-full">Planned Route</span>
               </div>
               <h3 className="text-xl md:text-2xl font-black text-slate-900 font-sora">{trip.tripOverview || trip.destinationSummary}</h3>
               <p className="text-xs md:text-sm text-slate-600 leading-relaxed">{trip.destinationSummary}</p>
@@ -249,9 +249,9 @@ export default function TripViewerPage() {
               <div className="flex justify-between items-start gap-2 border-b border-white/10 pb-3">
                 <div>
                   <span className="px-2 py-0.5 bg-sky-500/20 border border-sky-400/30 rounded-full text-[9px] font-black text-sky-300 uppercase tracking-widest font-sora">
-                    Phase 9 Weather Engine (Open-Meteo)
+                    Live Weather
                   </span>
-                  <h4 className="text-sm font-black text-white mt-1">Live Meteo & Protocol Active</h4>
+                  <h4 className="text-sm font-black text-white mt-1">Current Conditions</h4>
                 </div>
                 <div className="text-right shrink-0">
                   <span className="text-2xl font-black font-mono text-amber-400">{trip.weatherEngine?.temperature || 26}°C</span>
@@ -286,9 +286,9 @@ export default function TripViewerPage() {
             <div className="border-b border-slate-100 pb-4 flex justify-between items-center flex-wrap gap-2">
               <div>
                 <span className="px-3 py-1 bg-purple-50 border border-purple-200 rounded-full text-[10px] font-black text-purple-700 uppercase tracking-widest font-sora">
-                  Phase 10 Destination Intelligence Engine
+                  Places to Visit
                 </span>
-                <h3 className="text-xl md:text-2xl font-black text-slate-900 mt-2">Overpass + OSM + Wiki Ranked Places</h3>
+                <h3 className="text-xl md:text-2xl font-black text-slate-900 mt-2">Discover {trip.destination}</h3>
               </div>
               <div className="text-xs font-bold text-slate-500 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
                 13 Categories Mapped • Ranked Priority
@@ -319,7 +319,7 @@ export default function TripViewerPage() {
                     </div>
                     <div className="pt-2 border-t border-slate-200/60 flex justify-between items-center text-[11px] font-bold text-slate-500">
                       <span>📍 Distance: {item.distance || "1.2 km"}</span>
-                      <span className="text-purple-600 font-extrabold">Verified GIS</span>
+                      <span className="text-purple-600 font-extrabold">Map Data</span>
                     </div>
                   </div>
                 );
@@ -334,7 +334,7 @@ export default function TripViewerPage() {
             <div className="border-b border-white/10 pb-4 flex justify-between items-center flex-wrap gap-2">
               <div>
                 <span className="px-3 py-1 bg-indigo-500/20 border border-indigo-400/30 rounded-full text-[10px] font-black text-indigo-300 uppercase tracking-widest font-sora">
-                  Phase 11 User Preference Engine
+                  Your Travel Profile
                 </span>
                 <h3 className="text-xl md:text-2xl font-black text-white mt-2 flex items-center gap-2">
                   <span>🎯 Active Profile:</span>
@@ -382,10 +382,10 @@ export default function TripViewerPage() {
             <div className="border-b border-white/10 pb-4 flex justify-between items-center flex-wrap gap-4">
               <div>
                 <span className="px-3 py-1 bg-emerald-500/20 border border-emerald-500/40 rounded-full text-[10px] font-black text-emerald-400 uppercase tracking-widest font-sora">
-                  Phase 14 Validation Engine
+                  Trip Quality
                 </span>
                 <h3 className="text-xl md:text-2xl font-black text-white mt-2 flex items-center gap-3">
-                  Forensic GIS Scorecard
+                  Quality Score
                   <span className={`px-3 py-1 rounded-full text-xs font-black uppercase ${
                     trip.validationEngine.totalScore >= 90 ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/30" : "bg-amber-500 text-white shadow-lg shadow-amber-500/30"
                   }`}>
@@ -437,7 +437,7 @@ export default function TripViewerPage() {
             <div className="border-b border-slate-100 pb-4 flex justify-between items-center flex-wrap gap-2">
               <div>
                 <span className="px-3 py-1 bg-amber-50 border border-amber-200 rounded-full text-[10px] font-black text-amber-700 uppercase tracking-widest font-sora">
-                  Phase 13 Recommendation Engine
+                  Recommended Spots
                 </span>
                 <h3 className="text-xl md:text-2xl font-black text-slate-900 mt-2">Ranked Discoveries & Trending Spots</h3>
               </div>
@@ -477,7 +477,7 @@ export default function TripViewerPage() {
             <div className="border-b border-slate-100 pb-4 flex justify-between items-center flex-wrap gap-2">
               <div>
                 <span className="px-3 py-1 bg-teal-50 border border-teal-200 rounded-full text-[10px] font-black text-teal-700 uppercase tracking-widest font-sora">
-                  Phase 4 Hotel Intelligence Engine
+                  Hotel Options
                 </span>
                 <h3 className="text-xl md:text-2xl font-black text-slate-900 mt-2">Verified Hotel Recommendations</h3>
               </div>
@@ -547,9 +547,9 @@ export default function TripViewerPage() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/10 pb-4">
               <div>
                 <span className="px-3 py-1 bg-teal-500/20 border border-teal-400/30 rounded-full text-[10px] font-black text-teal-300 uppercase tracking-widest">
-                  Concierge Engine Verified
+                  Arrival & Departure
                 </span>
-                <h3 className="text-lg sm:text-xl font-black mt-2">Arrival & Departure Concierge Protocol</h3>
+                <h3 className="text-lg sm:text-xl font-black mt-2">Your Arrival & Departure Plan</h3>
               </div>
               <div className="text-right text-xs">
                 <p className="text-slate-300 font-bold">Check-in: <span className="text-white font-mono">{trip.conciergeWorkflow.conciergeAdvice.hotelCheckin}</span></p>
