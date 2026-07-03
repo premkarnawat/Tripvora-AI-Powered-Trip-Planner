@@ -1,5 +1,5 @@
-// Transport discovery — OSRM routing + Nominatim geocoding
-// Falls back to Haversine distance estimation if APIs are unavailable
+// ─── Transport Feasibility & Route Engine ───────────────────────────
+// Discovers real transport hubs, calculates routes, determines feasibility
 
 export interface TransportRoute {
   distanceKm: number;
@@ -10,6 +10,15 @@ export interface TransportRoute {
   suggestedMode: string;
   estimatedFare: number;
   journeyLegs: string[];
+  nearestAirport: { name: string; distanceKm: number } | null;
+  nearestRailway: { name: string; distanceKm: number } | null;
+  nearestBusStand: { name: string; distanceKm: number } | null;
+  feasibility: {
+    byFlight: boolean;
+    byTrain: boolean;
+    byBus: boolean;
+    byCar: boolean;
+  };
 }
 
 interface TransportNode {
@@ -18,29 +27,9 @@ interface TransportNode {
   distanceKm?: number;
 }
 
-interface NominatimResult {
-  lat: string;
-  lon: string;
-  display_name: string;
-}
+// ─── Haversine (self-contained) ─────────────────────────────────────
 
-interface OSRMRoute {
-  distance: number; // meters
-  duration: number; // seconds
-}
-
-interface OSRMResponse {
-  code: string;
-  routes?: OSRMRoute[];
-}
-
-// --- Haversine (self-contained, no cross-file imports) ---
-function haversineKm(
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number
-): number {
+function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371;
   const toRad = (deg: number) => (deg * Math.PI) / 180;
   const dLat = toRad(lat2 - lat1);
@@ -51,180 +40,84 @@ function haversineKm(
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-// --- Geocode origin via Nominatim ---
-async function geocodeOrigin(
-  city: string
-): Promise<{ lat: number; lon: number } | null> {
+// ─── Geocode origin city ────────────────────────────────────────────
+
+async function geocodeCity(city: string): Promise<{ lat: number; lon: number } | null> {
   try {
     const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`;
     const res = await fetch(url, {
-      headers: { 'User-Agent': 'TripvoraApp/1.0' },
-      signal: AbortSignal.timeout(3000),
+      headers: { 'User-Agent': 'Tripvora/1.0' },
+      signal: AbortSignal.timeout(4000),
     });
     if (!res.ok) return null;
-
-    const data: NominatimResult[] = await res.json();
+    const data: Array<{ lat: string; lon: string }> = await res.json();
     if (!data.length) return null;
-
-    return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+    const lat = parseFloat(data[0].lat);
+    const lon = parseFloat(data[0].lon);
+    if (isNaN(lat) || isNaN(lon)) return null;
+    return { lat, lon };
   } catch {
     return null;
   }
 }
 
-// --- OSRM driving route ---
+// ─── OSRM driving route ────────────────────────────────────────────
+
 async function getOSRMRoute(
-  originLat: number,
-  originLon: number,
-  destLat: number,
-  destLon: number
+  oLat: number, oLon: number, dLat: number, dLon: number
 ): Promise<{ distanceKm: number; durationHours: number } | null> {
   try {
-    const url =
-      `https://router.project-osrm.org/route/v1/driving/` +
-      `${originLon},${originLat};${destLon},${destLat}?overview=false`;
-
-    const res = await fetch(url, { signal: AbortSignal.timeout(3000) });
+    const url = `https://router.project-osrm.org/route/v1/driving/${oLon},${oLat};${dLon},${dLat}?overview=false`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(4000) });
     if (!res.ok) return null;
-
-    const data: OSRMResponse = await res.json();
+    const data: { code: string; routes?: Array<{ distance: number; duration: number }> } = await res.json();
     if (data.code !== 'Ok' || !data.routes?.length) return null;
-
-    const route = data.routes[0];
     return {
-      distanceKm: Math.round((route.distance / 1000) * 10) / 10,
-      durationHours: Math.round((route.duration / 3600) * 10) / 10,
+      distanceKm: Math.round(data.routes[0].distance / 1000),
+      durationHours: Math.round((data.routes[0].duration / 3600) * 10) / 10,
     };
   } catch {
     return null;
   }
 }
 
-// --- Determine travel mode ---
-function determineSuggestedMode(
-  distanceKm: number,
-  nodes: TransportNode[]
-): string {
-  const hasNearbyAirport = nodes.some(
-    (n) =>
-      n.category.toLowerCase().includes('airport') &&
-      (n.distanceKm ?? Infinity) < 100
-  );
+// ─── Find nearest transport hubs ────────────────────────────────────
 
-  if (hasNearbyAirport && distanceKm > 600) return 'Flight';
-  if (distanceKm > 800) return 'Flight';
-  if (distanceKm > 200) return 'Train';
-  if (distanceKm > 50) return 'Bus';
-  if (distanceKm > 5) return 'Auto/Cab';
-  return 'Walking';
+function findNearest(nodes: TransportNode[], category: string): { name: string; distanceKm: number } | null {
+  const filtered = nodes
+    .filter(n => n.category === category && n.name && n.name.length > 2)
+    .sort((a, b) => (a.distanceKm ?? 999) - (b.distanceKm ?? 999));
+
+  if (filtered.length === 0) return null;
+  return { name: filtered[0].name, distanceKm: filtered[0].distanceKm ?? 0 };
 }
 
-// --- Estimate fare in INR ---
-function estimateFare(distanceKm: number, mode: string): number {
+// ─── Fare estimation (Indian context) ───────────────────────────────
+
+function estimateFare(mode: string, distanceKm: number): number {
   switch (mode) {
     case 'Flight':
-      return Math.max(2500, Math.round(distanceKm * 5.5));
+      return Math.max(Math.min(Math.round(distanceKm * 5.5), 15000), 2500);
+    case 'Train (AC)':
+      return Math.max(Math.round(distanceKm * 2.5), 500);
     case 'Train':
-      return Math.max(300, Math.round(distanceKm * 1.5));
+    case 'Train (Sleeper)':
+      return Math.max(Math.round(distanceKm * 1.2), 200);
+    case 'Bus (AC)':
+      return Math.max(Math.round(distanceKm * 2.5), 300);
     case 'Bus':
-      return Math.max(150, Math.round(distanceKm * 2));
+      return Math.max(Math.round(distanceKm * 1.5), 100);
+    case 'Cab':
+      return Math.max(Math.round(distanceKm * 12), 500);
+    case 'Auto':
+      return Math.max(Math.round(distanceKm * 15), 50);
     default:
-      return Math.round(distanceKm * 15);
+      return Math.max(Math.round(distanceKm * 2), 200);
   }
 }
 
-// --- Find nearest stations from provided nodes ---
-function findNearestStations(
-  nodes: TransportNode[]
-): Array<{ name: string; type: string; distanceKm: number }> {
-  return nodes
-    .filter((n) => n.distanceKm !== undefined)
-    .sort((a, b) => (a.distanceKm ?? Infinity) - (b.distanceKm ?? Infinity))
-    .slice(0, 5)
-    .map((n) => ({
-      name: n.name,
-      type: n.category,
-      distanceKm: Math.round((n.distanceKm ?? 0) * 10) / 10,
-    }));
-}
+// ─── Main Export ────────────────────────────────────────────────────
 
-// --- Build journey legs from real station data ---
-function buildJourneyLegs(
-  origin: string,
-  destinationName: string,
-  mode: string,
-  nodes: TransportNode[]
-): string[] {
-  const legs: string[] = [];
-
-  // Find relevant departure hub
-  const departureHub = findHubByMode(nodes, mode, 'departure');
-  const arrivalHub = findHubByMode(nodes, mode, 'arrival');
-
-  const departName = departureHub ?? `${origin}`;
-  const arriveName = arrivalHub ?? `${destinationName} Station`;
-
-  legs.push(`Depart from ${departName}`);
-
-  if (mode === 'Flight') {
-    const originAirport = nodes.find(
-      (n) =>
-        n.category.toLowerCase().includes('airport') ||
-        n.name.toLowerCase().includes('airport')
-    );
-    const airportName = originAirport?.name ?? `${origin} Airport`;
-    legs.push(`Transfer to ${airportName}`);
-    legs.push(`Fly to ${arriveName}`);
-  } else if (mode === 'Train') {
-    const station = nodes.find(
-      (n) =>
-        n.category.toLowerCase().includes('railway') ||
-        n.category.toLowerCase().includes('train') ||
-        n.name.toLowerCase().includes('railway') ||
-        n.name.toLowerCase().includes('junction')
-    );
-    const stationName = station?.name ?? `${destinationName} Station`;
-    legs.push(`Train to ${stationName}`);
-  } else if (mode === 'Bus') {
-    const busStop = nodes.find(
-      (n) =>
-        n.category.toLowerCase().includes('bus') ||
-        n.name.toLowerCase().includes('bus')
-    );
-    const busName = busStop?.name ?? `${destinationName} Bus Stand`;
-    legs.push(`Bus to ${busName}`);
-  } else {
-    legs.push(`${mode} to ${destinationName}`);
-  }
-
-  legs.push(`Arrive at ${destinationName}`);
-
-  return legs;
-}
-
-function findHubByMode(
-  nodes: TransportNode[],
-  mode: string,
-  _direction: 'departure' | 'arrival'
-): string | null {
-  const modeKeywords: Record<string, string[]> = {
-    Flight: ['airport', 'aerodrome', 'airfield'],
-    Train: ['railway', 'train', 'junction', 'rail'],
-    Bus: ['bus', 'isbt', 'depot', 'stand'],
-  };
-
-  const keywords = modeKeywords[mode];
-  if (!keywords) return null;
-
-  const match = nodes.find((n) => {
-    const lower = `${n.name} ${n.category}`.toLowerCase();
-    return keywords.some((kw) => lower.includes(kw));
-  });
-
-  return match?.name ?? null;
-}
-
-// --- Main export ---
 export async function discoverTransport(
   origin: string,
   destinationLat: number,
@@ -232,91 +125,141 @@ export async function discoverTransport(
   destinationName: string,
   transportNodes: TransportNode[]
 ): Promise<TransportRoute> {
+  // Defaults
+  const defaults: TransportRoute = {
+    distanceKm: 0,
+    durationHours: 0,
+    originHub: origin,
+    destinationHub: destinationName,
+    nearestStations: [],
+    suggestedMode: 'Bus',
+    estimatedFare: 0,
+    journeyLegs: [origin, destinationName],
+    nearestAirport: null,
+    nearestRailway: null,
+    nearestBusStand: null,
+    feasibility: { byFlight: false, byTrain: false, byBus: true, byCar: true },
+  };
+
   try {
-    // 1. Geocode origin
-    const originCoords = await geocodeOrigin(origin);
+    // 1. Find nearest transport hubs
+    const nearestAirport = findNearest(transportNodes, 'airport');
+    const nearestRailway = findNearest(transportNodes, 'station');
+    const nearestBusStand = findNearest(transportNodes, 'bus_stand');
 
-    let distanceKm: number;
-    let durationHours: number;
+    defaults.nearestAirport = nearestAirport;
+    defaults.nearestRailway = nearestRailway;
+    defaults.nearestBusStand = nearestBusStand;
 
-    if (originCoords) {
-      // 2. Try OSRM route
-      const osrm = await getOSRMRoute(
-        originCoords.lat,
-        originCoords.lon,
-        destinationLat,
-        destinationLon
-      );
+    // Build all stations list
+    defaults.nearestStations = transportNodes
+      .filter(n => n.name && n.name.length > 2)
+      .slice(0, 10)
+      .map(n => ({ name: n.name, type: n.category, distanceKm: n.distanceKm ?? 0 }));
 
+    // 2. Geocode origin
+    const originGeo = await geocodeCity(origin);
+    let distanceKm = 0;
+    let durationHours = 0;
+
+    if (originGeo) {
+      // 3. Get OSRM driving route
+      const osrm = await getOSRMRoute(originGeo.lat, originGeo.lon, destinationLat, destinationLon);
       if (osrm) {
         distanceKm = osrm.distanceKm;
         durationHours = osrm.durationHours;
       } else {
-        // 3. Haversine fallback
-        distanceKm = haversineKm(
-          originCoords.lat,
-          originCoords.lon,
-          destinationLat,
-          destinationLon
-        );
-        durationHours = Math.round((distanceKm / 45) * 10) / 10;
+        // Fallback to Haversine
+        distanceKm = Math.round(haversineKm(originGeo.lat, originGeo.lon, destinationLat, destinationLon));
+        durationHours = Math.round((distanceKm / 45) * 10) / 10; // ~45 km/h average
       }
-    } else {
-      // Cannot geocode origin — rough estimate
-      distanceKm = 500;
-      durationHours = 11.1;
     }
 
-    // 4. Nearest stations
-    const nearestStations = findNearestStations(transportNodes);
+    defaults.distanceKm = distanceKm;
+    defaults.durationHours = durationHours;
 
-    // 5. Suggested mode
-    const suggestedMode = determineSuggestedMode(distanceKm, transportNodes);
-
-    // 6. Fare estimate
-    const estimatedFare = estimateFare(distanceKm, suggestedMode);
-
-    // 7. Journey legs
-    const journeyLegs = buildJourneyLegs(
-      origin,
-      destinationName,
-      suggestedMode,
-      transportNodes
-    );
-
-    // Origin / destination hubs
-    const originHub =
-      findHubByMode(transportNodes, suggestedMode, 'departure') ?? origin;
-    const destinationHub =
-      findHubByMode(transportNodes, suggestedMode, 'arrival') ??
-      (nearestStations.length > 0
-        ? nearestStations[0].name
-        : `${destinationName} Station`);
-
-    return {
-      distanceKm,
-      durationHours,
-      originHub,
-      destinationHub,
-      nearestStations,
-      suggestedMode,
-      estimatedFare,
-      journeyLegs,
+    // 4. Determine feasibility
+    const feasibility = {
+      byFlight: nearestAirport !== null && nearestAirport.distanceKm < 150,
+      byTrain: nearestRailway !== null && nearestRailway.distanceKm < 100,
+      byBus: true,
+      byCar: true,
     };
+    defaults.feasibility = feasibility;
+
+    // 5. Smart mode selection
+    let suggestedMode = 'Bus';
+    if (distanceKm > 800 && feasibility.byFlight) {
+      suggestedMode = 'Flight';
+    } else if (distanceKm > 600 && feasibility.byFlight) {
+      suggestedMode = 'Flight'; // prefer flight for 600+ if available
+    } else if (distanceKm > 200 && feasibility.byTrain) {
+      suggestedMode = 'Train';
+    } else if (distanceKm > 200) {
+      suggestedMode = 'Bus (AC)';
+    } else if (distanceKm > 50 && feasibility.byTrain) {
+      suggestedMode = 'Train';
+    } else if (distanceKm > 50) {
+      suggestedMode = 'Bus';
+    } else if (distanceKm > 5) {
+      suggestedMode = 'Cab';
+    } else {
+      suggestedMode = 'Auto';
+    }
+
+    defaults.suggestedMode = suggestedMode;
+    defaults.estimatedFare = estimateFare(suggestedMode, distanceKm);
+
+    // 6. Determine destination hub (real name)
+    let destHub = destinationName;
+    if (suggestedMode === 'Flight' && nearestAirport) {
+      destHub = nearestAirport.name;
+    } else if ((suggestedMode === 'Train' || suggestedMode === 'Train (AC)') && nearestRailway) {
+      destHub = nearestRailway.name;
+    } else if ((suggestedMode === 'Bus' || suggestedMode === 'Bus (AC)') && nearestBusStand) {
+      destHub = nearestBusStand.name;
+    } else if (nearestRailway) {
+      destHub = nearestRailway.name;
+    } else if (nearestBusStand) {
+      destHub = nearestBusStand.name;
+    }
+    defaults.destinationHub = destHub;
+    defaults.originHub = origin;
+
+    // 7. Build journey legs with REAL names
+    const legs: string[] = [origin];
+
+    if (suggestedMode === 'Flight' && nearestAirport) {
+      legs.push(`Flight to ${nearestAirport.name} (~${Math.round(distanceKm * 0.7)}km, ${Math.max(1, Math.round(durationHours * 0.3))}h)`);
+      legs.push(nearestAirport.name);
+      if (nearestAirport.distanceKm > 10) {
+        legs.push(`Local transport to ${destinationName} (${nearestAirport.distanceKm.toFixed(0)}km)`);
+      }
+    } else if (suggestedMode.includes('Train') && nearestRailway) {
+      const trainDuration = Math.round(durationHours * 0.8);
+      legs.push(`${suggestedMode} to ${nearestRailway.name} (~${distanceKm}km, ${trainDuration}h)`);
+      legs.push(nearestRailway.name);
+      if (nearestRailway.distanceKm > 3) {
+        const lastMile = nearestBusStand
+          ? `Local bus to ${nearestBusStand.name} (${nearestRailway.distanceKm.toFixed(0)}km)`
+          : `Auto/cab to ${destinationName} (${nearestRailway.distanceKm.toFixed(0)}km)`;
+        legs.push(lastMile);
+      }
+    } else if (suggestedMode.includes('Bus') && nearestBusStand) {
+      legs.push(`${suggestedMode} to ${nearestBusStand.name} (~${distanceKm}km, ${Math.round(durationHours)}h)`);
+      legs.push(nearestBusStand.name);
+    } else if (suggestedMode === 'Cab') {
+      legs.push(`Cab to ${destinationName} (~${distanceKm}km, ${Math.round(durationHours)}h)`);
+    } else {
+      legs.push(`${suggestedMode} to ${destinationName}`);
+    }
+
+    legs.push(destinationName);
+    // De-duplicate consecutive identical entries
+    defaults.journeyLegs = legs.filter((leg, i) => i === 0 || leg !== legs[i - 1]);
+
+    return defaults;
   } catch {
-    // 9. Sensible defaults on total failure
-    return {
-      distanceKm: 0,
-      durationHours: 0,
-      originHub: origin,
-      destinationHub: `${destinationName} Station`,
-      nearestStations: [],
-      suggestedMode: 'Auto/Cab',
-      estimatedFare: 500,
-      journeyLegs: [
-        `Depart from ${origin}`,
-        `Arrive at ${destinationName}`,
-      ],
-    };
+    return defaults;
   }
 }

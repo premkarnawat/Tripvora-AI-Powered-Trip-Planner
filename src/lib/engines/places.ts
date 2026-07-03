@@ -19,8 +19,9 @@ export interface PlacesResult {
 interface OverpassElement {
   type: string;
   id: number;
-  lat: number;
-  lon: number;
+  lat?: number;
+  lon?: number;
+  center?: { lat: number; lon: number };
   tags?: Record<string, string>;
 }
 
@@ -50,11 +51,16 @@ function categorize(tags: Record<string, string>): OSMPlace['category'] | null {
   const historic = tags['historic'] ?? '';
   const railway = tags['railway'] ?? '';
   const aeroway = tags['aeroway'] ?? '';
+  const natural = tags['natural'] ?? '';
+  const leisure = tags['leisure'] ?? '';
 
-  if (/hotel|resort|guest_house/.test(tourism)) return 'hotel';
-  if (/restaurant|cafe|fast_food/.test(amenity)) return 'restaurant';
-  if (/attraction|viewpoint|museum|gallery/.test(tourism)) return 'attraction';
-  if (/monument|castle|fort|memorial/.test(historic)) return 'attraction';
+  if (/hotel|resort|guest_house|motel|hostel/.test(tourism)) return 'hotel';
+  if (/restaurant|cafe|fast_food|food_court/.test(amenity)) return 'restaurant';
+  if (/attraction|viewpoint|museum|gallery|zoo|theme_park|aquarium/.test(tourism)) return 'attraction';
+  if (/monument|castle|fort|memorial|ruins|temple|church|mosque/.test(historic)) return 'attraction';
+  if (amenity === 'place_of_worship') return 'attraction';
+  if (/beach|peak|waterfall|cave_entrance/.test(natural)) return 'attraction';
+  if (/park|garden|nature_reserve|water_park/.test(leisure)) return 'attraction';
   if (/hospital|clinic/.test(amenity)) return 'hospital';
   if (/station|halt/.test(railway)) return 'station';
   if (aeroway === 'aerodrome') return 'airport';
@@ -73,24 +79,30 @@ export async function discoverPlaces(lat: number, lon: number): Promise<PlacesRe
   };
 
   try {
-    const query = `[out:json][timeout:8];
+    const query = `[out:json][timeout:12];
 (
-  node["tourism"~"hotel|resort|guest_house"](around:5000,${lat},${lon});
-  node["amenity"~"restaurant|cafe|fast_food"](around:5000,${lat},${lon});
-  node["tourism"~"attraction|viewpoint|museum|gallery"](around:5000,${lat},${lon});
-  node["historic"~"monument|castle|fort|memorial"](around:5000,${lat},${lon});
-  node["amenity"~"hospital|clinic"](around:5000,${lat},${lon});
-  node["railway"~"station|halt"](around:80000,${lat},${lon});
-  node["aeroway"="aerodrome"](around:80000,${lat},${lon});
-  node["amenity"="bus_station"](around:40000,${lat},${lon});
+  node["tourism"~"hotel|resort|guest_house|motel|hostel"](around:8000,${lat},${lon});
+  node["amenity"~"restaurant|cafe|fast_food|food_court"](around:8000,${lat},${lon});
+  node["tourism"~"attraction|viewpoint|museum|gallery|zoo|theme_park|aquarium"](around:15000,${lat},${lon});
+  way["tourism"~"attraction|viewpoint|museum|gallery|zoo|theme_park"](around:15000,${lat},${lon});
+  node["historic"~"monument|castle|fort|memorial|ruins|temple|church|mosque"](around:15000,${lat},${lon});
+  way["historic"~"monument|castle|fort|memorial|ruins"](around:15000,${lat},${lon});
+  node["amenity"~"place_of_worship"](around:10000,${lat},${lon});
+  node["natural"~"beach|peak|waterfall|cave_entrance"](around:15000,${lat},${lon});
+  node["leisure"~"park|garden|nature_reserve|water_park"](around:10000,${lat},${lon});
+  node["amenity"~"hospital|clinic"](around:10000,${lat},${lon});
+  node["railway"~"station|halt"](around:100000,${lat},${lon});
+  node["aeroway"="aerodrome"](around:150000,${lat},${lon});
+  way["aeroway"="aerodrome"](around:150000,${lat},${lon});
+  node["amenity"="bus_station"](around:60000,${lat},${lon});
 );
-out body 80;`;
+out center 150;`;
 
     const res = await fetch('https://overpass-api.de/api/interpreter', {
       method: 'POST',
       body: `data=${encodeURIComponent(query)}`,
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      signal: AbortSignal.timeout(5000),
+      signal: AbortSignal.timeout(10000),
     });
 
     if (!res.ok) return empty;
@@ -103,19 +115,31 @@ out body 80;`;
     const hospitals: OSMPlace[] = [];
     const transportNodes: OSMPlace[] = [];
 
+    const seenNames = new Set<string>();
+
     for (const el of data.elements) {
       const tags = el.tags;
       if (!tags || !tags['name']) continue;
 
+      // Deduplicate by name
+      const nameLower = tags['name'].toLowerCase();
+      if (seenNames.has(nameLower)) continue;
+      seenNames.add(nameLower);
+
       const category = categorize(tags);
       if (!category) continue;
 
-      const distanceKm = haversine(lat, lon, el.lat, el.lon);
+      // Handle way elements (use center coordinates)
+      const elLat = el.lat ?? el.center?.lat;
+      const elLon = el.lon ?? el.center?.lon;
+      if (elLat === undefined || elLon === undefined) continue;
+
+      const distanceKm = haversine(lat, lon, elLat, elLon);
 
       const place: OSMPlace = {
         id: el.id,
-        lat: el.lat,
-        lon: el.lon,
+        lat: elLat,
+        lon: elLon,
         name: tags['name'],
         category,
         distanceKm,
