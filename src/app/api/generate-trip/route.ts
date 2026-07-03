@@ -9,6 +9,7 @@ import { getWikiContext } from '@/lib/engines/wiki';
 import { getPlaceImage } from '@/lib/engines/images';
 import { generateItinerary, type AIContext } from '@/lib/engines/ai-generator';
 import { sanitize } from '@/lib/engines/sanitizer';
+import { buildTravelerDNA, rankHotels, rankRestaurants, rankAttractions } from '@/lib/engines/traveler-dna';
 
 export const maxDuration = 60;
 
@@ -348,7 +349,27 @@ export async function POST(request: Request) {
       places.transportNodes.map(n => ({ name: n.name, category: n.category, distanceKm: n.distanceKm }))
     );
 
-    // ── Step 4: Build AI context from REAL data ──
+    // ── Step 3.5: Build Traveler DNA ──
+    const dna = buildTravelerDNA({
+      travelType: body.travelType,
+      foodPreference: body.foodPreference,
+      interests: body.interests,
+      budget: body.budget,
+      duration: body.duration,
+      hotelPreference: body.hotelPreference,
+      travelers: body.travelers,
+    });
+
+    // ── Step 3.6: Rank places using DNA ──
+    const hotelBudgetPerNight = Math.floor((body.budget * 0.4) / Math.max(body.duration - 1, 1));
+    const rankedHotels = rankHotels(places.hotels, dna, hotelBudgetPerNight) as OSMPlace[];
+    const rankedRestaurants = rankRestaurants(places.restaurants, dna) as OSMPlace[];
+    const rankedAttractions = rankAttractions(
+      places.attractions, dna,
+      weather ? { temperature: weather.temperature, rainProbability: weather.rainProbability } : null
+    ) as OSMPlace[];
+
+    // ── Step 4: Build AI context from RANKED real data ──
     const aiContext: AIContext = {
       origin: body.origin,
       destination: body.destination,
@@ -362,9 +383,9 @@ export async function POST(request: Request) {
       hotelPreference: body.hotelPreference,
       foodPreference: body.foodPreference,
       interests: body.interests,
-      hotels: places.hotels.slice(0, 15).map(h => ({ name: h.name, lat: h.lat, lon: h.lon, distanceKm: h.distanceKm })),
-      restaurants: places.restaurants.slice(0, 20).map(r => ({ name: r.name, lat: r.lat, lon: r.lon, cuisine: r.cuisine, distanceKm: r.distanceKm })),
-      attractions: places.attractions.slice(0, 30).map(a => ({ name: a.name, lat: a.lat, lon: a.lon, distanceKm: a.distanceKm })),
+      hotels: rankedHotels.slice(0, 15).map(h => ({ name: h.name, lat: h.lat, lon: h.lon, distanceKm: h.distanceKm })),
+      restaurants: rankedRestaurants.slice(0, 20).map(r => ({ name: r.name, lat: r.lat, lon: r.lon, cuisine: r.cuisine, distanceKm: r.distanceKm })),
+      attractions: rankedAttractions.slice(0, 30).map(a => ({ name: a.name, lat: a.lat, lon: a.lon, distanceKm: a.distanceKm })),
       transportNodes: places.transportNodes.slice(0, 15).map(t => ({ name: t.name, category: t.category, distanceKm: t.distanceKm })),
       weather: weather ? { temperature: weather.temperature, description: weather.description, rainProbability: weather.rainProbability } : null,
       wikiExtract: wiki?.extract || null,
@@ -531,15 +552,32 @@ export async function POST(request: Request) {
         bestNonVeg: places.restaurants.find(r => !r.cuisine?.toLowerCase().includes('veg'))?.name || '',
       },
       destinationIntelligence,
-      userPreferenceEngine: {
-        detectedProfile: body.travelType,
-        preferredCategories: body.interests,
-        paceAndComfort: `Planned for ${body.travelType} travelers`,
-        specialRulesApplied: [] as string[],
+      travelerDNA: {
+        type: dna.travelerType,
+        purpose: dna.purpose,
+        comfortLevel: dna.comfortLevel,
+        energyLevel: dna.energyLevel,
+        spendingStyle: dna.spendingStyle,
+        walkingTolerance: dna.walkingTolerance,
+        travelPace: dna.travelPace,
+        foodPreference: dna.foodPreference,
+        maxActivitiesPerDay: dna.maxActivitiesPerDay,
+        prioritize: dna.prioritize,
+        avoid: dna.avoid,
       },
-      hotels: buildHotels(places.hotels, body.budget, body.duration, body.destination),
+      userPreferenceEngine: {
+        detectedProfile: dna.purpose,
+        preferredCategories: body.interests,
+        paceAndComfort: `${dna.travelPace > 60 ? 'Packed' : dna.travelPace > 35 ? 'Balanced' : 'Relaxed'} pace, ${dna.maxActivitiesPerDay} activities/day`,
+        specialRulesApplied: [
+          ...(dna.foodPreference === 'pure_veg' ? ['Pure vegetarian enforcement'] : []),
+          ...dna.prioritize.slice(0, 3).map(p => `Prioritize: ${p}`),
+          ...dna.avoid.slice(0, 2).map(a => `Avoid: ${a}`),
+        ],
+      },
+      hotels: buildHotels(rankedHotels, body.budget, body.duration, body.destination),
       flights: [] as Array<Record<string, unknown>>,
-      restaurants: buildRestaurants(places.restaurants, body.destination),
+      restaurants: buildRestaurants(rankedRestaurants, body.destination),
       days,
       mapExperience: buildMap(geo, places),
       conciergeWorkflow: {

@@ -121,11 +121,11 @@ export default function TripPlannerPage() {
     setLoadingPhase(true);
     let progress = 0;
     const loaderTexts = [
-      "Analyzing travel interests & timeline criteria...",
-      "Connecting to Travixa AI Engine...",
-      "Scraping real-time routes & stays...",
-      "Balancing budget allocations & emergency buffers...",
-      "Finalizing luxury itinerary..."
+      "Understanding your travel preferences...",
+      "Discovering real hotels, restaurants & attractions...",
+      "Calculating routes, fares & travel times...",
+      "Building your personalized day-by-day plan...",
+      "Finalizing your complete travel itinerary..."
     ];
     setLoadingText(loaderTexts[0]);
 
