@@ -10,6 +10,7 @@ import { getPlaceImage } from '@/lib/engines/images';
 import { generateItinerary, type AIContext } from '@/lib/engines/ai-generator';
 import { sanitize } from '@/lib/engines/sanitizer';
 import { buildTravelerDNA, rankHotels, rankRestaurants, rankAttractions } from '@/lib/engines/traveler-dna';
+import { generateAffiliateLinks } from '@/lib/engines/affiliates';
 
 export const maxDuration = 60;
 
@@ -22,12 +23,19 @@ type ValidatedInput = {
   duration: number;
   travelers: { adults: number; children: number; seniors: number };
   travelType: string;
+  tripPurpose: string;
+  comfortLevel: string;
+  travelPace: string;
+  walkingTolerance: string;
   arrivalMode: string;
   arrivalTime: string;
   departureTime: string;
   hotelPreference: string;
   foodPreference: string;
   interests: string[];
+  prebookedItems: string[];
+  startDate: string;
+  endDate: string;
 };
 
 function validateInput(body: Record<string, unknown>): { ok: true; data: ValidatedInput } | { ok: false; error: string } {
@@ -54,6 +62,15 @@ function validateInput(body: Record<string, unknown>): { ok: true; data: Validat
 
   const trav = (body.travelers || {}) as Record<string, unknown>;
 
+  // Dates for affiliate links
+  let startDate = '';
+  let endDate = '';
+  if (body.dates && typeof body.dates === 'object') {
+    const dates = body.dates as Record<string, unknown>;
+    startDate = String(dates.startDate || '');
+    endDate = String(dates.endDate || '');
+  }
+
   return {
     ok: true,
     data: {
@@ -67,12 +84,19 @@ function validateInput(body: Record<string, unknown>): { ok: true; data: Validat
         seniors: Number(trav.seniors) || 0,
       },
       travelType: String(body.travelType || 'Couple'),
+      tripPurpose: String(body.trip_purpose || body.travelType || 'vacation'),
+      comfortLevel: String(body.comfort_level || 'comfortable'),
+      travelPace: String(body.travel_pace || body.travel_speed || 'balanced'),
+      walkingTolerance: String(body.walking_tolerance || 'medium'),
       arrivalMode: String(body.arrival_mode || 'Train'),
       arrivalTime: String(body.arrival_time || '08:30 AM'),
       departureTime: String(body.departure_time || '04:30 PM'),
       hotelPreference: String(body.hotel_preference || 'Mid-range'),
-      foodPreference: String(body.food_preference || 'Veg & Non-Veg'),
+      foodPreference: String(body.food_preference || body.veg_nonveg || 'Veg & Non-Veg'),
       interests: Array.isArray(body.interests) ? body.interests.map(String) : ['Sightseeing', 'Nature'],
+      prebookedItems: Array.isArray(body.prebooked_items) ? body.prebooked_items.map(String) : [],
+      startDate,
+      endDate,
     },
   };
 }
@@ -356,8 +380,10 @@ export async function POST(request: Request) {
       interests: body.interests,
       budget: body.budget,
       duration: body.duration,
-      hotelPreference: body.hotelPreference,
+      hotelPreference: body.comfortLevel || body.hotelPreference,
       travelers: body.travelers,
+      travelStyle: body.tripPurpose,
+      travelSpeed: body.travelPace,
     });
 
     // ── Step 3.6: Rank places using DNA ──
@@ -608,6 +634,15 @@ export async function POST(request: Request) {
           departureFeasible: true,
         },
       },
+      affiliateLinks: generateAffiliateLinks({
+        origin: body.origin,
+        destination: body.destination,
+        checkIn: body.startDate,
+        checkOut: body.endDate,
+        adults: body.travelers.adults,
+        children: body.travelers.children,
+      }),
+      prebookedItems: body.prebookedItems,
     };
 
     // ── Background persistence (non-blocking) ──
