@@ -68,7 +68,18 @@ export default function TripPlannerPage() {
   const [customBudgetEnabled, setCustomBudgetEnabled] = useState(false);
 
   // Step 6: Travel Interests
-  const [selectedPreferences, setSelectedPreferences] = useState<string[]>(["Luxury", "Nature"]);
+  const [selectedPreferences, setSelectedPreferences] = useState<string[]>(["Nature"]);
+
+  // NEW: Step 4 - Trip Purpose
+  const [tripPurpose, setTripPurpose] = useState("Mixed");
+  // NEW: Step 6 - Comfort Level
+  const [comfortLevel, setComfortLevel] = useState("Comfortable");
+  // NEW: Step 7 - Travel Pace
+  const [travelPace, setTravelPace] = useState("Balanced");
+  // NEW: Step 10 - Walking Tolerance
+  const [walkingTolerance, setWalkingTolerance] = useState("Medium");
+  // NEW: Step 11 - Already Booked
+  const [prebookedItems, setPrebookedItems] = useState<string[]>([]);
 
   // Auth Forms
   const [email, setEmail] = useState("");
@@ -92,10 +103,9 @@ export default function TripPlannerPage() {
   };
 
   const handleNextStep = () => {
-    if (step < 7) {
+    if (step < 12) {
       setStep(prev => prev + 1);
     } else {
-      // Step 7: Summary clicks "Generate Itinerary" -> trigger Auth Gate
       if (isAuthenticated) {
         triggerItineraryGeneration();
       } else {
@@ -151,19 +161,15 @@ export default function TripPlannerPage() {
           arrival_mode: arrivalMode,
           arrival_time: arrivalTime,
           departure_time: departureTime,
-          hotel_preference: hotelPreference,
+          hotel_preference: comfortLevel,
           food_preference: foodPreference,
-          travel_speed: travelSpeed,
-          veg_nonveg: foodPreference === "Veg" ? "Pure Veg" : "Veg & Non-Veg",
+          comfort_level: comfortLevel,
+          trip_purpose: tripPurpose,
+          travel_pace: travelPace,
+          walking_tolerance: walkingTolerance,
+          prebooked_items: prebookedItems,
           interests: selectedPreferences,
-          activities: selectedPreferences.length > 0 ? selectedPreferences : ["Sightseeing"],
-          nightlife: selectedPreferences.includes("Nightlife"),
-          temples: selectedPreferences.includes("Temples") || selectedPreferences.includes("Pilgrimage"),
-          shopping: selectedPreferences.includes("Shopping"),
-          family: travelerType === "Family",
           duration: durationNights,
-          transport_preference: transportPreference,
-          travel_style: travelStyle,
           dates: { startDate: fromDate, endDate: toDate },
           travelType: travelerType
         })
@@ -445,14 +451,14 @@ export default function TripPlannerPage() {
             <div className="absolute left-0 right-0 top-1/2 h-0.5 bg-slate-200 -z-10 -translate-y-1/2" />
             <div 
               className="absolute left-0 top-1/2 h-0.5 bg-teal-600 -z-10 -translate-y-1/2 transition-all duration-500" 
-              style={{ width: `${((step - 1) / 6) * 100}%` }} 
+              style={{ width: `${((step - 1) / 11) * 100}%` }} 
             />
             
-            {[1, 2, 3, 4, 5, 6, 7].map(i => (
-              <div key={i} className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-300 ${
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(i => (
+              <div key={i} className={`w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center font-bold text-[9px] md:text-xs transition-all duration-300 ${
                 step >= i ? "bg-teal-600 text-white shadow-md" : "bg-white border border-slate-200 text-slate-400"
               }`}>
-                {i}
+                {step > i ? <Check className="w-3 h-3" /> : i}
               </div>
             ))}
           </div>
@@ -717,14 +723,12 @@ export default function TripPlannerPage() {
                   </div>
                   <h2 className="text-2xl font-black text-slate-900 tracking-tight font-sora">What is your travel setup?</h2>
 
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                    {(["Solo", "Couple", "Family", "Friends", "Corporate"] as const).map(type => (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {(["Solo", "Couple", "Family", "Friends", "Bachelor", "Corporate", "Senior"] as const).map(type => (
                       <button
                         key={type}
                         onClick={() => {
-                          setTravelerType(type);
-                          // Auto advance on selection
-                          setStep(4);
+                          setTravelerType(type as any);
                         }}
                         className={`py-4 px-2 rounded-xl border text-xs font-bold transition-all flex flex-col items-center justify-center gap-3 ${
                           travelerType === type 
@@ -746,13 +750,10 @@ export default function TripPlannerPage() {
                 </motion.div>
               )}
 
-              {/* STEP 4: DETAILED TRAVELER SPECIFICS */}
-              {step === 4 && (
-                <motion.div key="step4" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="space-y-6 flex-1">
-                  <div className="flex items-center gap-1.5 text-teal-600 font-bold uppercase tracking-widest text-[10px]">
-                    <Users className="w-4 h-4" /> Step 4: Traveler Details
-                  </div>
-                  <h2 className="text-2xl font-black text-slate-900 tracking-tight font-sora">Configure traveler details</h2>
+              {/* TRAVELER DETAILS (merged into Step 3) */}
+              {step === 3 && (
+                <motion.div key="step3b" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+                  <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mt-2">Traveler Details</p>
 
                   {travelerType === "Solo" && (
                     <div className="space-y-4 max-w-sm">
@@ -937,18 +938,86 @@ export default function TripPlannerPage() {
                 </motion.div>
               )}
 
-              {/* STEP 6: TRAVEL INTERESTS */}
+              {/* STEP 4: TRIP PURPOSE */}
+              {step === 4 && (
+                <motion.div key="step4" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="space-y-6 flex-1">
+                  <div className="flex items-center gap-1.5 text-teal-600 font-bold uppercase tracking-widest text-[10px]">
+                    <Heart className="w-4 h-4" /> Step 4: Trip Purpose
+                  </div>
+                  <h2 className="text-2xl font-black text-slate-900 tracking-tight font-sora">What's the purpose of this trip?</h2>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {["Romantic", "Pilgrimage", "Food Explorer", "Luxury", "Business", "Family Vacation", "Adventure", "Party", "Wellness", "Shopping", "Mixed"].map(p => (
+                      <button key={p} onClick={() => setTripPurpose(p)} className={`py-3 px-3 rounded-xl border text-[11px] font-bold transition-all ${tripPurpose === p ? "bg-teal-600 text-white border-teal-600" : "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200"}`}>{p}</button>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+
               {step === 6 && (
                 <motion.div key="step6" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="space-y-6 flex-1">
                   <div className="flex items-center gap-1.5 text-teal-600 font-bold uppercase tracking-widest text-[10px]">
-                    <Sparkles className="w-4 h-4" /> Step 6: Travel Interests
+                    <Star className="w-4 h-4" /> Step 6: Comfort Level
+                  </div>
+                  <h2 className="text-2xl font-black text-slate-900 tracking-tight font-sora">What's your comfort preference?</h2>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {["Budget", "Value", "Comfortable", "Premium", "Luxury"].map(c => (
+                      <button key={c} onClick={() => setComfortLevel(c)} className={`py-3 px-3 rounded-xl border text-[11px] font-bold transition-all ${comfortLevel === c ? "bg-teal-600 text-white border-teal-600" : "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200"}`}>{c}</button>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+
+              {/* STEP 7: TRAVEL PACE */}
+              {step === 7 && (
+                <motion.div key="step7" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="space-y-6 flex-1">
+                  <div className="flex items-center gap-1.5 text-teal-600 font-bold uppercase tracking-widest text-[10px]">
+                    <Compass className="w-4 h-4" /> Step 7: Travel Pace
+                  </div>
+                  <h2 className="text-2xl font-black text-slate-900 tracking-tight font-sora">How packed should your days be?</h2>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { label: "Relaxed", desc: "2-4 activities per day" },
+                      { label: "Balanced", desc: "4-6 activities per day" },
+                      { label: "Explorer", desc: "6-8 activities per day" },
+                      { label: "Packed", desc: "8-12 activities per day" },
+                    ].map(p => (
+                      <button key={p.label} onClick={() => setTravelPace(p.label)} className={`py-4 px-4 rounded-xl border text-left transition-all ${travelPace === p.label ? "bg-teal-600 text-white border-teal-600" : "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200"}`}>
+                        <span className="text-[12px] font-bold block">{p.label}</span>
+                        <span className={`text-[10px] ${travelPace === p.label ? "text-teal-100" : "text-slate-400"}`}>{p.desc}</span>
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+
+              {/* STEP 8: FOOD PREFERENCE */}
+              {step === 8 && (
+                <motion.div key="step8" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="space-y-6 flex-1">
+                  <div className="flex items-center gap-1.5 text-teal-600 font-bold uppercase tracking-widest text-[10px]">
+                    <Award className="w-4 h-4" /> Step 8: Food Preference
+                  </div>
+                  <h2 className="text-2xl font-black text-slate-900 tracking-tight font-sora">What do you prefer to eat?</h2>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {["Pure Veg", "Jain", "Non-Veg", "Vegan", "Halal", "No Preference"].map(f => (
+                      <button key={f} onClick={() => setFoodPreference(f)} className={`py-3 px-3 rounded-xl border text-[11px] font-bold transition-all ${foodPreference === f ? "bg-teal-600 text-white border-teal-600" : "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200"}`}>{f}</button>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+
+              {/* STEP 9: TRAVEL INTERESTS */}
+              {step === 9 && (
+                <motion.div key="step9" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="space-y-6 flex-1">
+                  <div className="flex items-center gap-1.5 text-teal-600 font-bold uppercase tracking-widest text-[10px]">
+                    <Sparkles className="w-4 h-4" /> Step 9: Travel Interests
                   </div>
                   <h2 className="text-2xl font-black text-slate-900 tracking-tight font-sora">What are your travel interests?</h2>
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2 max-h-[220px] overflow-y-auto pr-1">
                     {[
-                      "Adventure", "Nature", "Luxury", "Food", "Culture", "Shopping", 
-                      "Nightlife", "Photography", "Spiritual", "Workation", "Family Friendly"
+                      "Temples", "Nightlife", "Food", "Photography", "Shopping", "Adventure", 
+                      "Cafes", "Sunsets", "Hidden Gems", "Nature", "Culture", "Heritage",
+                      "Beaches", "Mountains", "Wildlife"
                     ].map(pref => {
                       const isSelected = selectedPreferences.includes(pref);
                       return (
@@ -969,13 +1038,61 @@ export default function TripPlannerPage() {
                 </motion.div>
               )}
 
-              {/* STEP 7: REVIEW SUMMARY */}
-              {step === 7 && (
+              {/* STEP 10: WALKING TOLERANCE */}
+              {step === 10 && (
+                <motion.div key="step10" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="space-y-6 flex-1">
+                  <div className="flex items-center gap-1.5 text-teal-600 font-bold uppercase tracking-widest text-[10px]">
+                    <Map className="w-4 h-4" /> Step 10: Walking Tolerance
+                  </div>
+                  <h2 className="text-2xl font-black text-slate-900 tracking-tight font-sora">How much walking is comfortable?</h2>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { label: "Minimal", desc: "I prefer vehicles everywhere" },
+                      { label: "Low", desc: "Short walks only (under 1km)" },
+                      { label: "Medium", desc: "Comfortable with moderate walking" },
+                      { label: "High", desc: "I love walking & exploring on foot" },
+                    ].map(w => (
+                      <button key={w.label} onClick={() => setWalkingTolerance(w.label)} className={`py-4 px-4 rounded-xl border text-left transition-all ${walkingTolerance === w.label ? "bg-teal-600 text-white border-teal-600" : "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200"}`}>
+                        <span className="text-[12px] font-bold block">{w.label}</span>
+                        <span className={`text-[10px] ${walkingTolerance === w.label ? "text-teal-100" : "text-slate-400"}`}>{w.desc}</span>
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+
+              {/* STEP 11: ALREADY BOOKED */}
+              {step === 11 && (
+                <motion.div key="step11" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="space-y-6 flex-1">
+                  <div className="flex items-center gap-1.5 text-teal-600 font-bold uppercase tracking-widest text-[10px]">
+                    <ShieldCheck className="w-4 h-4" /> Step 11: Already Booked
+                  </div>
+                  <h2 className="text-2xl font-black text-slate-900 tracking-tight font-sora">Have you already booked anything?</h2>
+                  <p className="text-xs text-slate-500">Select items you've already booked. We'll plan around them.</p>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {["Flight", "Train", "Bus", "Hotel", "Cab", "Activities"].map(item => {
+                      const isChecked = prebookedItems.includes(item);
+                      return (
+                        <button key={item} onClick={() => setPrebookedItems(prev => isChecked ? prev.filter(i => i !== item) : [...prev, item])} className={`py-3 px-3 rounded-xl border text-[11px] font-bold transition-all flex items-center gap-2 ${isChecked ? "bg-teal-600 text-white border-teal-600" : "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200"}`}>
+                          <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${isChecked ? "border-white bg-white/20" : "border-slate-300"}`}>
+                            {isChecked && <Check className="w-3 h-3" />}
+                          </div>
+                          {item}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="text-[10px] text-slate-400">Skip this step if nothing is booked yet.</p>
+                </motion.div>
+              )}
+
+              {/* STEP 12: REVIEW SUMMARY */}
+              {step === 12 && (
                 <motion.div key="step7" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="space-y-4 flex-1">
                   <div className="flex items-center gap-1.5 text-teal-600 font-bold uppercase tracking-widest text-[10px]">
-                    <Check className="w-4 h-4" /> Step 7: Review Summary
+                    <Check className="w-4 h-4" /> Step 12: Review & Generate
                   </div>
-                  <h2 className="text-2xl font-black text-slate-900 tracking-tight font-sora">Verify your parameters</h2>
+                  <h2 className="text-2xl font-black text-slate-900 tracking-tight font-sora">Your trip summary</h2>
 
                   <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 text-xs font-semibold text-slate-600 grid grid-cols-2 gap-4">
                     <div>
@@ -999,6 +1116,28 @@ export default function TripPlannerPage() {
                       <p className="text-[9px] text-slate-400 font-extrabold uppercase">Est. Budget Limit</p>
                       <p className="text-[#0F172A] font-bold mt-0.5 font-mono">₹{budgetValue.toLocaleString('en-IN')}</p>
                     </div>
+                    <div>
+                      <p className="text-[9px] text-slate-400 font-extrabold uppercase">Trip Purpose</p>
+                      <p className="text-[#0F172A] font-bold mt-0.5">{tripPurpose}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-slate-400 font-extrabold uppercase">Comfort / Pace</p>
+                      <p className="text-[#0F172A] font-bold mt-0.5">{comfortLevel} · {travelPace}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-slate-400 font-extrabold uppercase">Food</p>
+                      <p className="text-[#0F172A] font-bold mt-0.5">{foodPreference}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-slate-400 font-extrabold uppercase">Walking</p>
+                      <p className="text-[#0F172A] font-bold mt-0.5">{walkingTolerance}</p>
+                    </div>
+                    {prebookedItems.length > 0 && (
+                      <div>
+                        <p className="text-[9px] text-slate-400 font-extrabold uppercase">Pre-booked</p>
+                        <p className="text-[#0F172A] font-bold mt-0.5">{prebookedItems.join(", ")}</p>
+                      </div>
+                    )}
                     <div className="col-span-2">
                       <p className="text-[9px] text-slate-400 font-extrabold uppercase">Travel Interests</p>
                       <div className="flex flex-wrap gap-1.5 mt-1">
@@ -1029,12 +1168,12 @@ export default function TripPlannerPage() {
               <Button
                 onClick={handleNextStep}
                 className={`font-bold px-6 h-12 rounded-xl text-xs flex items-center gap-1.5 border-none transition-all ${
-                  step === 7 
+                  step === 12 
                     ? "bg-teal-600 hover:bg-teal-700 text-white shadow-md hover:scale-[1.02]" 
                     : "bg-slate-900 hover:bg-slate-800 text-white"
                 }`}
               >
-                {step === 7 ? (
+                {step === 12 ? (
                   <>Generate Itinerary <Sparkles className="w-3.5 h-3.5" /></>
                 ) : (
                   <>Continue <ChevronRight className="w-4 h-4" /></>
