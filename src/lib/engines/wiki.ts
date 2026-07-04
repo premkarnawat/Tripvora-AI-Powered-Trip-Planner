@@ -66,7 +66,7 @@ export async function getWikiContext(
     if (!extract && nearbyPlaces.length === 0) return null;
 
     return { extract, thumbnail, nearbyPlaces };
-  } catch {
-    return null;
+  } catch (err: unknown) {
+    throw new Error(`WIKI_FETCH_FAILED: Failed to fetch Wikipedia context - ${err instanceof Error ? err.message : String(err)}`);
   }
 }

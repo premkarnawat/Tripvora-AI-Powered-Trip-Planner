@@ -196,13 +196,12 @@ export function rankHotels(hotels: Scoreable[], dna: TravelerDNA, budgetPerNight
     .map(h => {
       const dist = h.distanceKm ?? 5;
       const locationScore = Math.max(0, 100 - dist * 15); // closer = better, 0km = 100
-      const budgetScore = 70; // can't verify actual price vs budget without live API
       let travelerMatch = 50;
       if (dna.purpose === 'romantic') travelerMatch = dist < 3 ? 85 : 40;
       if (dna.purpose === 'family_vacation') travelerMatch = 70;
       if (dna.purpose === 'business') travelerMatch = 65;
-      const safetyScore = 70; // default since no real safety data
-      const total = locationScore * 0.2 + budgetScore * 0.25 + travelerMatch * 0.25 + (100 - dist * 5) * 0.2 + safetyScore * 0.1;
+      
+      const total = locationScore * 0.4 + travelerMatch * 0.4 + Math.max(0, 100 - dist * 5) * 0.2;
       return { ...h, _score: total };
     })
     .sort((a, b) => (b as any)._score - (a as any)._score);
@@ -232,10 +231,9 @@ export function rankRestaurants(restaurants: Scoreable[], dna: TravelerDNA): Sco
       if (dna.purpose === 'romantic' && dist < 2) travelerMatch = 80;
       if (dna.purpose === 'group_fun') travelerMatch = 65;
       
-      const authenticityScore = cuisine.length > 0 ? 70 : 40; // has cuisine info = more authentic
-      const popularityScore = 60; // default
+      const authenticityScore = cuisine.length > 0 ? 100 : 50;
       
-      const total = distanceScore * 0.2 + travelerMatch * 0.25 + foodMatch * 0.3 + authenticityScore * 0.15 + popularityScore * 0.1;
+      const total = distanceScore * 0.3 + travelerMatch * 0.3 + foodMatch * 0.3 + authenticityScore * 0.1;
       return { ...r, _score: total };
     })
     .sort((a, b) => (b as any)._score - (a as any)._score);
@@ -283,7 +281,7 @@ export function rankAttractions(
       
       const popularityScore = dist < 5 ? 75 : 50;
       
-      const total = distanceScore * 0.15 + personaScore * 0.30 + weatherScore * 0.10 + popularityScore * 0.20 + 50 * 0.25;
+      const total = distanceScore * 0.2 + personaScore * 0.4 + weatherScore * 0.2 + popularityScore * 0.2;
       return { ...a, _score: total };
     })
     .sort((a, b) => (b as any)._score - (a as any)._score);

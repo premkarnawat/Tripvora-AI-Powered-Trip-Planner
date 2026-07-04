@@ -178,7 +178,7 @@ out center 150;`;
     transportNodes.sort(byDistance);
 
     return { hotels, restaurants, attractions, hospitals, transportNodes };
-  } catch {
-    return empty;
+  } catch (err: unknown) {
+    throw new Error(`OVERPASS_PLACES_FAILED: Failed to fetch places from Overpass API - ${err instanceof Error ? err.message : String(err)}`);
   }
 }

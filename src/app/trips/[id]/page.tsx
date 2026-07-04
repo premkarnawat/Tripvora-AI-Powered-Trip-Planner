@@ -589,27 +589,28 @@ export default function TripViewerPage() {
           </div>
 
           <div className="space-y-5">
-            {[
-              { name: "Hotels & Accommodation", percent: "40%", width: "w-[40%]", color: "bg-[#14F1D9]", icon: "🏨" },
-              { name: "Local Dining & Food", percent: "30%", width: "w-[30%]", color: "bg-[#6C63FF]", icon: "🍗" },
-              { name: "OSRM Travel & Cabs", percent: "20%", width: "w-[20%]", color: "bg-amber-400", icon: "🚕" },
-              { name: "Tickets & Activities", percent: "10%", width: "w-[10%]", color: "bg-emerald-400", icon: "🎯" }
-            ].map((budgetCat, idx) => (
-              <div key={idx} className="space-y-1.5 text-xs">
-                <div className="flex justify-between font-bold text-slate-200">
-                  <span>{budgetCat.icon} {budgetCat.name}</span>
-                  <span className="font-mono">{budgetCat.percent}</span>
+            {trip.engineBudget?.categorySpend?.slice(0, 4).map((budgetCat: any, idx: number) => {
+              const colors = ["bg-[#14F1D9]", "bg-[#6C63FF]", "bg-amber-400", "bg-emerald-400", "bg-rose-400"];
+              const icons = ["🏨", "🚕", "🍗", "🎯", "🚨"];
+              const color = colors[idx % colors.length];
+              const icon = icons[idx % icons.length];
+              return (
+                <div key={idx} className="space-y-1.5 text-xs">
+                  <div className="flex justify-between font-bold text-slate-200">
+                    <span>{icon} {budgetCat.category}</span>
+                    <span className="font-mono">{budgetCat.percentage}%</span>
+                  </div>
+                  <div className="w-full bg-slate-900 h-3.5 rounded-full overflow-hidden p-0.5 border border-white/5">
+                    <motion.div 
+                      initial={{ width: 0 }}
+                      whileInView={{ width: `${budgetCat.percentage}%` }}
+                      transition={{ duration: 1.2, ease: "easeOut" }}
+                      className={`${color} h-full rounded-full`}
+                    />
+                  </div>
                 </div>
-                <div className="w-full bg-slate-900 h-3.5 rounded-full overflow-hidden p-0.5 border border-white/5">
-                  <motion.div 
-                    initial={{ width: 0 }}
-                    whileInView={{ width: budgetCat.percent }}
-                    transition={{ duration: 1.2, ease: "easeOut" }}
-                    className={`${budgetCat.color} h-full rounded-full`}
-                  />
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
 
@@ -626,25 +627,33 @@ export default function TripViewerPage() {
           </div>
           
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
-            <div className="p-3 bg-black/20 rounded-2xl border border-white/5">
+            <div className="p-3 bg-black/20 rounded-2xl border border-white/5 flex flex-col justify-between">
               <p className="text-[9px] text-slate-400 uppercase font-black">🏥 Hospital</p>
-              <p className="font-extrabold text-white mt-1">Life Care Hospital</p>
-              <p className="text-[10px] text-rose-300 font-bold mt-1 inline-flex items-center gap-0.5">📞 112 / 102</p>
+              <p className="font-extrabold text-white mt-1 leading-tight">{trip.emergencyContacts?.hospital?.name || "Local City Hospital"}</p>
+              <p className="text-[10px] text-rose-300 font-bold mt-2 inline-flex items-center gap-1 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20 w-fit">
+                <Phone className="w-2.5 h-2.5" /> {trip.emergencyContacts?.helplines?.ambulance || "102"}
+              </p>
             </div>
-            <div className="p-3 bg-black/20 rounded-2xl border border-white/5">
+            <div className="p-3 bg-black/20 rounded-2xl border border-white/5 flex flex-col justify-between">
               <p className="text-[9px] text-slate-400 uppercase font-black">🚨 Police</p>
-              <p className="font-extrabold text-white mt-1">Regional Police Station</p>
-              <p className="text-[10px] text-rose-300 font-bold mt-1 inline-flex items-center gap-0.5">📞 100 / 112</p>
+              <p className="font-extrabold text-white mt-1 leading-tight">{trip.emergencyContacts?.police?.name || "Regional Police Station"}</p>
+              <p className="text-[10px] text-rose-300 font-bold mt-2 inline-flex items-center gap-1 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20 w-fit">
+                <Phone className="w-2.5 h-2.5" /> {trip.emergencyContacts?.helplines?.police || "112"}
+              </p>
             </div>
-            <div className="p-3 bg-black/20 rounded-2xl border border-white/5">
+            <div className="p-3 bg-black/20 rounded-2xl border border-white/5 flex flex-col justify-between">
               <p className="text-[9px] text-slate-400 uppercase font-black">💊 Pharmacy</p>
-              <p className="font-extrabold text-white mt-1">24/7 Wellness Pharmacy</p>
-              <p className="text-[10px] text-slate-300 font-bold mt-1">Dist: 1.5 km</p>
+              <p className="font-extrabold text-white mt-1 leading-tight">{trip.emergencyContacts?.pharmacy?.name || "24/7 Wellness Pharmacy"}</p>
+              <p className="text-[10px] text-slate-300 font-bold mt-2 bg-white/5 px-2 py-0.5 rounded border border-white/10 w-fit">
+                Dist: {trip.emergencyContacts?.pharmacy?.distanceKm?.toFixed(1) || "1.5"} km
+              </p>
             </div>
-            <div className="p-3 bg-black/20 rounded-2xl border border-white/5">
+            <div className="p-3 bg-black/20 rounded-2xl border border-white/5 flex flex-col justify-between">
               <p className="text-[9px] text-slate-400 uppercase font-black">🚒 Fire Rescue</p>
-              <p className="font-extrabold text-white mt-1">Coastal Fire Station</p>
-              <p className="text-[10px] text-rose-300 font-bold mt-1 inline-flex items-center gap-0.5">📞 101</p>
+              <p className="font-extrabold text-white mt-1 leading-tight">{trip.emergencyContacts?.fire?.name || "Coastal Fire Station"}</p>
+              <p className="text-[10px] text-rose-300 font-bold mt-2 inline-flex items-center gap-1 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20 w-fit">
+                <Phone className="w-2.5 h-2.5" /> {trip.emergencyContacts?.helplines?.fire || "101"}
+              </p>
             </div>
           </div>
         </section>

@@ -64,7 +64,7 @@ export async function getWeather(lat: number, lon: number): Promise<WeatherData 
       rainProbability: daily.precipitation_probability_max?.[0] ?? 0,
       uvIndex: daily.uv_index_max?.[0] ?? 0,
     };
-  } catch {
-    return null;
+  } catch (err: unknown) {
+    throw new Error(`WEATHER_API_FAILED: Failed to fetch weather - ${err instanceof Error ? err.message : String(err)}`);
   }
 }

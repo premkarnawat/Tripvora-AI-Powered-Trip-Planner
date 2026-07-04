@@ -56,8 +56,8 @@ async function geocodeCity(city: string): Promise<{ lat: number; lon: number } |
     const lon = parseFloat(data[0].lon);
     if (isNaN(lat) || isNaN(lon)) return null;
     return { lat, lon };
-  } catch {
-    return null;
+  } catch (err: unknown) {
+    throw new Error(`GEOCODE_CITY_FAILED: Failed to geocode origin city "${city}" - ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 
@@ -76,8 +76,8 @@ async function getOSRMRoute(
       distanceKm: Math.round(data.routes[0].distance / 1000),
       durationHours: Math.round((data.routes[0].duration / 3600) * 10) / 10,
     };
-  } catch {
-    return null;
+  } catch (err: unknown) {
+    throw new Error(`OSRM_ROUTE_FAILED: Failed to fetch OSRM route - ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 
@@ -95,6 +95,7 @@ function findNearest(nodes: TransportNode[], category: string): { name: string; 
 // ─── Fare estimation (Indian context) ───────────────────────────────
 
 function estimateFare(mode: string, distanceKm: number): number {
+  // NOTE: These are rough formula-based estimates since real-time APIs for Indian trains/buses are not available.
   switch (mode) {
     case 'Flight':
       return Math.max(Math.min(Math.round(distanceKm * 5.5), 15000), 2500);
@@ -259,7 +260,7 @@ export async function discoverTransport(
     defaults.journeyLegs = legs.filter((leg, i) => i === 0 || leg !== legs[i - 1]);
 
     return defaults;
-  } catch {
-    return defaults;
+  } catch (err: unknown) {
+    throw new Error(`TRANSPORT_DISCOVERY_FAILED: ${err instanceof Error ? err.message : String(err)}`);
   }
 }

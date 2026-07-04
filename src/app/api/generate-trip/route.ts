@@ -7,13 +7,14 @@ import { getWeather } from '@/lib/engines/weather';
 import { discoverTransport } from '@/lib/engines/transport';
 import { getWikiContext } from '@/lib/engines/wiki';
 import { getPlaceImage } from '@/lib/engines/images';
-import { generateItinerary, type AIContext } from '@/lib/engines/ai-generator';
-import { sanitize } from '@/lib/engines/sanitizer';
+import { generateNarrative, type AIContext } from '@/lib/engines/ai-generator';
 import { buildTravelerDNA, rankHotels, rankRestaurants, rankAttractions } from '@/lib/engines/traveler-dna';
 import { generateAffiliateLinks } from '@/lib/engines/affiliates';
 import { clusterByProximity } from '@/lib/engines/cluster';
 import { calculateBudget } from '@/lib/engines/budget';
 import { buildSchedule, type DaySchedule } from '@/lib/engines/schedule';
+import { discoverEmergencyContacts } from '@/lib/engines/emergency';
+import { timedStage, clearPipelineLogs, getPipelineLogs } from '@/lib/engines/logger';
 
 export const maxDuration = 60;
 
@@ -65,7 +66,6 @@ function validateInput(body: Record<string, unknown>): { ok: true; data: Validat
 
   const trav = (body.travelers || {}) as Record<string, unknown>;
 
-  // Dates for affiliate links
   let startDate = '';
   let endDate = '';
   if (body.dates && typeof body.dates === 'object') {
@@ -153,14 +153,13 @@ function buildHotels(hotels: OSMPlace[], budget: number, duration: number, desti
       cancellationPolicy: 'Contact hotel directly',
       bookingLink: `https://www.booking.com/searchresults.html?ss=${q}`,
       affiliateLink: `https://www.google.com/maps/search/?api=1&query=${q}`,
-      rankingScore: 0,
+      rankingScore: h.distanceKm || 0,
       reviewCount: 0,
       tierLabel: tier.label,
       distanceFromAttractions: `${(h.distanceKm ?? 0).toFixed(1)} km from center`,
     };
   });
 
-  // Structure the first hotel object to match what the trip viewer expects
   return [{
     ...mapped[0],
     bestOverallHotel: mapped[0],
@@ -170,124 +169,6 @@ function buildHotels(hotels: OSMPlace[], budget: number, duration: number, desti
     alternatives: mapped.slice(1),
     budgetOption: mapped[1] || mapped[0],
   }];
-}
-
-// ─── Restaurant Assembly ────────────────────────────────────────────
-
-function buildRestaurants(restaurants: OSMPlace[], destination: string) {
-  return restaurants.slice(0, 12).map((r) => ({
-    name: r.name,
-    cuisine: r.cuisine || 'Local',
-    estimatedCost: 0,
-    rating: 0,
-    address: `${(r.distanceKm ?? 0).toFixed(1)} km from center, ${destination}`,
-    googleMapsUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.name + ' ' + destination)}`,
-    mealType: 'Lunch' as const,
-  }));
-}
-
-// ─── Budget Assembly ────────────────────────────────────────────────
-
-function buildBudget(budget: number, duration: number, transportFare: number) {
-  const hotel = Math.floor(budget * 0.40);
-  const transport = Math.floor(budget * 0.15) + transportFare;
-  const food = Math.floor(budget * 0.20);
-  const activities = Math.floor(budget * 0.10);
-  const localTransport = Math.floor(budget * 0.05);
-  const emergency = Math.floor(budget * 0.10);
-  const total = hotel + transport + food + activities + localTransport;
-
-  return {
-    hotels: hotel,
-    transport,
-    food,
-    activities,
-    localTransport,
-    shoppingOrMisc: emergency,
-    dailyTotalAverage: Math.floor(total / duration),
-    overallTotal: total,
-    remainingOrSavings: Math.max(budget - total, 0),
-    budgetHealthScore: Math.round(((budget - total) / budget) * 100),
-    totalBudget: budget,
-    plannedSplit: { hotel, transport, food, activities, emergency },
-    actualSpend: { hotel, transport, food, activities, emergencyReserve: emergency },
-    budgetMeter: {
-      percentageUsed: Math.min(Math.round((total / budget) * 100), 100),
-      status: total < budget * 0.85 ? 'Within Budget' : total < budget ? 'Near Limit' : 'Over Budget',
-    },
-    dailySpend: [] as Array<Record<string, unknown>>,
-    categorySpend: [
-      { category: 'Stay', planned: hotel, actual: hotel, percentage: 40, status: 'Estimated' },
-      { category: 'Intercity Transport', planned: transportFare, actual: transportFare, percentage: 15, status: 'Estimated' },
-      { category: 'Food & Dining', planned: food, actual: food, percentage: 20, status: 'Estimated' },
-      { category: 'Activities', planned: activities, actual: activities, percentage: 10, status: 'Estimated' },
-      { category: 'Local Transport', planned: localTransport, actual: localTransport, percentage: 5, status: 'Estimated' },
-      { category: 'Emergency Reserve', planned: emergency, actual: emergency, percentage: 10, status: 'Reserve' },
-    ],
-    budgetAlternatives: [] as Array<Record<string, unknown>>,
-  };
-}
-
-// ─── Arrival Plan from AI Journey ───────────────────────────────────
-
-interface JourneyStep {
-  time?: string;
-  action?: string;
-  details?: string;
-  cost?: number;
-}
-
-function buildArrivalPlan(arrivalJourney: JourneyStep[] | undefined, destHub: string, arrivalTime: string) {
-  if (arrivalJourney && arrivalJourney.length > 0) {
-    return {
-      arrivalPoint: destHub,
-      time: arrivalJourney[0]?.time || arrivalTime,
-      steps: arrivalJourney.map(j => ({
-        time: j.time || '',
-        step: j.action || '',
-        details: j.details || '',
-        fare: j.cost ? `₹${j.cost}` : undefined,
-        options: undefined,
-      })),
-    };
-  }
-
-  // Fallback: simple arrival
-  return {
-    arrivalPoint: destHub,
-    time: arrivalTime,
-    steps: [
-      { time: arrivalTime, step: `Arrive at ${destHub}` },
-      { step: 'Take local transport to hotel' },
-      { step: 'Check in and freshen up' },
-      { step: 'Begin exploring nearby area' },
-    ],
-  };
-}
-
-function buildReturnPlan(departureJourney: JourneyStep[] | undefined, destHub: string, departureTime: string, origin: string) {
-  if (departureJourney && departureJourney.length > 0) {
-    return {
-      checkoutTime: '11:00 AM',
-      departurePoint: destHub,
-      steps: departureJourney.map(j => ({
-        time: j.time || '',
-        step: j.action || '',
-        details: j.details || '',
-        fare: j.cost ? `₹${j.cost}` : undefined,
-      })),
-      summary: `Departure from ${destHub} back to ${origin}`,
-      thankYouMessage: `Have a safe journey home!`,
-    };
-  }
-
-  return {
-    checkoutTime: '11:00 AM',
-    departurePoint: destHub,
-    transportOptions: [{ mode: 'Local transport to station', cost: 200, duration: '30 min' }],
-    summary: `Hotel checkout by 11:00 AM, departure from ${destHub} at ${departureTime}.`,
-    thankYouMessage: `Have a safe journey home!`,
-  };
 }
 
 // ─── Map Assembly ───────────────────────────────────────────────────
@@ -319,15 +200,17 @@ function buildMap(geo: { lat: number; lon: number }, places: {
 
 export async function POST(request: Request) {
   try {
+    clearPipelineLogs();
     const rawBody = await request.json();
-    const validation = validateInput(rawBody);
+    
+    const validation = await timedStage('FORM_RECEIVED', async () => validateInput(rawBody));
     if (!validation.ok) {
       return NextResponse.json({ status: 400, reason: validation.error }, { status: 400 });
     }
     const body = validation.data;
 
     // ── Step 1: Geocode destination ──
-    const geo = await geocode(body.destination);
+    const geo = await timedStage('GEOCODING', () => geocode(body.destination));
     if (!geo) {
       return NextResponse.json(
         { status: 422, reason: `Could not find "${body.destination}" on the map. Please check the spelling.` },
@@ -335,49 +218,25 @@ export async function POST(request: Request) {
       );
     }
 
-    // ── Step 2: Parallel data fetching (all real, all with timeouts) ──
-    const [placesResult, weatherResult, wikiResult] = await Promise.allSettled([
-      discoverPlaces(geo.lat, geo.lon),
-      getWeather(geo.lat, geo.lon),
-      getWikiContext(body.destination, geo.lat, geo.lon),
+    // ── Step 2: Parallel data fetching ──
+    const [places, weather, wiki, emergency] = await Promise.all([
+      timedStage('POI_DISCOVERY', () => discoverPlaces(geo.lat, geo.lon), { countFn: (p) => p.attractions.length }),
+      timedStage('WEATHER', () => getWeather(geo.lat, geo.lon)),
+      timedStage('SANITIZATION', () => getWikiContext(body.destination, geo.lat, geo.lon)),
+      timedStage('EMERGENCY', () => discoverEmergencyContacts(geo.lat, geo.lon)),
     ]);
 
-    const places = placesResult.status === 'fulfilled'
-      ? placesResult.value
-      : { hotels: [], restaurants: [], attractions: [], hospitals: [], transportNodes: [] };
-    const weather = weatherResult.status === 'fulfilled' ? weatherResult.value : null;
-    const wiki = wikiResult.status === 'fulfilled' ? wikiResult.value : null;
-
-    // Enrich attractions with Wikipedia geosearch results
-    if (wiki?.nearbyPlaces) {
-      for (const wp of wiki.nearbyPlaces) {
-        const alreadyFound = places.attractions.some(a =>
-          a.name.toLowerCase() === wp.title.toLowerCase()
-        );
-        if (!alreadyFound && wp.title.length > 3) {
-          places.attractions.push({
-            id: wp.pageid,
-            lat: wp.lat,
-            lon: wp.lon,
-            name: wp.title,
-            category: 'attraction',
-            distanceKm: 0,
-          });
-        }
-      }
-    }
-
     // ── Step 3: Transport discovery ──
-    const transport = await discoverTransport(
+    const transport = await timedStage('ROUTING', () => discoverTransport(
       body.origin,
       geo.lat,
       geo.lon,
       body.destination,
       places.transportNodes.map(n => ({ name: n.name, category: n.category, distanceKm: n.distanceKm }))
-    );
+    ));
 
     // ── Step 3.5: Build Traveler DNA ──
-    const dna = buildTravelerDNA({
+    const dna = await timedStage('TRAVELER_DNA', async () => buildTravelerDNA({
       travelType: body.travelType,
       foodPreference: body.foodPreference,
       interests: body.interests,
@@ -387,7 +246,7 @@ export async function POST(request: Request) {
       travelers: body.travelers,
       travelStyle: body.tripPurpose,
       travelSpeed: body.travelPace,
-    });
+    }));
 
     // ── Step 3.6: Rank places using DNA ──
     const hotelBudgetPerNight = Math.floor((body.budget * 0.4) / Math.max(body.duration - 1, 1));
@@ -398,26 +257,26 @@ export async function POST(request: Request) {
       weather ? { temperature: weather.temperature, rainProbability: weather.rainProbability } : null
     ) as OSMPlace[];
 
-    // ── Step 3.7: Geo-cluster attractions by walking tolerance ──
+    // ── Step 3.7: Geo-cluster attractions ──
     const walkTolerance = (body.walkingTolerance || 'medium') as 'minimal' | 'low' | 'medium' | 'high';
-    const clusters = clusterByProximity(
+    const clusters = await timedStage('CLUSTERING', async () => clusterByProximity(
       rankedAttractions.slice(0, 30).map(a => ({ name: a.name, lat: a.lat, lon: a.lon, category: a.category, distanceKm: a.distanceKm })),
       body.duration,
       walkTolerance
-    );
+    ));
 
     // ── Step 3.8: Compute proper budget breakdown ──
-    const budgetBreakdown = calculateBudget(
+    const budgetBreakdown = await timedStage('BUDGET', async () => calculateBudget(
       body.budget,
       body.duration,
       body.travelers,
       body.comfortLevel,
-      transport?.estimatedFare || 0,
+      transport.estimatedFare,
       body.travelType
-    );
+    ));
 
-    // ── Step 3.9: Build intelligent schedule from clusters ──
-    const scheduleData: DaySchedule[] = buildSchedule(
+    // ── Step 3.9: Build intelligent schedule ──
+    const scheduleData: DaySchedule[] = await timedStage('SCHEDULING', async () => buildSchedule(
       body.duration,
       body.arrivalTime,
       body.departureTime,
@@ -426,10 +285,10 @@ export async function POST(request: Request) {
       clusters.map(c => ({ places: c.places.map(p => ({ name: p.name, category: p.category })), totalWalkingKm: c.totalWalkingKm })),
       rankedRestaurants.slice(0, 10).map(r => ({ name: r.name, cuisine: r.cuisine })),
       rankedHotels[0]?.name || body.destination + ' Hotel',
-      transport?.durationHours || 0
-    );
+      transport.durationHours
+    ));
 
-    // ── Step 4: Build AI context from RANKED real data ──
+    // ── Step 4: Build AI context ──
     const aiContext: AIContext = {
       origin: body.origin,
       destination: body.destination,
@@ -438,82 +297,57 @@ export async function POST(request: Request) {
       travelType: body.travelType,
       travelers: body.travelers,
       arrivalMode: body.arrivalMode,
-      arrivalTime: body.arrivalTime,
-      departureTime: body.departureTime,
       hotelPreference: body.hotelPreference,
       foodPreference: body.foodPreference,
       interests: body.interests,
       tripPurpose: body.tripPurpose,
-      comfortLevel: body.comfortLevel,
-      travelPace: body.travelPace,
-      walkingTolerance: body.walkingTolerance,
-      hotels: rankedHotels.slice(0, 15).map(h => ({ name: h.name, lat: h.lat, lon: h.lon, distanceKm: h.distanceKm })),
-      restaurants: rankedRestaurants.slice(0, 20).map(r => ({ name: r.name, lat: r.lat, lon: r.lon, cuisine: r.cuisine, distanceKm: r.distanceKm })),
-      attractions: rankedAttractions.slice(0, 30).map(a => ({ name: a.name, lat: a.lat, lon: a.lon, distanceKm: a.distanceKm })),
-      transportNodes: places.transportNodes.slice(0, 15).map(t => ({ name: t.name, category: t.category, distanceKm: t.distanceKm })),
       weather: weather ? { temperature: weather.temperature, description: weather.description, rainProbability: weather.rainProbability } : null,
       wikiExtract: wiki?.extract || null,
-      transport: transport ? {
-        suggestedMode: transport.suggestedMode,
-        durationHours: transport.durationHours,
-        estimatedFare: transport.estimatedFare,
-        destinationHub: transport.destinationHub,
-      } : null,
+      schedule: scheduleData.map(d => ({
+        day: d.day,
+        theme: d.theme,
+        places: d.slots.filter(s => s.type === 'activity').map(s => s.title.replace(/^Visit /, '')),
+      })),
     };
 
-    // ── Step 5: Generate itinerary via Gemini AI ──
-    const aiOutput = await generateItinerary(aiContext);
+    // ── Step 5: Generate narrative via Gemini AI ──
+    const narrative = await generateNarrative(aiContext);
 
-    // ── Step 6: Sanitize AI output ──
-    const realNames = [
-      ...places.hotels.map(h => h.name),
-      ...places.restaurants.map(r => r.name),
-      ...places.attractions.map(a => a.name),
-      ...places.transportNodes.map(t => t.name),
-      ...(wiki?.nearbyPlaces?.map(p => p.title) || []),
-    ];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const clean = sanitize(aiOutput as any, realNames) as any;
-
-    // ── Step 7: Hero image ──
+    // ── Step 6: Hero image ──
     let heroImage: string | null = wiki?.thumbnail || null;
     if (!heroImage && places.attractions.length > 0) {
-      heroImage = await getPlaceImage(places.attractions[0].name, body.destination);
+      heroImage = await timedStage('IMAGES', () => getPlaceImage(places.attractions[0].name, body.destination));
     }
 
-    // ── Step 8: Assemble response ──
-    const destHub = transport?.destinationHub || places.transportNodes[0]?.name || body.destination;
+    // ── Step 7: Assemble response ──
+    const destHub = transport.destinationHub || places.transportNodes[0]?.name || body.destination;
 
-    // ── Build place coordination map ──
     const placeCoordMap = new Map<string, { lat: number, lon: number }>();
     for (const p of [...places.hotels, ...places.restaurants, ...places.attractions, ...places.transportNodes]) {
       placeCoordMap.set(p.name.toLowerCase().trim(), { lat: p.lat, lon: p.lon });
     }
 
-    // Build days with morning/afternoon/evening/night split (backwards compatible)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const days = (clean.days || []).map((day: any, idx: number) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const activities = (day.activities || []).map((a: any) => {
-        const nameKey = (a.title || '').toLowerCase().trim();
-        const coords = placeCoordMap.get(nameKey) || {
-          lat: geo.lat + (Math.random() - 0.5) * 0.02,
-          lon: geo.lon + (Math.random() - 0.5) * 0.02
-        };
-
+    const days = scheduleData.map(day => {
+      const activities = day.slots.map(slot => {
+        let cleanTitle = slot.title;
+        if (slot.type === 'activity') cleanTitle = slot.title.replace(/^Visit /, '');
+        else if (slot.type === 'meal') cleanTitle = slot.title.replace(/^(Breakfast|Lunch|Dinner) at /, '');
+        
+        const coords = placeCoordMap.get(cleanTitle.toLowerCase().trim()) || { lat: geo.lat, lon: geo.lon };
+        
         return {
-          time: a.time || '10:00 AM',
-          timeSlot: parseTimeSlot(a.time || '10:00 AM'),
-          title: a.title || 'Activity',
-          name: a.title || 'Activity',
-          description: a.description || '',
-          category: a.category || 'activity',
-          type: a.type || 'activity',
-          cost: a.estimatedCost || 0,
+          time: slot.time,
+          timeSlot: parseTimeSlot(slot.time),
+          title: slot.title,
+          name: cleanTitle,
+          description: narrative.placeDescriptions[cleanTitle] || slot.notes,
+          category: slot.type,
+          type: slot.type,
+          cost: slot.type === 'meal' ? 500 : (slot.type === 'travel' ? 100 : 0), // Base estimates since pricing is hard to get
           location: body.destination,
-          distance: a.walkingDistance || '',
+          distance: '',
           travelTime: '',
-          duration: a.duration || '1 hour',
+          duration: \`\${slot.duration} min\`,
           aiTip: '',
           imageUrl: heroImage || '',
           lat: coords.lat,
@@ -521,20 +355,15 @@ export async function POST(request: Request) {
         };
       });
 
-      // Split activities into time-of-day buckets
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const morning = activities.filter((a: any) => a.timeSlot === 'morning');
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const afternoon = activities.filter((a: any) => a.timeSlot === 'afternoon');
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const evening = activities.filter((a: any) => a.timeSlot === 'evening');
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const night = activities.filter((a: any) => a.timeSlot === 'night');
+      const morning = activities.filter(a => a.timeSlot === 'morning');
+      const afternoon = activities.filter(a => a.timeSlot === 'afternoon');
+      const evening = activities.filter(a => a.timeSlot === 'evening');
+      const night = activities.filter(a => a.timeSlot === 'night');
 
       return {
-        day: day.day || idx + 1,
-        date: new Date(Date.now() + 86400000 * idx).toISOString().split('T')[0],
-        title: day.title || `Day ${idx + 1}`,
+        day: day.day,
+        date: day.date,
+        title: narrative.dayThemes[day.day] || day.theme,
         morning,
         afternoon,
         evening,
@@ -543,69 +372,49 @@ export async function POST(request: Request) {
       };
     });
 
-    // Build map Day Routes dynamically
-    const dayRoutes = days.map((d: any) => {
-      const steps = d.activities.map((act: any) => ({
+    const dayRoutes = days.map(d => {
+      const steps = d.activities.map(act => ({
         time: act.time,
-        etaToNext: `${Math.round(2 + Math.random() * 8)} min`,
-        type: act.type || 'attraction',
-        name: act.title,
+        etaToNext: '10 min',
+        type: act.type,
+        name: act.name,
         lat: act.lat,
         lon: act.lon,
-        distanceToNext: `${(0.5 + Math.random() * 1.5).toFixed(1)} km`,
+        distanceToNext: '1 km',
       }));
 
       return {
         day: d.day,
         title: d.title,
-        totalDistanceKm: parseFloat((steps.length * 1.4).toFixed(1)) || 5.2,
-        totalEstTimeMin: steps.length * 12 || 45,
+        totalDistanceKm: (steps.length * 1.4).toFixed(1),
+        totalEstTimeMin: steps.length * 12,
         trafficStatus: 'Moderate',
-        weatherSummary: weather ? `${weather.description} ${weather.temperature}°C` : 'Clear 26°C',
-        travelMode: 'OSRM Cab',
-        estFare: steps.length * 80 || 300,
+        weatherSummary: weather ? \`\${weather.description} \${weather.temperature}°C\` : 'Clear 26°C',
+        travelMode: 'OSRM Route',
+        estFare: steps.length * 50,
         steps,
       };
     });
 
-    // Destination intelligence from real data
     const destinationIntelligence = places.attractions.slice(0, 20).map(a => ({
       name: a.name,
       category: 'attraction',
       rank: (a.distanceKm ?? 99) < 3 ? 'must visit' : 'recommended',
-      distance: `${(a.distanceKm ?? 0).toFixed(1)} km`,
-      description: `Located at (${a.lat.toFixed(4)}, ${a.lon.toFixed(4)})`,
+      distance: \`\${(a.distanceKm ?? 0).toFixed(1)} km\`,
+      description: \`Located at (\${a.lat.toFixed(4)}, \${a.lon.toFixed(4)})\`,
     }));
 
-    // Transport feasibility info
-    const transportAccess = {
-      transportExists: true,
-      transportMode: transport?.suggestedMode || 'Transit',
-      sourceHub: transport?.originHub || body.origin,
-      destinationHub: destHub,
-      distanceKm: transport?.distanceKm || 0,
-      duration: transport ? `${transport.durationHours} Hours` : 'Unknown',
-      fare: transport ? `₹${transport.estimatedFare}` : 'Unknown',
-      journeyLegs: transport?.journeyLegs || [body.origin, body.destination],
-      nearestAirport: (transport as any)?.nearestAirport || null,
-      nearestRailway: (transport as any)?.nearestRailway || null,
-      nearestBusStand: (transport as any)?.nearestBusStand || null,
-      feasibility: (transport as any)?.feasibility || { byFlight: false, byTrain: false, byBus: true, byCar: true },
-    };
-
     const response = {
-      id: `tripvora-${Date.now()}`,
-      tripOverview: clean.tripOverview || wiki?.extract || `A ${body.duration}-day trip to ${body.destination}`,
+      id: \`tripvora-\${Date.now()}\`,
+      tripOverview: narrative.tripOverview,
       destination: body.destination,
-      destinationSummary: wiki?.extract?.slice(0, 300) || `Explore ${body.destination} with a personally planned itinerary.`,
+      destinationSummary: wiki?.extract?.slice(0, 300) || \`Explore \${body.destination} with a personally planned itinerary.\`,
       totalDays: body.duration,
       totalBudget: body.budget,
       estimatedCost: Math.floor(body.budget * 0.85),
       currency: 'INR',
       bestVisitingTime: '',
-      weatherConsiderations: weather
-        ? `${weather.description}, ${weather.temperature}°C, ${weather.rainProbability}% rain`
-        : 'Weather data unavailable',
+      weatherConsiderations: weather ? \`\${weather.description}, \${weather.temperature}°C, \${weather.rainProbability}% rain\` : 'Weather data unavailable',
       weatherEngine: weather ? {
         currentWeather: weather.description,
         temperature: weather.temperature,
@@ -614,107 +423,54 @@ export async function POST(request: Request) {
         uvIndex: weather.uvIndex,
         wind: weather.windSpeed,
         weatherCode: weather.weatherCode,
-        weatherAdvice: weather.rainProbability > 60
-          ? 'Carry an umbrella — high chance of rain.'
-          : weather.temperature > 38
-            ? 'Stay hydrated — extreme heat expected.'
-            : 'Comfortable weather for exploring.',
-        sunrise: '',
-        sunset: '',
+        weatherAdvice: weather.rainProbability > 60 ? 'Carry an umbrella — high chance of rain.' : weather.temperature > 38 ? 'Stay hydrated — extreme heat expected.' : 'Comfortable weather for exploring.',
       } : undefined,
-      packingSuggestions: clean.packingSuggestions || [],
-      safetyTips: clean.safetyTips || [],
-      localTravelAdvice: clean.localTravelAdvice || '',
-      emergencyContacts: {
-        police: '112',
-        ambulance: '102',
-        embassyOrHelpline: '1363',
-        hospitals: places.hospitals.slice(0, 3).map(h => h.name),
-        pharmacies: [] as string[],
-      },
-      budgetTracker: buildBudget(body.budget, body.duration, transport?.estimatedFare || 0),
+      packingSuggestions: narrative.packingSuggestions,
+      safetyTips: narrative.safetyTips,
+      localTravelAdvice: narrative.localTravelAdvice,
+      emergencyContacts: emergency,
+      budgetTracker: budgetBreakdown,
       travelToDestination: {
         userLocation: body.origin,
         destination: body.destination,
-        transportAccess,
         options: [{
-          title: `${transport?.suggestedMode || 'Transit'}: ${body.origin} → ${body.destination}`,
-          steps: transport?.journeyLegs.map((leg, i) => ({
-            mode: i === 0 ? transport?.suggestedMode || 'Transit' : 'Connection',
-            cost: i === 0 ? transport?.estimatedFare || 0 : 0,
-            duration: i === 0 ? `${transport?.durationHours || '?'} hours` : '',
-          })) || [{ mode: 'Transit', cost: 0, duration: 'Unknown' }],
-          totalCost: transport?.estimatedFare || 0,
-          totalDuration: transport ? `${transport.durationHours} hours` : 'Unknown',
+          title: \`\${transport.suggestedMode}: \${body.origin} → \${body.destination}\`,
+          steps: transport.journeyLegs.map((leg, i) => ({
+            mode: i === 0 ? transport.suggestedMode : 'Connection',
+            cost: i === 0 ? transport.estimatedFare : 0,
+            duration: i === 0 ? \`\${transport.durationHours} hours\` : '',
+          })),
+          totalCost: transport.estimatedFare,
+          totalDuration: \`\${transport.durationHours} hours\`,
         }],
       },
-      transportAccess,
-      arrivalPlan: buildArrivalPlan(clean.arrivalJourney, destHub, body.arrivalTime),
-      returnPlan: buildReturnPlan(clean.departureJourney, destHub, body.departureTime, body.origin),
+      transportAccess: {
+        transportMode: transport.suggestedMode,
+        sourceHub: transport.originHub,
+        destinationHub: destHub,
+        distanceKm: transport.distanceKm,
+        duration: \`\${transport.durationHours} Hours\`,
+        fare: \`₹\${transport.estimatedFare}\`,
+        journeyLegs: transport.journeyLegs,
+        feasibility: transport.feasibility,
+      },
       foodIntelligence: {
         mustTryDish: places.restaurants[0]?.cuisine || 'Local cuisine',
         bestVeg: places.restaurants.find(r => r.cuisine?.toLowerCase().includes('veg'))?.name || '',
         bestNonVeg: places.restaurants.find(r => !r.cuisine?.toLowerCase().includes('veg'))?.name || '',
       },
       destinationIntelligence,
-      travelerDNA: {
-        type: dna.travelerType,
-        purpose: dna.purpose,
-        comfortLevel: dna.comfortLevel,
-        energyLevel: dna.energyLevel,
-        spendingStyle: dna.spendingStyle,
-        walkingTolerance: dna.walkingTolerance,
-        travelPace: dna.travelPace,
-        foodPreference: dna.foodPreference,
-        maxActivitiesPerDay: dna.maxActivitiesPerDay,
-        prioritize: dna.prioritize,
-        avoid: dna.avoid,
-      },
-      userPreferenceEngine: {
-        detectedProfile: dna.purpose,
-        preferredCategories: body.interests,
-        paceAndComfort: `${dna.travelPace > 60 ? 'Packed' : dna.travelPace > 35 ? 'Balanced' : 'Relaxed'} pace, ${dna.maxActivitiesPerDay} activities/day`,
-        specialRulesApplied: [
-          ...(dna.foodPreference === 'pure_veg' ? ['Pure vegetarian enforcement'] : []),
-          ...dna.prioritize.slice(0, 3).map(p => `Prioritize: ${p}`),
-          ...dna.avoid.slice(0, 2).map(a => `Avoid: ${a}`),
-        ],
-      },
+      travelerDNA: dna,
       hotels: buildHotels(rankedHotels, body.budget, body.duration, body.destination),
-      flights: [] as Array<Record<string, unknown>>,
-      restaurants: buildRestaurants(rankedRestaurants, body.destination),
+      restaurants: rankedRestaurants.slice(0, 12).map((r) => ({
+        name: r.name,
+        cuisine: r.cuisine || 'Local',
+        address: \`\${(r.distanceKm ?? 0).toFixed(1)} km from center, \${body.destination}\`,
+      })),
       days,
       mapExperience: {
         ...buildMap(geo, places),
         dayRoutes,
-      },
-      conciergeWorkflow: {
-        arrivalWorkflow: (clean.arrivalJourney || []).map((j: JourneyStep) => ({
-          time: j.time || '',
-          activity: j.action || '',
-          details: j.details || '',
-          fare: j.cost ? `₹${j.cost}` : undefined,
-        })),
-        departureWorkflow: (clean.departureJourney || []).map((j: JourneyStep) => ({
-          time: j.time || '',
-          activity: j.action || '',
-          details: j.details || '',
-          fare: j.cost ? `₹${j.cost}` : undefined,
-        })),
-        conciergeAdvice: {
-          hotelCheckin: '12:00 PM',
-          hotelCheckout: '11:00 AM',
-          taxiFare: `₹${Math.round((transport?.distanceKm || 10) * 15)}/trip`,
-          busFare: `₹${Math.round((transport?.distanceKm || 10) * 2)}/trip`,
-          walkingTime: '10-15 min to nearby spots',
-          emergencyContact: '112 (Police) | 102 (Ambulance)',
-        },
-        validation: {
-          arrivalTransportExists: places.transportNodes.length > 0,
-          hotelReachable: places.hotels.length > 0,
-          timingRealistic: true,
-          departureFeasible: true,
-        },
       },
       affiliateLinks: generateAffiliateLinks({
         origin: body.origin,
@@ -725,26 +481,12 @@ export async function POST(request: Request) {
         children: body.travelers.children,
       }),
       prebookedItems: body.prebookedItems,
-      // New engine outputs
-      geoClusters: clusters.map((c, i) => ({
-        id: i + 1,
-        centroid: c.centroid,
-        placesCount: c.places.length,
-        totalWalkingKm: c.totalWalkingKm,
-        suggestedOrder: c.suggestedOrder,
-        places: c.places.slice(0, 8).map(p => ({ name: p.name, category: p.category })),
-      })),
+      geoClusters: clusters,
       engineBudget: budgetBreakdown,
-      schedule: scheduleData.map(d => ({
-        day: d.day,
-        date: d.date,
-        theme: d.theme,
-        totalActiveHours: d.totalActiveHours,
-        slots: d.slots,
-      })),
+      schedule: scheduleData,
+      systemLogs: getPipelineLogs(),
     };
 
-    // ── Background persistence (non-blocking) ──
     try {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
       const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -759,9 +501,9 @@ export async function POST(request: Request) {
           tags: [body.travelType],
         }, { onConflict: 'destination_name' }).then();
       }
-    } catch { /* persistence failure should not block */ }
+    } catch { /* ignore persistence error */ }
 
-    return NextResponse.json(response);
+    return NextResponse.json(await timedStage('FINAL_JSON', async () => response));
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error';
     console.error('Trip generation error:', message);

@@ -35,7 +35,7 @@ export async function geocode(query: string): Promise<GeoResult | null> {
       lon,
       displayName: first.display_name,
     };
-  } catch {
-    return null;
+  } catch (err: unknown) {
+    throw new Error(`GEOCODING_FAILED: Failed to geocode "${query}" - ${err instanceof Error ? err.message : String(err)}`);
   }
 }

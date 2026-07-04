@@ -47,7 +47,7 @@ export async function getPlaceImage(
     }
 
     return null;
-  } catch {
-    return null;
+  } catch (err: unknown) {
+    throw new Error(`IMAGE_FETCH_FAILED: Failed to fetch image for ${placeName} - ${err instanceof Error ? err.message : String(err)}`);
   }
 }
