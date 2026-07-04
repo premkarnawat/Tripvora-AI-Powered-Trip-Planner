@@ -172,9 +172,9 @@ export default function TripViewerPage() {
           animate={{ opacity: 1, scale: 1, filter: "blur(0px) brightness(0.24)" }}
           exit={{ opacity: 0, scale: 1.05, filter: "blur(15px)" }}
           transition={{ duration: 1.2, ease: "easeInOut" }}
-          style={{ scale: bgScale }}
           className="fixed inset-0 z-0 bg-cover bg-center"
-          style={{
+          style={{ 
+            scale: bgScale,
             backgroundImage: `url(${
               trip.days?.[activeDay - 1]?.activities?.[activeStepIdx]?.imageUrl || 
               trip.days?.[activeDay - 1]?.activities?.[0]?.imageUrl || 
