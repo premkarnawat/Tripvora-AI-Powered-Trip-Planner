@@ -326,7 +326,7 @@ export default function TripViewerPage() {
                     </div>
                     <div className="text-right font-mono text-[10px] text-slate-400">
                       <p>Center: {trip.mapExperience?.centerLat?.toFixed(3)}, {trip.mapExperience?.centerLon?.toFixed(3)}</p>
-                      <p className="text-teal-400">Distance: {dayRoute?.totalDistanceKm || 5.2} km</p>
+                      <p className="text-teal-400">Distance: {(trip.mapExperience?.dayRoutes || []).find((r: any) => r.day === activeDay)?.totalDistanceKm || 5.2} km</p>
                     </div>
                   </div>
 
