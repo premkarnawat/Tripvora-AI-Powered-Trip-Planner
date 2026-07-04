@@ -14,6 +14,10 @@ export interface AIContext {
   hotelPreference: string;
   foodPreference: string;
   interests: string[];
+  tripPurpose: string;
+  comfortLevel: string;
+  travelPace: string;
+  walkingTolerance: string;
   hotels: Array<{ name: string; lat: number; lon: number; distanceKm?: number }>;
   restaurants: Array<{ name: string; lat: number; lon: number; cuisine?: string; distanceKm?: number }>;
   attractions: Array<{ name: string; lat: number; lon: number; distanceKm?: number }>;
@@ -146,6 +150,10 @@ CLIENT BRIEF
 • Departure: ${ctx.departureTime} on day ${ctx.duration}
 • Hotel preference: ${ctx.hotelPreference}
 • Food: ${ctx.foodPreference}
+• Trip purpose: ${ctx.tripPurpose}
+• Comfort level: ${ctx.comfortLevel}
+• Travel pace: ${ctx.travelPace}
+• Walking tolerance: ${ctx.walkingTolerance}
 • Interests: ${ctx.interests.join(', ')}
 
 ${weatherBlock}

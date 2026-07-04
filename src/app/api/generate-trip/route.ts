@@ -44,7 +44,7 @@ function validateInput(body: Record<string, unknown>): { ok: true; data: Validat
     return { ok: false, error: 'Please enter a valid destination name.' };
   }
 
-  const origin = String(body.origin || 'Mumbai').trim();
+  const origin = String(body.origin_city || body.origin || 'Mumbai').trim();
   const rawBudget = String(body.budget || '30000').replace(/[^0-9]/g, '');
   const budget = Math.max(Math.min(parseInt(rawBudget, 10) || 30000, 10000000), 1000);
 
@@ -83,7 +83,7 @@ function validateInput(body: Record<string, unknown>): { ok: true; data: Validat
         children: Number(trav.children) || 0,
         seniors: Number(trav.seniors) || 0,
       },
-      travelType: String(body.travelType || 'Couple'),
+      travelType: String(body.travelType || body.trip_type || 'Couple'),
       tripPurpose: String(body.trip_purpose || body.travelType || 'vacation'),
       comfortLevel: String(body.comfort_level || 'comfortable'),
       travelPace: String(body.travel_pace || body.travel_speed || 'balanced'),
@@ -409,6 +409,10 @@ export async function POST(request: Request) {
       hotelPreference: body.hotelPreference,
       foodPreference: body.foodPreference,
       interests: body.interests,
+      tripPurpose: body.tripPurpose,
+      comfortLevel: body.comfortLevel,
+      travelPace: body.travelPace,
+      walkingTolerance: body.walkingTolerance,
       hotels: rankedHotels.slice(0, 15).map(h => ({ name: h.name, lat: h.lat, lon: h.lon, distanceKm: h.distanceKm })),
       restaurants: rankedRestaurants.slice(0, 20).map(r => ({ name: r.name, lat: r.lat, lon: r.lon, cuisine: r.cuisine, distanceKm: r.distanceKm })),
       attractions: rankedAttractions.slice(0, 30).map(a => ({ name: a.name, lat: a.lat, lon: a.lon, distanceKm: a.distanceKm })),
