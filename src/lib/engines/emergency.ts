@@ -40,20 +40,56 @@ export async function discoverEmergencyContacts(lat: number, lon: number): Promi
     out body 20;
   `;
 
-  const response = await fetch("https://overpass-api.de/api/interpreter", {
-    method: "POST",
-    body: query,
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-  });
+  const endpoints = [
+    "https://overpass-api.de/api/interpreter",
+    "https://overpass.kumi.systems/api/interpreter",
+    "https://lz4.overpass-api.de/api/interpreter"
+  ];
 
-  if (!response.ok) {
-    throw new Error(`OVERPASS_API_FAILED: Failed to fetch emergency data (Status ${response.status})`);
+  let data = null;
+
+  for (const OVERPASS_URL of endpoints) {
+    try {
+      console.log("OVERPASS_REQUEST: Initiating");
+      console.log("OVERPASS_URL:", OVERPASS_URL);
+      console.log("OVERPASS_QUERY:", query);
+      
+      const response = await fetch(OVERPASS_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `data=${encodeURIComponent(query)}`
+      });
+      
+      console.log("OVERPASS_STATUS:", response.status);
+      
+      if (response.ok) {
+        data = await response.json();
+        console.log("OVERPASS_RESPONSE: Success, elements:", data?.elements?.length);
+        if (data && data.elements) break;
+      } else {
+        console.error("OVERPASS_ERROR: API returned status", response.status);
+      }
+    } catch (e) {
+      console.error("OVERPASS_ERROR: Exception during fetch", e);
+    }
   }
 
-  const data = await response.json();
+  const helplines = {
+    police: '112',
+    ambulance: '102',
+    fire: '101',
+    tourist: '1363',
+  };
 
   if (!data || !data.elements) {
-    throw new Error("OVERPASS_API_FAILED: Invalid response structure");
+    console.error("OVERPASS_API_FAILED: All emergency endpoints failed or returned invalid data.");
+    return {
+      hospital: null,
+      police: null,
+      pharmacy: null,
+      fire: null,
+      helplines
+    };
   }
 
   const facilities: EmergencyFacility[] = data.elements.map((el: any) => ({
@@ -65,19 +101,10 @@ export async function discoverEmergencyContacts(lat: number, lon: number): Promi
     distanceKm: calculateHaversine(lat, lon, el.lat, el.lon),
   }));
 
-  // Find nearest of each type
   const getNearest = (type: string) => {
     const matching = facilities.filter(f => f.type === type);
     if (matching.length === 0) return null;
     return matching.sort((a, b) => a.distanceKm - b.distanceKm)[0];
-  };
-
-  // Indian helplines as default, but in a real global app this would use a country code mapping
-  const helplines = {
-    police: '112', // Universal emergency in India
-    ambulance: '102',
-    fire: '101',
-    tourist: '1363', // Indian Tourist Helpline
   };
 
   return {

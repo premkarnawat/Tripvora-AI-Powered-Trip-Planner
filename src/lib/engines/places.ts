@@ -98,16 +98,42 @@ export async function discoverPlaces(lat: number, lon: number): Promise<PlacesRe
 );
 out center 150;`;
 
-    const res = await fetch('https://overpass-api.de/api/interpreter', {
-      method: 'POST',
-      body: `data=${encodeURIComponent(query)}`,
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      signal: AbortSignal.timeout(10000),
-    });
+    const endpoints = [
+      'https://overpass-api.de/api/interpreter',
+      'https://overpass.kumi.systems/api/interpreter',
+      'https://lz4.overpass-api.de/api/interpreter'
+    ];
 
-    if (!res.ok) return empty;
+    let data: OverpassResponse | null = null;
 
-    const data: OverpassResponse = await res.json();
+    for (const OVERPASS_URL of endpoints) {
+      try {
+        console.log("OVERPASS_REQUEST: Initiating");
+        console.log("OVERPASS_URL:", OVERPASS_URL);
+        console.log("OVERPASS_QUERY:", query);
+
+        const res = await fetch(OVERPASS_URL, {
+          method: 'POST',
+          body: `data=${encodeURIComponent(query)}`,
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          signal: AbortSignal.timeout(12000),
+        });
+
+        console.log("OVERPASS_STATUS:", res.status);
+
+        if (res.ok) {
+          data = await res.json();
+          console.log("OVERPASS_RESPONSE: Success, elements:", data?.elements?.length);
+          if (data && data.elements) break;
+        } else {
+          console.error("OVERPASS_ERROR: API returned status", res.status);
+        }
+      } catch (e) {
+        console.error("OVERPASS_ERROR: Exception during fetch", e);
+      }
+    }
+
+    if (!data || !data.elements) return empty;
 
     const hotels: OSMPlace[] = [];
     const restaurants: OSMPlace[] = [];
@@ -179,6 +205,7 @@ out center 150;`;
 
     return { hotels, restaurants, attractions, hospitals, transportNodes };
   } catch (err: unknown) {
-    throw new Error(`OVERPASS_PLACES_FAILED: Failed to fetch places from Overpass API - ${err instanceof Error ? err.message : String(err)}`);
+    console.error(`OVERPASS_PLACES_FAILED: ${err instanceof Error ? err.message : String(err)}`);
+    return empty;
   }
 }
