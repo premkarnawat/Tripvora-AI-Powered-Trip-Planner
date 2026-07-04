@@ -243,7 +243,7 @@ export default function TripViewerPage() {
             </div>
           </div>
 
-          {/* PHASE 9: WEATHER INTELLIGENCE ENGINE CARD */}
+          {/* Weather Card */}
           <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-sky-950 text-white border border-sky-500/30 rounded-3xl p-6 shadow-lg flex flex-col justify-between space-y-4">
             <div>
               <div className="flex justify-between items-start gap-2 border-b border-white/10 pb-3">
@@ -259,13 +259,10 @@ export default function TripViewerPage() {
                 </div>
               </div>
 
-              {/* Protocol Banner */}
+              {/* Weather Advice */}
               <div className="mt-3 p-2.5 bg-sky-950/80 border border-sky-400/40 rounded-xl text-xs space-y-1">
-                <p className="font-extrabold text-sky-300 text-[11px] leading-snug">
-                  {trip.weatherEngine?.protocolTriggered || "✨ Standard Optimal Weather Protocol Active"}
-                </p>
                 <p className="text-[10px] text-slate-300 leading-tight">
-                  {trip.weatherEngine?.weatherAdvice || "Comfortable climate for sightseeing. Itinerary sequenced for optimal weather safety."}
+                  {trip.weatherEngine?.weatherAdvice || "Comfortable weather for sightseeing."}
                 </p>
               </div>
             </div>
@@ -280,7 +277,7 @@ export default function TripViewerPage() {
           </div>
         </div>
 
-        {/* PHASE 10: DESTINATION INTELLIGENCE ENGINE */}
+        {/* Nearby Experiences */}
         {trip.destinationIntelligence && trip.destinationIntelligence.length > 0 && (
           <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
             <div className="border-b border-slate-100 pb-4 flex justify-between items-center flex-wrap gap-2">
@@ -315,7 +312,7 @@ export default function TripViewerPage() {
                         </span>
                       </div>
                       <h4 className="font-extrabold text-slate-900 text-base mt-2">{item.name}</h4>
-                      <p className="text-xs text-slate-600 mt-1 line-clamp-2">{item.description || "Verified regional point of interest."}</p>
+                      <p className="text-xs text-slate-600 mt-1 line-clamp-2">{item.description || ""}</p>
                     </div>
                     <div className="pt-2 border-t border-slate-200/60 flex justify-between items-center text-[11px] font-bold text-slate-500">
                       <span>📍 Distance: {item.distance || "1.2 km"}</span>
@@ -328,31 +325,30 @@ export default function TripViewerPage() {
           </div>
         )}
 
-        {/* PHASE 11: USER PREFERENCE ENGINE */}
+        {/* Your Travel Profile */}
         {trip.userPreferenceEngine && (
           <div className="bg-gradient-to-br from-indigo-950 via-slate-900 to-purple-950 text-white border border-indigo-500/30 rounded-3xl p-6 sm:p-8 shadow-lg space-y-6">
             <div className="border-b border-white/10 pb-4 flex justify-between items-center flex-wrap gap-2">
               <div>
                 <span className="px-3 py-1 bg-indigo-500/20 border border-indigo-400/30 rounded-full text-[10px] font-black text-indigo-300 uppercase tracking-widest font-sora">
-                  Your Travel Profile
+                  Personalized For You
                 </span>
                 <h3 className="text-xl md:text-2xl font-black text-white mt-2 flex items-center gap-2">
-                  <span>🎯 Active Profile:</span>
-                  <span className="text-amber-400 underline decoration-amber-400/50">{trip.userPreferenceEngine.detectedProfile} Traveler</span>
+                  <span className="text-amber-400">{trip.userPreferenceEngine.detectedProfile}</span> Trip
                 </h3>
               </div>
               <div className="text-xs font-bold text-indigo-200 bg-indigo-900/50 px-3 py-1.5 rounded-xl border border-indigo-400/30">
-                Tailored Itinerary & Pace Active
+                Your preferences applied
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
               <div className="bg-white/5 p-4 rounded-2xl border border-white/10 space-y-2">
-                <span className="text-[10px] font-black uppercase tracking-wider text-indigo-300">Pace & Comfort Standard</span>
+                <span className="text-[10px] font-black uppercase tracking-wider text-indigo-300">Pace & Comfort</span>
                 <p className="text-sm font-bold text-slate-200">{trip.userPreferenceEngine.paceAndComfort}</p>
               </div>
               <div className="bg-white/5 p-4 rounded-2xl border border-white/10 space-y-2">
-                <span className="text-[10px] font-black uppercase tracking-wider text-purple-300">Preferred Categories Focus</span>
+                <span className="text-[10px] font-black uppercase tracking-wider text-purple-300">Your Interests</span>
                 <div className="flex flex-wrap gap-1.5 pt-1">
                   {trip.userPreferenceEngine.preferredCategories?.map((cat: string, cIdx: number) => (
                     <span key={cIdx} className="px-2 py-0.5 bg-white/10 rounded-md text-[11px] font-bold text-amber-300 uppercase">
@@ -365,7 +361,7 @@ export default function TripViewerPage() {
 
             {trip.userPreferenceEngine.specialRulesApplied && trip.userPreferenceEngine.specialRulesApplied.length > 0 && (
               <div className="bg-indigo-900/30 border border-indigo-500/20 rounded-2xl p-4 space-y-2">
-                <span className="text-[10px] font-black uppercase tracking-wider text-amber-400">⚡ Automated Profile Rules Triggered</span>
+                <span className="text-[10px] font-black uppercase tracking-wider text-amber-400">How we customized your trip</span>
                 <ul className="list-disc list-inside space-y-1 text-xs text-slate-300 font-medium">
                   {trip.userPreferenceEngine.specialRulesApplied.map((rule: string, rIdx: number) => (
                     <li key={rIdx}>{rule}</li>
@@ -376,7 +372,7 @@ export default function TripViewerPage() {
           </div>
         )}
 
-        {/* PHASE 14: VALIDATION ENGINE SCORECARD */}
+        {/* Trip Quality */}
         {trip.validationEngine && (
           <div className="bg-gradient-to-br from-slate-900 to-indigo-950 text-white border border-indigo-500/30 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
             <div className="border-b border-white/10 pb-4 flex justify-between items-center flex-wrap gap-4">
@@ -385,16 +381,14 @@ export default function TripViewerPage() {
                   Trip Quality
                 </span>
                 <h3 className="text-xl md:text-2xl font-black text-white mt-2 flex items-center gap-3">
-                  Quality Score
+                  Trip Quality
                   <span className={`px-3 py-1 rounded-full text-xs font-black uppercase ${
                     trip.validationEngine.totalScore >= 90 ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/30" : "bg-amber-500 text-white shadow-lg shadow-amber-500/30"
                   }`}>
-                    {trip.validationEngine.totalScore} / 100 • {trip.validationEngine.status === "RENDER_PERFECT" ? "90+ PERFECT RENDER" : "75-90 CAUTION WARNING"}
+                    {trip.validationEngine.totalScore} / 100
                   </span>
                 </h3>
               </div>
-              <div className="text-right text-xs font-bold text-slate-300 bg-white/5 px-3 py-1.5 rounded-xl border border-white/10">
-                Rule: 90+ Render | 75-90 Warning | &lt;75 Reject (No Fake Data)
               </div>
             </div>
 
@@ -402,7 +396,7 @@ export default function TripViewerPage() {
               <div className={`p-3 rounded-xl border text-xs font-bold ${
                 trip.validationEngine.totalScore >= 90 ? "bg-emerald-950/40 border-emerald-500/30 text-emerald-300" : "bg-amber-950/40 border-amber-500/30 text-amber-300"
               }`}>
-                ℹ️ Protocol Status: {trip.validationEngine.warningMessage}
+                {trip.validationEngine.warningMessage}
               </div>
             )}
 
@@ -431,7 +425,7 @@ export default function TripViewerPage() {
           </div>
         )}
 
-        {/* PHASE 13: RECOMMENDATION ENGINE */}
+        {/* Recommended Spots */}
         {trip.recommendationEngine && trip.recommendationEngine.length > 0 && (
           <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
             <div className="border-b border-slate-100 pb-4 flex justify-between items-center flex-wrap gap-2">
@@ -439,10 +433,8 @@ export default function TripViewerPage() {
                 <span className="px-3 py-1 bg-amber-50 border border-amber-200 rounded-full text-[10px] font-black text-amber-700 uppercase tracking-widest font-sora">
                   Recommended Spots
                 </span>
-                <h3 className="text-xl md:text-2xl font-black text-slate-900 mt-2">Ranked Discoveries & Trending Spots</h3>
+                <h3 className="text-xl md:text-2xl font-black text-slate-900 mt-2">Top Picks For You</h3>
               </div>
-              <div className="text-right text-xs font-bold text-slate-500 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
-                Formula: reviews + rating + dist + popularity + user bonus
               </div>
             </div>
 
@@ -454,12 +446,10 @@ export default function TripViewerPage() {
                       <span className="px-2 py-0.5 bg-amber-100 text-amber-800 rounded text-[10px] font-black uppercase tracking-wider">
                         #{idx + 1} • {rec.category}
                       </span>
-                      <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 font-extrabold text-[10px] rounded border border-indigo-100">
-                        Score: {rec.score}
                       </span>
                     </div>
                     <h4 className="font-extrabold text-slate-900 text-base line-clamp-1">{rec.name}</h4>
-                    <p className="text-xs text-slate-600 line-clamp-2">{rec.description || "Verified regional recommendation."}</p>
+                    <p className="text-xs text-slate-600 line-clamp-2">{rec.description || ""}</p>
                   </div>
                   <div className="pt-3 mt-3 border-t border-slate-100 flex justify-between items-center text-[11px] text-slate-500 font-semibold">
                     <span>⭐ {rec.rating} ({rec.reviewsCount})</span>
@@ -471,7 +461,7 @@ export default function TripViewerPage() {
           </div>
         )}
 
-        {/* PHASE 4: HOTEL INTELLIGENCE ENGINE SELECTION */}
+        {/* Hotel Options */}
         {trip.hotels?.[0] && (
           <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6 sm:p-8 shadow-xs space-y-8">
             <div className="border-b border-slate-100 pb-4 flex justify-between items-center flex-wrap gap-2">
@@ -479,11 +469,8 @@ export default function TripViewerPage() {
                 <span className="px-3 py-1 bg-teal-50 border border-teal-200 rounded-full text-[10px] font-black text-teal-700 uppercase tracking-widest font-sora">
                   Hotel Options
                 </span>
-                <h3 className="text-xl md:text-2xl font-black text-slate-900 mt-2">Verified Hotel Recommendations</h3>
+                <h3 className="text-xl md:text-2xl font-black text-slate-900 mt-2">Where to Stay</h3>
               </div>
-              <div className="text-right text-xs">
-                <span className="text-slate-400 block font-bold">Ranking Score Formula</span>
-                <span className="font-mono text-teal-800 font-extrabold">Rating(40%) + Dist(20%) + Price(20%) + Reviews(20%)</span>
               </div>
             </div>
 
@@ -505,9 +492,9 @@ export default function TripViewerPage() {
                     </div>
 
                     <div>
-                      <h4 className="font-black text-slate-900 text-sm leading-snug line-clamp-2">{item.data?.name || "Verified Hotel"}</h4>
+                      <h4 className="font-black text-slate-900 text-sm leading-snug line-clamp-2">{item.data?.name || "Hotel"}</h4>
                       <p className="text-[11px] text-slate-500 mt-1 flex items-center gap-1 line-clamp-1">
-                        <MapPin className="w-3 h-3 text-rose-500 shrink-0" /> {item.data?.address || "Verified Coordinates"}
+                        <MapPin className="w-3 h-3 text-rose-500 shrink-0" /> {item.data?.address || ""}
                       </p>
                     </div>
 
@@ -516,9 +503,7 @@ export default function TripViewerPage() {
                         <span className="text-lg font-black text-slate-950 font-mono">₹{item.data?.pricePerNight?.toLocaleString('en-IN') || 2500}</span>
                         <span className="text-[10px] text-slate-400 font-bold"> / night</span>
                       </div>
-                      <span className="text-[10px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
-                        Score: {item.data?.rankingScore || 94.5}/100
-                      </span>
+                      </div>
                     </div>
 
                     <div className="space-y-1 text-[11px] text-slate-600 bg-white p-2.5 rounded-xl border border-slate-200/60">
@@ -541,7 +526,78 @@ export default function TripViewerPage() {
           </div>
         )}
 
-        {/* Phase 3: Arrival & Departure Concierge Engine Banner */}
+        {/* Quick Booking Links */}
+        {trip.affiliateLinks && (
+          <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
+            <div className="border-b border-slate-100 pb-4">
+              <span className="px-3 py-1 bg-blue-50 border border-blue-200 rounded-full text-[10px] font-black text-blue-700 uppercase tracking-widest font-sora">
+                Book Now
+              </span>
+              <h3 className="text-xl md:text-2xl font-black text-slate-900 mt-2">Quick Booking Links</h3>
+              <p className="text-xs text-slate-500 mt-1">Compare prices across platforms — we don't charge any commission.</p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Hotels */}
+              {trip.affiliateLinks.hotels && trip.affiliateLinks.hotels.length > 0 && (
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-teal-700">🏨 Hotels</span>
+                  <div className="space-y-2">
+                    {trip.affiliateLinks.hotels.map((h: any, i: number) => (
+                      <a key={i} href={h.url} target="_blank" rel="noreferrer" className="block w-full py-2 px-3 bg-white hover:bg-teal-50 border border-slate-200 hover:border-teal-300 rounded-xl text-xs font-bold text-slate-800 transition-all text-center">
+                        {h.platform} →
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Flights */}
+              {trip.affiliateLinks.flights && trip.affiliateLinks.flights.length > 0 && (
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-blue-700">✈️ Flights</span>
+                  <div className="space-y-2">
+                    {trip.affiliateLinks.flights.map((f: any, i: number) => (
+                      <a key={i} href={f.url} target="_blank" rel="noreferrer" className="block w-full py-2 px-3 bg-white hover:bg-blue-50 border border-slate-200 hover:border-blue-300 rounded-xl text-xs font-bold text-slate-800 transition-all text-center">
+                        {f.platform} →
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Buses */}
+              {trip.affiliateLinks.buses && trip.affiliateLinks.buses.length > 0 && (
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-orange-700">🚌 Buses</span>
+                  <div className="space-y-2">
+                    {trip.affiliateLinks.buses.map((b: any, i: number) => (
+                      <a key={i} href={b.url} target="_blank" rel="noreferrer" className="block w-full py-2 px-3 bg-white hover:bg-orange-50 border border-slate-200 hover:border-orange-300 rounded-xl text-xs font-bold text-slate-800 transition-all text-center">
+                        {b.platform} →
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Activities */}
+              {trip.affiliateLinks.activities && trip.affiliateLinks.activities.length > 0 && (
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-purple-700">🎯 Activities</span>
+                  <div className="space-y-2">
+                    {trip.affiliateLinks.activities.map((a: any, i: number) => (
+                      <a key={i} href={a.url} target="_blank" rel="noreferrer" className="block w-full py-2 px-3 bg-white hover:bg-purple-50 border border-slate-200 hover:border-purple-300 rounded-xl text-xs font-bold text-slate-800 transition-all text-center">
+                        {a.platform} →
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Arrival & Departure */}
         {trip.conciergeWorkflow && (
           <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-teal-950 rounded-3xl p-6 sm:p-8 text-white shadow-xl border border-teal-500/30 space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/10 pb-4">
@@ -634,7 +690,7 @@ export default function TripViewerPage() {
           ))}
         </div>
 
-        {/* Phase 15: Travel Progress Indicator */}
+        {/* Travel Progress */}
         <div className="bg-gradient-to-r from-slate-900 via-teal-950 to-slate-900 text-white p-4 rounded-2xl border border-teal-500/30 flex flex-col sm:flex-row justify-between items-center gap-4 shadow-md">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-teal-500/20 rounded-xl border border-teal-400/30">
@@ -748,15 +804,15 @@ export default function TripViewerPage() {
           {/* Panel 2: Food Intelligence & Spends Engine (5 Cols) */}
           <div className="lg:col-span-5 space-y-6">
             
-            {/* PHASE 5: FOOD INTELLIGENCE ENGINE */}
+            {/* Food Recommendations */}
             <div className="bg-white border border-[#E5E7EB] rounded-3xl p-6 shadow-xs space-y-5">
               <div className="border-b border-slate-100 pb-3 flex justify-between items-start flex-wrap gap-2">
                 <div>
                   <span className="px-2.5 py-0.5 bg-amber-50 border border-amber-200 rounded-full text-[10px] font-black text-amber-800 uppercase tracking-widest font-sora">
-                    Phase 5 Food Intelligence Engine
+                    Food Recommendations
                   </span>
                   <h4 className="text-base sm:text-lg font-black text-slate-900 mt-1.5 flex items-center gap-2">
-                    <Utensils className="w-5 h-5 text-amber-500 shrink-0" /> Verified Restaurant Recommendations
+                    <Utensils className="w-5 h-5 text-amber-500 shrink-0" /> Restaurant Recommendations
                   </h4>
                 </div>
                 <div className="text-right text-[11px] bg-slate-50 p-2 rounded-xl border border-slate-200">
@@ -797,7 +853,7 @@ export default function TripViewerPage() {
                       <div className="flex justify-between items-start gap-2">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="px-2.5 py-0.5 bg-amber-500 text-white rounded-md text-[10px] font-black uppercase tracking-wider">
-                            {rst.categoryLabel || rst.mealType || "Verified Dining"}
+                            {rst.categoryLabel || rst.mealType || "Dining"}
                           </span>
                           <h5 className="font-black text-slate-900 text-sm">{rst.name}</h5>
                         </div>
@@ -837,14 +893,14 @@ export default function TripViewerPage() {
               </div>
             </div>
 
-            {/* PHASE 8: BUDGET INTELLIGENCE ENGINE CARD */}
+            {/* Budget Breakdown */}
             <div className="bg-white border border-teal-200 rounded-3xl p-6 shadow-md space-y-6">
               <div className="border-b border-slate-100 pb-3 flex justify-between items-center flex-wrap gap-2">
                 <div>
                   <span className="px-2.5 py-0.5 bg-teal-50 border border-teal-200 rounded-full text-[10px] font-black text-teal-700 uppercase tracking-widest font-sora">
-                    Phase 8 Budget Intelligence Engine
+                    Budget Breakdown
                   </span>
-                  <h4 className="text-base font-black text-slate-900 uppercase tracking-wider font-sora mt-1">Intelligent Allocation & Spend Tracker</h4>
+                  <h4 className="text-base font-black text-slate-900 uppercase tracking-wider font-sora mt-1">Budget Allocation & Spending</h4>
                 </div>
                 <span className="text-xs font-black bg-emerald-100 text-emerald-800 px-3 py-1 rounded-xl uppercase">
                   Score: {trip.budgetTracker?.budgetHealthScore || 98}/100
@@ -950,13 +1006,13 @@ export default function TripViewerPage() {
 
         </div>
 
-        {/* PHASE 6: MAP EXPERIENCE ENGINE */}
+        {/* Interactive Map */}
         {trip.mapExperience && (
           <div className="bg-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl space-y-6 border border-slate-800">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-800 pb-5">
               <div>
                 <span className="px-3 py-1 bg-teal-500/20 text-teal-300 border border-teal-500/30 rounded-full text-[10px] font-black uppercase tracking-widest">
-                  Phase 6 Map Experience Engine
+                  Interactive Map
                 </span>
                 <h3 className="text-xl sm:text-2xl font-black mt-2 flex items-center gap-2.5 font-sora">
                   <MapIcon className="w-6 h-6 text-teal-400 shrink-0" /> Interactive Travel Map & Timeline Playback
@@ -1024,7 +1080,7 @@ export default function TripViewerPage() {
                             <span className="text-[10px] uppercase font-black px-2 py-0.5 rounded bg-teal-500/20 text-teal-300 border border-teal-500/30">
                               {currStep?.type?.toUpperCase() || "MARKER"}
                             </span>
-                            <h4 className="text-lg font-black text-white mt-1.5">{currStep?.name || "Verified Landmark"}</h4>
+                            <h4 className="text-lg font-black text-white mt-1.5">{currStep?.name || "Landmark"}</h4>
                             <p className="text-xs text-slate-400 font-mono mt-0.5">Coords: {currStep?.lat?.toFixed(4)}, {currStep?.lon?.toFixed(4)}</p>
                           </div>
                           <div className="text-right shrink-0 bg-slate-950 p-2.5 rounded-xl border border-slate-800">
@@ -1160,7 +1216,7 @@ export default function TripViewerPage() {
         <button onClick={() => window.print()} className="flex flex-col items-center text-slate-400 hover:text-teal-600"><Download className="w-5 h-5" /><span className="text-[10px] font-bold mt-1">Export</span></button>
       </nav>
 
-      {/* PHASE 15 FLOATING AI CONCIERGE WIDGET */}
+      {/* AI Travel Assistant */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
         {showConcierge && (
           <div className="w-80 sm:w-96 bg-slate-900 border border-teal-500/40 rounded-3xl shadow-2xl overflow-hidden mb-4 animate-fade-in text-white flex flex-col max-h-[480px]">
