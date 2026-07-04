@@ -1488,7 +1488,20 @@ export default function TripViewerPage() {
                                   <p className="text-[9px] text-slate-400 uppercase font-mono">{m.type}</p>
                                 </div>
                               </div>
-      </main>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          )}
+
+        </main>
+      )}
 
       {/* Sticky Mobile Bottom Navigation */}
       <nav className="block md:hidden bg-white border-t border-[#E5E7EB] fixed bottom-0 inset-x-0 z-40 px-4 py-3 flex justify-around shadow-lg">
