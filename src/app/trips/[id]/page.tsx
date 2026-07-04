@@ -1491,8 +1491,9 @@ export default function TripViewerPage() {
                             ))}
                           </div>
                         </div>
-                      );
-                    })()}
+                      </div>
+                    );
+                  })()}
                   </div>
                 </div>
 
