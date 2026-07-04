@@ -389,7 +389,6 @@ export default function TripViewerPage() {
                   </span>
                 </h3>
               </div>
-              </div>
             </div>
 
             {trip.validationEngine.warningMessage && (
@@ -435,7 +434,6 @@ export default function TripViewerPage() {
                 </span>
                 <h3 className="text-xl md:text-2xl font-black text-slate-900 mt-2">Top Picks For You</h3>
               </div>
-              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -445,7 +443,6 @@ export default function TripViewerPage() {
                     <div className="flex justify-between items-start gap-1">
                       <span className="px-2 py-0.5 bg-amber-100 text-amber-800 rounded text-[10px] font-black uppercase tracking-wider">
                         #{idx + 1} • {rec.category}
-                      </span>
                       </span>
                     </div>
                     <h4 className="font-extrabold text-slate-900 text-base line-clamp-1">{rec.name}</h4>
@@ -470,7 +467,6 @@ export default function TripViewerPage() {
                   Hotel Options
                 </span>
                 <h3 className="text-xl md:text-2xl font-black text-slate-900 mt-2">Where to Stay</h3>
-              </div>
               </div>
             </div>
 
@@ -502,7 +498,6 @@ export default function TripViewerPage() {
                       <div>
                         <span className="text-lg font-black text-slate-950 font-mono">₹{item.data?.pricePerNight?.toLocaleString('en-IN') || 2500}</span>
                         <span className="text-[10px] text-slate-400 font-bold"> / night</span>
-                      </div>
                       </div>
                     </div>
 
