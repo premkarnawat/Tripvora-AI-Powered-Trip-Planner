@@ -1498,7 +1498,6 @@ export default function TripViewerPage() {
                 </div>
 
               </div>
-            </div>
           )}
 
         </main>
