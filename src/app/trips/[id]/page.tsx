@@ -472,8 +472,9 @@ export default function TripViewerPage() {
                       Progress: <span className="text-white">{activeStepIdx + 1}</span> / {steps.length}
                     </div>
                     </div>
-                  );
-                })()}
+                  </div>
+                );
+              })()}
               </div>
             </div>
           </div>
