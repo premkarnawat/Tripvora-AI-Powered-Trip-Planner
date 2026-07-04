@@ -693,12 +693,12 @@ export default function TripViewerPage() {
             </div>
             <div>
               <h4 className="text-xs font-black uppercase tracking-wider text-teal-300">Regional Trip Progress</h4>
-              <p className="text-sm font-bold text-white mt-0.5">Day {activeDay} of {totalDaysList.length} • {currentSlots.length} Verified Stops Sequenced</p>
+              <p className="text-sm font-bold text-white mt-0.5">Day {activeDay} of {totalDaysList.length} • {currentSlots.length} stops planned</p>
             </div>
           </div>
           <div className="w-full sm:w-64 space-y-1.5">
             <div className="flex justify-between text-[11px] font-mono text-slate-300">
-              <span>Execution Status</span>
+              <span>Progress</span>
               <span className="text-teal-400 font-bold">{Math.round((activeDay / totalDaysList.length) * 100)}% Completed</span>
             </div>
             <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden p-0.5 border border-slate-700">
@@ -796,7 +796,7 @@ export default function TripViewerPage() {
             </div>
           </div>
 
-          {/* Panel 2: Food Intelligence & Spends Engine (5 Cols) */}
+          {/* Panel 2: Food & Budget (5 Cols) */}
           <div className="lg:col-span-5 space-y-6">
             
             {/* Food Recommendations */}
@@ -838,8 +838,7 @@ export default function TripViewerPage() {
               {/* 8 Categorized Restaurant Recommendations */}
               <div className="pt-3 border-t border-slate-100 space-y-3">
                 <div className="flex justify-between items-center">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Categorized Verified Database (8 Categories):</p>
-                  <span className="text-[10px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">Timings & Coordinates Verified</span>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Restaurants nearby:</p>
                 </div>
 
                 <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
@@ -864,8 +863,8 @@ export default function TripViewerPage() {
                           <span className="font-mono font-black text-slate-900">{rst.priceRange || `₹${rst.estimatedCost}`}</span>
                         </div>
                         <div>
-                          <span className="text-slate-400 block text-[9px] font-bold uppercase">Distance (Geo Rule)</span>
-                          <span className="font-bold text-teal-700">📍 {rst.distance || "1.2 km (Verified ≤3km)"}</span>
+                          <span className="text-slate-400 block text-[9px] font-bold uppercase">Distance</span>
+                          <span className="font-bold text-teal-700">📍 {rst.distance || "Nearby"}</span>
                         </div>
                         <div>
                           <span className="text-slate-400 block text-[9px] font-bold uppercase">Operating Timings</span>
@@ -1050,7 +1049,7 @@ export default function TripViewerPage() {
                     <span className="font-mono font-bold text-slate-200">OSRM Center: {trip.mapExperience.centerLat?.toFixed(4)}, {trip.mapExperience.centerLon?.toFixed(4)}</span>
                   </div>
                   <span className="text-[10px] font-extrabold bg-teal-950 text-teal-300 px-2.5 py-0.5 rounded border border-teal-800">
-                    {trip.mapExperience.routingEngine || "OpenRouteService Verified"}
+                    {trip.mapExperience.routingEngine || "Route Data"}
                   </span>
                 </div>
 
@@ -1145,7 +1144,7 @@ export default function TripViewerPage() {
 
                       {/* Displaying all 6 requested markers */}
                       <div className="pt-2 border-t border-slate-800 space-y-2">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Verified GIS Markers Legend:</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Map Markers:</p>
                         <div className="grid grid-cols-2 gap-1.5 max-h-[190px] overflow-y-auto pr-1 text-[11px]">
                           {(trip.mapExperience.markers || []).map((m: any, idx: number) => (
                             <div key={idx} className="p-2 bg-slate-900/80 border border-slate-800 rounded-xl flex items-center gap-2 truncate">

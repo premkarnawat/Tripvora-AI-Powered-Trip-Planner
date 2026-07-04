@@ -11,6 +11,9 @@ import { generateItinerary, type AIContext } from '@/lib/engines/ai-generator';
 import { sanitize } from '@/lib/engines/sanitizer';
 import { buildTravelerDNA, rankHotels, rankRestaurants, rankAttractions } from '@/lib/engines/traveler-dna';
 import { generateAffiliateLinks } from '@/lib/engines/affiliates';
+import { clusterByProximity } from '@/lib/engines/cluster';
+import { calculateBudget } from '@/lib/engines/budget';
+import { buildSchedule, type DaySchedule } from '@/lib/engines/schedule';
 
 export const maxDuration = 60;
 
@@ -395,6 +398,37 @@ export async function POST(request: Request) {
       weather ? { temperature: weather.temperature, rainProbability: weather.rainProbability } : null
     ) as OSMPlace[];
 
+    // ── Step 3.7: Geo-cluster attractions by walking tolerance ──
+    const walkTolerance = (body.walkingTolerance || 'medium') as 'minimal' | 'low' | 'medium' | 'high';
+    const clusters = clusterByProximity(
+      rankedAttractions.slice(0, 30).map(a => ({ name: a.name, lat: a.lat, lon: a.lon, category: a.category, distanceKm: a.distanceKm })),
+      body.duration,
+      walkTolerance
+    );
+
+    // ── Step 3.8: Compute proper budget breakdown ──
+    const budgetBreakdown = calculateBudget(
+      body.budget,
+      body.duration,
+      body.travelers,
+      body.comfortLevel,
+      transport?.estimatedFare || 0,
+      body.travelType
+    );
+
+    // ── Step 3.9: Build intelligent schedule from clusters ──
+    const scheduleData: DaySchedule[] = buildSchedule(
+      body.duration,
+      body.arrivalTime,
+      body.departureTime,
+      body.travelPace,
+      body.travelType,
+      clusters.map(c => ({ places: c.places.map(p => ({ name: p.name, category: p.category })), totalWalkingKm: c.totalWalkingKm })),
+      rankedRestaurants.slice(0, 10).map(r => ({ name: r.name, cuisine: r.cuisine })),
+      rankedHotels[0]?.name || body.destination + ' Hotel',
+      transport?.durationHours || 0
+    );
+
     // ── Step 4: Build AI context from RANKED real data ──
     const aiContext: AIContext = {
       origin: body.origin,
@@ -647,6 +681,23 @@ export async function POST(request: Request) {
         children: body.travelers.children,
       }),
       prebookedItems: body.prebookedItems,
+      // New engine outputs
+      geoClusters: clusters.map((c, i) => ({
+        id: i + 1,
+        centroid: c.centroid,
+        placesCount: c.places.length,
+        totalWalkingKm: c.totalWalkingKm,
+        suggestedOrder: c.suggestedOrder,
+        places: c.places.slice(0, 8).map(p => ({ name: p.name, category: p.category })),
+      })),
+      engineBudget: budgetBreakdown,
+      schedule: scheduleData.map(d => ({
+        day: d.day,
+        date: d.date,
+        theme: d.theme,
+        totalActiveHours: d.totalActiveHours,
+        slots: d.slots,
+      })),
     };
 
     // ── Background persistence (non-blocking) ──
