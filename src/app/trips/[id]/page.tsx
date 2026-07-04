@@ -314,7 +314,10 @@ export default function TripViewerPage() {
 
               {/* Right Column: Fullscreen sticky animated SVG map (5 Cols) */}
               <div className="hidden lg:block lg:col-span-5 h-[calc(100vh-180px)] sticky top-[150px]">
-                <div className="h-full backdrop-blur-md bg-slate-900/60 border border-white/10 rounded-3xl p-6 shadow-2xl flex flex-col justify-between relative overflow-hidden">
+                {(() => {
+                  const steps = (trip.mapExperience?.dayRoutes || []).find((r: any) => r.day === activeDay)?.steps || [];
+                  return (
+                    <div className="h-full backdrop-blur-md bg-slate-900/60 border border-white/10 rounded-3xl p-6 shadow-2xl flex flex-col justify-between relative overflow-hidden">
                   {/* Grid overlay */}
                   <div className="absolute inset-0 opacity-5 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px]" />
 
@@ -468,8 +471,9 @@ export default function TripViewerPage() {
                     <div className="text-[11px] text-slate-400 font-mono font-bold">
                       Progress: <span className="text-white">{activeStepIdx + 1}</span> / {steps.length}
                     </div>
-                  </div>
-                </div>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           </div>
