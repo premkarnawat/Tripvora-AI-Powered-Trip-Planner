@@ -237,8 +237,17 @@ export async function POST(request: Request) {
 
     // ── Step 3.1: STRICT REAL DATA VALIDATION ──
     if (places.hotels.length === 0 || places.restaurants.length === 0 || places.attractions.length === 0) {
+      const missing = [];
+      if (places.hotels.length === 0) missing.push('Hotels');
+      if (places.restaurants.length === 0) missing.push('Restaurants');
+      if (places.attractions.length === 0) missing.push('Attractions');
+
       return NextResponse.json(
-        { success: false, error: 'INSUFFICIENT_REAL_DATA', message: 'Unable to discover enough verified hotels, restaurants, or attractions in this region.' },
+        { 
+          status: 'INSUFFICIENT_REAL_DATA', 
+          score: 15,
+          missing 
+        },
         { status: 422 }
       );
     }
