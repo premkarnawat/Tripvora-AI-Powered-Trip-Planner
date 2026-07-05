@@ -421,13 +421,6 @@ export async function POST(request: Request) {
       };
     });
 
-    const destinationIntelligence = places.attractions.slice(0, 20).map(a => ({
-      name: a.name,
-      category: 'attraction',
-      rank: (a.distanceKm ?? 99) < 3 ? 'must visit' : 'recommended',
-      distance: `${(a.distanceKm ?? 0).toFixed(1)} km`,
-      description: `Located at (${a.lat.toFixed(4)}, ${a.lon.toFixed(4)})`,
-    }));
 
     // ── Step 6: Final JSON Assembly (Phase 23 Strict Match) ──
     const response = {
