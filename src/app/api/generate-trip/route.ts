@@ -6,7 +6,11 @@ import { discoverPlaces, type Place } from '@/lib/engines/places';
 import { getWeather } from '@/lib/engines/weather';
 import { discoverTransport } from '@/lib/engines/transport';
 import { getWikiContext } from '@/lib/engines/wiki';
-import { getPlaceImage } from '@/lib/engines/images';
+import { getDestinationImage } from '@/lib/engines/images';
+import { buildTripContext } from '@/lib/engines/context';
+import { buildGroupAllocation } from '@/lib/engines/group';
+import { discoverHiddenGems } from '@/lib/engines/hidden-gems';
+import { calculateComfort } from '@/lib/engines/comfort';
 import { generateNarrative, type AIContext } from '@/lib/engines/ai-generator';
 import { buildTravelerDNA, rankHotels, rankRestaurants, rankAttractions } from '@/lib/engines/traveler-dna';
 import { generateAffiliateLinks } from '@/lib/engines/affiliates';
@@ -193,12 +197,27 @@ export async function POST(request: Request) {
     const duration = Math.max(1, Math.ceil((new Date(body.end_date).getTime() - new Date(body.start_date).getTime()) / 86400000));
     
     // ── Step 2: Parallel data fetching ──
-    const [places, weather, wiki, emergency] = await Promise.all([
+    const [places, weather, wiki, emergency, destinationImage] = await Promise.all([
       timedStage('POI_DISCOVERY', () => discoverPlaces(geo.lat, geo.lon), { countFn: (p) => p.attractions.length }),
       timedStage('WEATHER', () => getWeather(geo.lat, geo.lon)),
       timedStage('SANITIZATION', () => getWikiContext(body.destination, geo.lat, geo.lon)),
       timedStage('EMERGENCY', () => discoverEmergencyContacts(geo.lat, geo.lon)),
+      timedStage('IMAGE_ENGINE', () => getDestinationImage(body.destination)),
     ]);
+
+    // ── Step 2.5: Context & Group Engines ──
+    const tripContext = await timedStage('TRIP_CONTEXT', async () => buildTripContext(
+      body.arrival_datetime,
+      geo.lat,
+      geo.lon,
+      duration
+    ));
+
+    const groupAllocation = await timedStage('GROUP_ENGINE', async () => buildGroupAllocation(
+      { boys: body.boys, girls: body.girls, children: body.children, total_travelers: body.travelers },
+      body.budget,
+      body.trip_type
+    ));
 
     // ── Step 3: Transport discovery ──
     const transport = await timedStage('ROUTING', () => discoverTransport(
@@ -248,13 +267,15 @@ export async function POST(request: Request) {
       weather ? { temperature: weather.temperature, rainProbability: weather.rainProbability } : null
     ) as Place[];
 
-    // ── Step 3.7: Geo-cluster attractions ──
+    // ── Step 3.7: Geo-cluster & Hidden Gems ──
     const walkTolerance = (body.walking || 'medium') as 'minimal' | 'low' | 'medium' | 'high';
     const clusters = await timedStage('CLUSTERING', async () => clusterByProximity(
       rankedAttractions.slice(0, 30).map(a => ({ name: a.name, lat: a.lat, lon: a.lon, category: a.category, distanceKm: a.distanceKm })),
       duration,
       walkTolerance
     ));
+
+    const hiddenGems = await timedStage('HIDDEN_GEMS', async () => discoverHiddenGems(rankedAttractions));
 
     // ── Step 3.8: Compute proper budget breakdown ──
     const budgetBreakdown = await timedStage('BUDGET', async () => calculateBudget(
@@ -266,9 +287,17 @@ export async function POST(request: Request) {
       body.trip_type
     ));
 
+    // ── Step 3.9: Comfort & Schedule Optimizer ──
+    const comfortMetrics = await timedStage('COMFORT_ENGINE', async () => calculateComfort(
+      body.walking,
+      body.pace,
+      weather ? { temperature: weather.temperature, rainProbability: weather.rainProbability } : null,
+      transport.durationHours
+    ));
+
     const scheduleData: DaySchedule[] = await timedStage('SCHEDULING', async () => buildSchedule(
       duration,
-      body.arrival_datetime.includes(' ') ? body.arrival_datetime.split(' ')[1] : '',
+      tripContext.arrival_day_start,
       '', // Let engine decide departure time based on pace
       body.pace,
       body.trip_type,
@@ -394,11 +423,15 @@ export async function POST(request: Request) {
       description: `Located at (${a.lat.toFixed(4)}, ${a.lon.toFixed(4)})`,
     }));
 
+    // ── Step 6: Final JSON Assembly ──
     const response = {
-      id: `tripvora-${Date.now()}`,
-      tripOverview: narrative.tripOverview,
-      destination: body.destination,
-      destinationSummary: wiki?.extract?.slice(0, 300) || `Explore ${body.destination} with a personally planned itinerary.`,
+      status: 'SUCCESS',
+      id: crypto.randomUUID(),
+      tripData: {
+        heroImage: destinationImage,
+        tripOverview: narrative.tripOverview,
+        destination: body.destination,
+        destinationSummary: wiki?.extract?.slice(0, 300) || `Explore ${body.destination} with a personally planned itinerary.`,
       totalDays: duration,
       totalBudget: body.budget,
       estimatedCost: Math.floor(body.budget * 0.85),
@@ -451,6 +484,10 @@ export async function POST(request: Request) {
       },
       destinationIntelligence,
       travelerDNA: dna,
+      tripContext,
+      groupAllocation,
+      comfortMetrics,
+      hiddenGems: hiddenGems.slice(0, 3),
       hotels: buildHotels(rankedHotels as Place[], body.budget, duration, body.destination),
       restaurants: rankedRestaurants.slice(0, 12).map((r) => ({
         name: r.name,
@@ -487,8 +524,8 @@ export async function POST(request: Request) {
         });
         supabase.from('destination_cache').upsert({
           destination_name: body.destination.toLowerCase().trim(),
-          overview: response.tripOverview,
-          tags: [body.travelType],
+          overview: response.tripData.tripOverview,
+          tags: [body.trip_type],
         }, { onConflict: 'destination_name' }).then();
       }
     } catch { /* ignore persistence error */ }
