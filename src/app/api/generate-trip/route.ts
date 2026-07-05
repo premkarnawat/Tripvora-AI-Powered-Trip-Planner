@@ -485,6 +485,7 @@ export async function POST(request: Request) {
       }),
     };
 
+    // ── Step 7: Database Persistence (Phase 3 Strict Real-world mapping) ──
     try {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
       const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -493,13 +494,90 @@ export async function POST(request: Request) {
         const supabase = createServerClient(supabaseUrl, supabaseAnon, {
           cookies: { getAll() { return cookieStore.getAll(); }, setAll() {} },
         });
-        supabase.from('destination_cache').upsert({
-          destination_name: body.destination.toLowerCase().trim(),
-          overview: response.trip.tripOverview,
-          tags: [body.trip_type],
-        }, { onConflict: 'destination_name' }).then();
+
+        // 1. Insert Trip
+        const { data: tripData } = await supabase.from('trips').insert({
+          title: `Trip to ${body.destination}`,
+          source: body.source,
+          destination: body.destination,
+          trip_type: body.trip_type,
+          group_type: body.trip_type, // Fallback as group_type
+          budget: body.budget,
+          currency: 'INR',
+          start_date: body.start_date,
+          end_date: body.end_date,
+          travelers: body.travelers
+        }).select('id').single();
+
+        if (tripData?.id) {
+          const tripId = tripData.id;
+
+          // 2. Parallel Inserts for relational tables
+          await Promise.allSettled([
+            supabase.from('traveler_dna').insert({
+              trip_id: tripId,
+              profile: dna.profile,
+              comfort_score: dna.comfort_score,
+              crowd_tolerance: dna.crowd_tolerance,
+              walking_limit: dna.walking_limit,
+              wakeup_time: dna.wake_up,
+              sleep_time: dna.sleep,
+              activity_capacity: dna.activities_per_day,
+              transport_preference: dna.transport,
+              food_preference: dna.food_priority
+            }),
+            
+            supabase.from('destinations').insert({
+              trip_id: tripId,
+              name: body.destination,
+              lat: geo.lat,
+              lon: geo.lon,
+              sunrise: tripContext.sunrise,
+              sunset: tripContext.sunset
+            }),
+
+            supabase.from('transport').insert({
+              trip_id: tripId,
+              mode: transport.suggestedMode,
+              source: body.source,
+              destination: body.destination,
+              distance: transport.distanceKm,
+              duration: transport.durationHours,
+              fare: transport.estimatedFare,
+              comfort_score: dna.comfort_score
+            }),
+
+            response.hotels.length > 0 && supabase.from('hotels').insert(
+              response.hotels.map(h => ({
+                trip_id: tripId,
+                name: h.name,
+                price: h.price,
+                rating: h.rating,
+                image: h.image,
+                affiliate_link: h.affiliate
+              }))
+            ),
+
+            response.restaurants.length > 0 && supabase.from('restaurants').insert(
+              response.restaurants.map(r => ({
+                trip_id: tripId,
+                name: r.name,
+                cuisine: r.cuisine,
+                location: r.address
+              }))
+            ),
+
+            supabase.from('poi').insert([
+              ...response.poi.iconic_places.map(p => ({ trip_id: tripId, name: p.name, category: p.category, lat: p.lat, lon: p.lon, rating: p.rating, priority_score: 95 })),
+              ...response.poi.hidden_gems.map(p => ({ trip_id: tripId, name: p.name, category: p.category, lat: p.lat, lon: p.lon, rating: p.rating, priority_score: 100 })),
+              ...response.poi.family_places.map(p => ({ trip_id: tripId, name: p.name, category: p.category, lat: p.lat, lon: p.lon, rating: p.rating, priority_score: 80 }))
+            ])
+          ]);
+        }
       }
-    } catch { /* ignore persistence error */ }
+    } catch (e) {
+      console.error('Database Persistence Error:', e);
+    }
 
     return NextResponse.json(await timedStage('FINAL_JSON', async () => response));
   } catch (err: unknown) {
