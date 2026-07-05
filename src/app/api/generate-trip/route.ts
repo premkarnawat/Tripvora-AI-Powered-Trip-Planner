@@ -537,7 +537,7 @@ export async function POST(request: Request) {
               distance: transport.distanceKm,
               duration: transport.durationHours,
               fare: transport.estimatedFare,
-              comfort_score: dna.comfort_score
+              comfort_score: dna.comfortLevel
             }),
 
             response.hotels.length > 0 && supabase.from('hotels').insert(
