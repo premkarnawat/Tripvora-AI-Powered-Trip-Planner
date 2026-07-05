@@ -19,7 +19,13 @@ export type PipelineStage =
   | 'GEMINI'
   | 'SANITIZATION'
   | 'IMAGES'
+  | 'IMAGE_ENGINE'
   | 'EMERGENCY'
+  | 'TRIP_CONTEXT'
+  | 'GROUP_ENGINE'
+  | 'HIDDEN_GEMS'
+  | 'DESTINATION_INTEL'
+  | 'COMFORT_ENGINE'
   | 'FINAL_JSON';
 
 export interface StageLog {
