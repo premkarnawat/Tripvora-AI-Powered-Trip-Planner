@@ -94,8 +94,14 @@ export default function TripViewerPage() {
     );
   }
 
-  const trip = realTripData;
-  const totalDays = trip.totalDays || trip.days?.length || 5;
+  const tripData = realTripData;
+  const trip = tripData?.trip || tripData || {};
+  const days = tripData?.days || trip?.days || [];
+  const budget = tripData?.budget || tripData?.budgetTracker || {};
+  const travelerDNA = tripData?.traveler_dna || tripData?.travelerDNA || {};
+  const weather = tripData?.weather || tripData?.weatherEngine || {};
+
+  const totalDays = trip.totalDays || days?.length || 5;
   const totalDaysList = Array.from({ length: totalDays }, (_, i) => i + 1);
 
   const getPhotoSpot = (name: string) => {
@@ -120,9 +126,9 @@ export default function TripViewerPage() {
     return { score, status };
   };
 
-  const originHub = trip.travelToDestination?.userLocation || trip.origin || "Origin";
+  const originHub = tripData.transport?.origin || trip.origin || "Origin";
   const destHub = trip.destination || "Destination";
-  const travelModeSymbol = trip.travelerDNA?.comfortLevel === "Luxury" ? "✈️" : "🚍";
+  const travelModeSymbol = travelerDNA?.comfortLevel === "Luxury" ? "✈️" : "🚍";
 
   return (
     <div ref={pageContainerRef} className="bg-[#050816] text-white min-h-screen relative font-inter select-none overflow-x-hidden">
@@ -139,8 +145,8 @@ export default function TripViewerPage() {
           style={{ 
             scale: bgScale,
             backgroundImage: `url(${
-              trip.days?.[activeDay - 1]?.activities?.[activeStepIdx]?.imageUrl || 
-              trip.days?.[activeDay - 1]?.activities?.[0]?.imageUrl || 
+              days?.[activeDay - 1]?.activities?.[activeStepIdx]?.imageUrl || 
+              days?.[activeDay - 1]?.activities?.[0]?.imageUrl || 
               "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=1600&q=80"
             })`
           }}
@@ -206,15 +212,15 @@ export default function TripViewerPage() {
             </div>
             <div className="bg-white/5 border border-white/10 rounded-[32px] p-4 backdrop-blur-md">
               <p className="text-slate-400 uppercase font-black tracking-wider text-[9px]">Travel Style</p>
-              <p className="text-white font-extrabold text-sm mt-1">{trip.travelerDNA?.type || "Couple Adventure"}</p>
+              <p className="text-white font-extrabold text-sm mt-1">{travelerDNA?.type || "Couple Adventure"}</p>
             </div>
             <div className="bg-white/5 border border-white/10 rounded-[32px] p-4 backdrop-blur-md">
               <p className="text-slate-400 uppercase font-black tracking-wider text-[9px]">Weather</p>
-              <p className="text-white font-extrabold text-sm mt-1">{trip.weatherEngine?.temperature || 26}°C • {trip.weatherEngine?.currentWeather || "Clear"}</p>
+              <p className="text-white font-extrabold text-sm mt-1">{weather?.temperature || 26}°C • {weather?.currentWeather || "Clear"}</p>
             </div>
             <div className="bg-white/5 border border-white/10 rounded-[32px] p-4 backdrop-blur-md">
               <p className="text-slate-400 uppercase font-black tracking-wider text-[9px]">Budget</p>
-              <p className="text-white font-extrabold text-sm mt-1">₹{trip.budgetTracker?.totalBudget?.toLocaleString('en-IN') || trip.totalBudget?.toLocaleString('en-IN') || "15,000"}</p>
+              <p className="text-white font-extrabold text-sm mt-1">₹{budget?.totalBudget?.toLocaleString('en-IN') || trip.totalBudget?.toLocaleString('en-IN') || "15,000"}</p>
             </div>
           </motion.div>
 
@@ -247,7 +253,7 @@ export default function TripViewerPage() {
       <div className="relative z-10 max-w-6xl mx-auto px-4 md:px-8 pb-32 space-y-28">
         
         {totalDaysList.map(dayNum => {
-          const dayData = trip.days?.find((d: any) => d.day === dayNum) || { title: "Explore Location", activities: [] };
+          const dayData = days?.find((d: any) => d.day === dayNum) || { title: "Explore Location", activities: [] };
           const dayActivities = dayData.activities || [];
           
           return (
@@ -420,7 +426,7 @@ export default function TripViewerPage() {
           </div>
 
           <div className="space-y-5">
-            {trip.engineBudget?.categorySpend?.slice(0, 4).map((budgetCat: any, idx: number) => {
+            {(budget?.categorySpend || tripData.engineBudget?.categorySpend)?.slice(0, 4).map((budgetCat: any, idx: number) => {
               const colors = ["bg-[#14F1D9]", "bg-[#6C63FF]", "bg-amber-400", "bg-emerald-400", "bg-rose-400"];
               const icons = ["🏨", "🚕", "🍗", "🎯", "🚨"];
               const color = colors[idx % colors.length];
@@ -476,7 +482,7 @@ export default function TripViewerPage() {
               {/* Mini vector SVG projection */}
               <div className="w-full flex-1 bg-slate-950/50 rounded-[24px] border border-white/5 overflow-hidden flex items-center justify-center">
                 {(() => {
-                  const routes = trip.mapExperience?.dayRoutes || [];
+                  const routes = tripData.mapExperience?.dayRoutes || [];
                   const currRoute = routes.find((r: any) => r.day === activeDay) || routes[0];
                   const steps = currRoute?.steps || [];
 
@@ -492,10 +498,10 @@ export default function TripViewerPage() {
                     if (!isNaN(lon) && lon > maxLon) maxLon = lon;
                   });
 
-                  if (minLat === 90) minLat = trip.mapExperience?.centerLat || 15;
-                  if (maxLat === -90) maxLat = trip.mapExperience?.centerLat || 16;
-                  if (minLon === 180) minLon = trip.mapExperience?.centerLon || 73;
-                  if (maxLon === -180) maxLon = trip.mapExperience?.centerLon || 74;
+                  if (minLat === 90) minLat = tripData.mapExperience?.centerLat || 15;
+                  if (maxLat === -90) maxLat = tripData.mapExperience?.centerLat || 16;
+                  if (minLon === 180) minLon = tripData.mapExperience?.centerLon || 73;
+                  if (maxLon === -180) maxLon = tripData.mapExperience?.centerLon || 74;
 
                   if (maxLat === minLat) { maxLat += 0.01; minLat -= 0.01; }
                   if (maxLon === minLon) { maxLon += 0.01; minLon -= 0.01; }
@@ -554,8 +560,8 @@ export default function TripViewerPage() {
               </div>
 
               <div className="flex justify-between items-center text-[10px] text-slate-400 pt-1">
-                <span className="truncate max-w-[180px] font-bold text-white">📍 {trip.days?.[activeDay - 1]?.activities?.[activeStepIdx]?.title || "Active Spot"}</span>
-                <span className="shrink-0">{activeStepIdx + 1} / {trip.days?.[activeDay - 1]?.activities?.length || 1}</span>
+                <span className="truncate max-w-[180px] font-bold text-white">📍 {days?.[activeDay - 1]?.activities?.[activeStepIdx]?.title || "Active Spot"}</span>
+                <span className="shrink-0">{activeStepIdx + 1} / {days?.[activeDay - 1]?.activities?.length || 1}</span>
               </div>
             </div>
           )}

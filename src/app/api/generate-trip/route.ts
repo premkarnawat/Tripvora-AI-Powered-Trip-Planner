@@ -11,6 +11,7 @@ import { buildTripContext } from '@/lib/engines/context';
 import { buildGroupAllocation } from '@/lib/engines/group';
 import { discoverHiddenGems } from '@/lib/engines/hidden-gems';
 import { calculateComfort } from '@/lib/engines/comfort';
+import { buildDestinationIntelligence } from '@/lib/engines/destination';
 import { generateNarrative, type AIContext } from '@/lib/engines/ai-generator';
 import { buildTravelerDNA, rankHotels, rankRestaurants, rankAttractions } from '@/lib/engines/traveler-dna';
 import { generateAffiliateLinks } from '@/lib/engines/affiliates';
@@ -267,7 +268,7 @@ export async function POST(request: Request) {
       weather ? { temperature: weather.temperature, rainProbability: weather.rainProbability } : null
     ) as Place[];
 
-    // ── Step 3.7: Geo-cluster & Hidden Gems ──
+    // ── Step 3.7: Geo-cluster & Hidden Gems & Destination Intel ──
     const walkTolerance = (body.walking || 'medium') as 'minimal' | 'low' | 'medium' | 'high';
     const clusters = await timedStage('CLUSTERING', async () => clusterByProximity(
       rankedAttractions.slice(0, 30).map(a => ({ name: a.name, lat: a.lat, lon: a.lon, category: a.category, distanceKm: a.distanceKm })),
@@ -276,6 +277,11 @@ export async function POST(request: Request) {
     ));
 
     const hiddenGems = await timedStage('HIDDEN_GEMS', async () => discoverHiddenGems(rankedAttractions));
+    
+    const destinationIntelligence = await timedStage('DESTINATION_INTEL', async () => buildDestinationIntelligence(
+      [...rankedAttractions, ...rankedRestaurants, ...rankedHotels],
+      hiddenGems
+    ));
 
     // ── Step 3.8: Compute proper budget breakdown ──
     const budgetBreakdown = await timedStage('BUDGET', async () => calculateBudget(
@@ -423,82 +429,52 @@ export async function POST(request: Request) {
       description: `Located at (${a.lat.toFixed(4)}, ${a.lon.toFixed(4)})`,
     }));
 
-    // ── Step 6: Final JSON Assembly ──
+    // ── Step 6: Final JSON Assembly (Phase 23 Strict Match) ──
     const response = {
-      status: 'SUCCESS',
+      success: true,
       id: crypto.randomUUID(),
-      tripData: {
+      trip: {
+        destination: body.destination,
+        destinationSummary: wiki?.extract?.slice(0, 300) || `Explore ${body.destination}.`,
         heroImage: destinationImage,
+        totalDays: duration,
+        totalBudget: body.budget,
+        currency: 'INR',
         tripOverview: narrative.tripOverview,
-        destination: body.destination,
-        destinationSummary: wiki?.extract?.slice(0, 300) || `Explore ${body.destination} with a personally planned itinerary.`,
-      totalDays: duration,
-      totalBudget: body.budget,
-      estimatedCost: Math.floor(body.budget * 0.85),
-      currency: 'INR',
-      bestVisitingTime: '',
-      weatherConsiderations: weather ? `${weather.description}, ${weather.temperature}°C, ${weather.rainProbability}% rain` : 'Weather data unavailable',
-      weatherEngine: weather ? {
-        currentWeather: weather.description,
-        temperature: weather.temperature,
-        rainProbability: weather.rainProbability,
-        humidity: weather.humidity,
-        uvIndex: weather.uvIndex,
-        wind: weather.windSpeed,
-        weatherCode: weather.weatherCode,
-        weatherAdvice: weather.rainProbability > 60 ? 'Carry an umbrella — high chance of rain.' : weather.temperature > 38 ? 'Stay hydrated — extreme heat expected.' : 'Comfortable weather for exploring.',
-      } : undefined,
-      packingSuggestions: narrative.packingSuggestions,
-      safetyTips: narrative.safetyTips,
-      localTravelAdvice: narrative.localTravelAdvice,
-      emergencyContacts: emergency,
-      budgetTracker: budgetBreakdown,
-      travelToDestination: {
-        userLocation: body.source,
-        destination: body.destination,
-        options: [{
-          title: `${transport.suggestedMode}: ${body.source} → ${body.destination}`,
-          steps: transport.journeyLegs.map((leg, i) => ({
-            mode: i === 0 ? transport.suggestedMode : 'Connection',
-            cost: i === 0 ? transport.estimatedFare : 0,
-            duration: i === 0 ? `${transport.durationHours} hours` : '',
-          })),
-          totalCost: transport.estimatedFare,
-          totalDuration: `${transport.durationHours} hours`,
-        }],
+        packingSuggestions: narrative.packingSuggestions,
+        safetyTips: narrative.safetyTips,
+        localTravelAdvice: narrative.localTravelAdvice,
       },
-      transportAccess: {
+      traveler_dna: dna,
+      context: tripContext,
+      group: groupAllocation,
+      transport: {
         transportMode: transport.suggestedMode,
         sourceHub: transport.originHub,
         destinationHub: destHub,
         distanceKm: transport.distanceKm,
         duration: `${transport.durationHours} Hours`,
-        fare: `₹${transport.estimatedFare}`,
+        fare: transport.estimatedFare,
         journeyLegs: transport.journeyLegs,
-        feasibility: transport.feasibility,
       },
-      foodIntelligence: {
-        mustTryDish: places.restaurants[0]?.cuisine || 'Local cuisine',
-        bestVeg: places.restaurants.find(r => r.cuisine?.toLowerCase().includes('veg'))?.name || '',
-        bestNonVeg: places.restaurants.find(r => !r.cuisine?.toLowerCase().includes('veg'))?.name || '',
-      },
-      destinationIntelligence,
-      travelerDNA: dna,
-      tripContext,
-      groupAllocation,
-      comfortMetrics,
-      hiddenGems: hiddenGems.slice(0, 3),
       hotels: buildHotels(rankedHotels as Place[], body.budget, duration, body.destination),
       restaurants: rankedRestaurants.slice(0, 12).map((r) => ({
         name: r.name,
         cuisine: r.cuisine || 'Local',
-        address: `${(r.distanceKm ?? 0).toFixed(1)} km from center, ${body.destination}`,
+        address: `${(r.distanceKm ?? 0).toFixed(1)} km from center`,
       })),
-      days,
-      mapExperience: {
-        ...buildMap(geo, places),
-        dayRoutes,
-      },
+      poi: destinationIntelligence,
+      weather: weather ? {
+        currentWeather: weather.description,
+        temperature: weather.temperature,
+        rainProbability: weather.rainProbability,
+        weatherAdvice: weather.rainProbability > 60 ? 'Rain expected' : 'Clear',
+      } : {},
+      emergency: emergency,
+      budget: budgetBreakdown,
+      comfort: comfortMetrics,
+      days: days,
+      map: buildMap(geo, places),
       affiliateLinks: generateAffiliateLinks({
         origin: body.source,
         destination: body.destination,
@@ -507,11 +483,6 @@ export async function POST(request: Request) {
         adults: body.travelers,
         children: body.children,
       }),
-      prebookedItems: body.special_requests,
-      geoClusters: clusters,
-      engineBudget: budgetBreakdown,
-      schedule: scheduleData,
-      systemLogs: getPipelineLogs(),
     };
 
     try {
@@ -524,7 +495,7 @@ export async function POST(request: Request) {
         });
         supabase.from('destination_cache').upsert({
           destination_name: body.destination.toLowerCase().trim(),
-          overview: response.tripData.tripOverview,
+          overview: response.trip.tripOverview,
           tags: [body.trip_type],
         }, { onConflict: 'destination_name' }).then();
       }
