@@ -544,10 +544,10 @@ export async function POST(request: Request) {
               response.hotels.map(h => ({
                 trip_id: tripId,
                 name: h.name,
-                price: h.price,
+                price: h.pricePerNight,
                 rating: h.rating,
-                image: h.image,
-                affiliate_link: h.affiliate
+                image: h.imageUrl,
+                affiliate_link: h.affiliateLink
               }))
             ),
 
