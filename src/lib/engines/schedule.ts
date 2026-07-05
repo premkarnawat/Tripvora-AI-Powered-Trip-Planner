@@ -124,9 +124,14 @@ function allowsNightActivities(travelType: string): boolean {
   return t === 'bachelor' || t === 'friends';
 }
 
-function needsRestBreaks(travelType: string): boolean {
+function getRestIntervalMins(travelType: string, pace: string): number {
   const t = travelType.toLowerCase().trim();
-  return t === 'family' || t === 'senior';
+  const p = pace.toLowerCase().trim();
+  if (t === 'senior') return 90;
+  if (t === 'family') return 120;
+  if (p === 'relaxed') return 120;
+  if (p === 'packed') return 240;
+  return 180;
 }
 
 // ─── Build a single day's schedule ──────────────────────────────────
@@ -149,7 +154,7 @@ function buildDaySlots(
   let activityIndex = 0;
   let restaurantIndex = 0;
   let lastRestAt = startMinutes;
-  const insertRest = needsRestBreaks(travelType);
+  const restInterval = getRestIntervalMins(travelType, (maxActiveMinutes > 600 ? 'packed' : 'balanced'));
   const nightOk = allowsNightActivities(travelType);
   const activityCutoff = nightOk ? 1380 : 1200; // 23:00 or 20:00
 
@@ -191,11 +196,11 @@ function buildDaySlots(
         if (alreadyHas) continue;
 
         const restaurant = restaurants[restaurantIndex % Math.max(1, restaurants.length)];
-        const restaurantName = restaurant?.name;
+        const restaurantName = restaurant?.name || 'Exclusive Dining';
         const cuisine = restaurant?.cuisine;
 
-        const mealTitle = `${meal.name} at ${restaurantName}`;
-        const mealNotes = cuisine ? `${cuisine} cuisine` : `Local dining`;
+        const mealTitle = restaurantName ? `${meal.name} at ${restaurantName}` : `${meal.name} Experience`;
+        const mealNotes = cuisine ? `Savor authentic ${cuisine} flavors` : `Exclusive culinary experience`;
 
         if (cursor + meal.duration <= endMinutes) {
           slots.push({
@@ -228,8 +233,8 @@ function buildDaySlots(
     // Try to insert a meal
     if (tryInsertMeal()) continue;
 
-    // Insert rest break if needed (every 180 minutes of activity)
-    if (insertRest && (cursor - lastRestAt) >= 180 && cursor + 20 <= endMinutes) {
+    // Insert rest break if needed based on fatigue/pace
+    if ((cursor - lastRestAt) >= restInterval && cursor + 20 <= endMinutes) {
       slots.push({
         time: formatTime(cursor),
         endTime: formatTime(cursor + 20),
@@ -410,15 +415,15 @@ export function buildSchedule(
     let dayEndMinutes: number;
 
     if (isFirstDay) {
-      dayStartMinutes = parseTime(arrivalTime || '09:00');
+      dayStartMinutes = parseTime(arrivalTime && arrivalTime.trim() !== '' ? arrivalTime : '09:30');
     } else {
-      dayStartMinutes = parseTime('08:00'); // Standard day start
+      dayStartMinutes = parseTime(paceKey === 'relaxed' ? '09:30' : paceKey === 'explorer' || paceKey === 'packed' ? '07:30' : '08:30');
     }
 
     if (isLastDay) {
-      dayEndMinutes = parseTime(departureTime || '18:00');
+      dayEndMinutes = parseTime(departureTime && departureTime.trim() !== '' ? departureTime : '17:45');
     } else {
-      dayEndMinutes = parseTime('22:00'); // Standard day end
+      dayEndMinutes = parseTime(paceKey === 'relaxed' ? '20:30' : paceKey === 'packed' ? '23:30' : '21:30');
     }
 
     // Ensure valid range

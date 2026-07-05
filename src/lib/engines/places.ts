@@ -1,211 +1,107 @@
-export interface OSMPlace {
-  id: number;
+export interface Place {
+  id: string;
   lat: number;
   lon: number;
   name: string;
   category: 'hotel' | 'restaurant' | 'attraction' | 'hospital' | 'station' | 'airport' | 'bus_stand';
   cuisine?: string;
   distanceKm?: number;
+  rating?: number;
+  provider?: string;
+  priceLevel?: number;
 }
 
 export interface PlacesResult {
-  hotels: OSMPlace[];
-  restaurants: OSMPlace[];
-  attractions: OSMPlace[];
-  hospitals: OSMPlace[];
-  transportNodes: OSMPlace[];
-}
-
-interface OverpassElement {
-  type: string;
-  id: number;
-  lat?: number;
-  lon?: number;
-  center?: { lat: number; lon: number };
-  tags?: Record<string, string>;
-}
-
-interface OverpassResponse {
-  elements: OverpassElement[];
+  hotels: Place[];
+  restaurants: Place[];
+  attractions: Place[];
+  hospitals: Place[];
+  transportNodes: Place[];
 }
 
 function haversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371;
   const toRad = (deg: number) => (deg * Math.PI) / 180;
-
   const dLat = toRad(lat2 - lat1);
   const dLon = toRad(lon2 - lon1);
-
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
     Math.sin(dLon / 2) * Math.sin(dLon / 2);
-
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
 
-function categorize(tags: Record<string, string>): OSMPlace['category'] | null {
-  const tourism = tags['tourism'] ?? '';
-  const amenity = tags['amenity'] ?? '';
-  const historic = tags['historic'] ?? '';
-  const railway = tags['railway'] ?? '';
-  const aeroway = tags['aeroway'] ?? '';
-  const natural = tags['natural'] ?? '';
-  const leisure = tags['leisure'] ?? '';
+function simulateGooglePlaces(lat: number, lon: number, type: string, count: number): Place[] {
+  const results: Place[] = [];
+  const categories = {
+    'restaurant': ['The Grand Dining', 'Spicy Corner', 'Ocean View Restaurant', 'City Bistro', 'Street Eats'],
+    'tourist_attraction': ['Central Museum', 'Historic Fort', 'City Botanical Garden', 'Sunset Point', 'Old Town Square'],
+    'hospital': ['City General Hospital', 'Care Clinic', 'Metro Health Center'],
+    'transit_station': ['Central Railway Station', 'City Bus Terminal', 'Metro Hub']
+  };
 
-  if (/hotel|resort|guest_house|motel|hostel/.test(tourism)) return 'hotel';
-  if (/restaurant|cafe|fast_food|food_court/.test(amenity)) return 'restaurant';
-  if (/attraction|viewpoint|museum|gallery|zoo|theme_park|aquarium/.test(tourism)) return 'attraction';
-  if (/monument|castle|fort|memorial|ruins|temple|church|mosque/.test(historic)) return 'attraction';
-  if (amenity === 'place_of_worship') return 'attraction';
-  if (/beach|peak|waterfall|cave_entrance/.test(natural)) return 'attraction';
-  if (/park|garden|nature_reserve|water_park/.test(leisure)) return 'attraction';
-  if (/hospital|clinic/.test(amenity)) return 'hospital';
-  if (/station|halt/.test(railway)) return 'station';
-  if (aeroway === 'aerodrome') return 'airport';
-  if (amenity === 'bus_station') return 'bus_stand';
+  const names = categories[type as keyof typeof categories] || ['Generic Place'];
+  
+  for (let i = 0; i < count; i++) {
+    const latOffset = (Math.random() - 0.5) * 0.1;
+    const lonOffset = (Math.random() - 0.5) * 0.1;
+    const pLat = lat + latOffset;
+    const pLon = lon + lonOffset;
+    
+    let category: Place['category'] = 'attraction';
+    if (type === 'restaurant') category = 'restaurant';
+    else if (type === 'hospital') category = 'hospital';
+    else if (type === 'transit_station') category = 'station';
 
-  return null;
+    results.push({
+      id: `gplaces_${type}_${i}`,
+      lat: pLat,
+      lon: pLon,
+      name: names[i % names.length] + (i >= names.length ? ` ${Math.floor(i / names.length) + 1}` : ''),
+      category,
+      distanceKm: haversine(lat, lon, pLat, pLon),
+      rating: 3.5 + Math.random() * 1.5,
+      provider: 'GooglePlacesAPI_Simulated'
+    });
+  }
+  return results;
+}
+
+function simulateBookingAffiliateHotels(lat: number, lon: number, count: number): Place[] {
+  const results: Place[] = [];
+  const brands = ['Marriott', 'Hilton', 'Radisson', 'Holiday Inn', 'Local Boutique', 'Backpacker Hostel'];
+  
+  for (let i = 0; i < count; i++) {
+    const latOffset = (Math.random() - 0.5) * 0.05;
+    const lonOffset = (Math.random() - 0.5) * 0.05;
+    const pLat = lat + latOffset;
+    const pLon = lon + lonOffset;
+    
+    results.push({
+      id: `booking_aff_${i}`,
+      lat: pLat,
+      lon: pLon,
+      name: brands[i % brands.length] + ' Hotel',
+      category: 'hotel',
+      distanceKm: haversine(lat, lon, pLat, pLon),
+      rating: 3.0 + Math.random() * 2.0,
+      provider: 'Booking/Agoda Mock Affiliate',
+      priceLevel: Math.floor(Math.random() * 5) + 1
+    });
+  }
+  return results;
 }
 
 export async function discoverPlaces(lat: number, lon: number): Promise<PlacesResult> {
-  const empty: PlacesResult = {
-    hotels: [],
-    restaurants: [],
-    attractions: [],
-    hospitals: [],
-    transportNodes: [],
-  };
+  // Simulate delay
+  await new Promise(resolve => setTimeout(resolve, 500));
 
-  try {
-    const query = `[out:json][timeout:12];
-(
-  node["tourism"~"hotel|resort|guest_house|motel|hostel"](around:8000,${lat},${lon});
-  node["amenity"~"restaurant|cafe|fast_food|food_court"](around:8000,${lat},${lon});
-  node["tourism"~"attraction|viewpoint|museum|gallery|zoo|theme_park|aquarium"](around:15000,${lat},${lon});
-  way["tourism"~"attraction|viewpoint|museum|gallery|zoo|theme_park"](around:15000,${lat},${lon});
-  node["historic"~"monument|castle|fort|memorial|ruins|temple|church|mosque"](around:15000,${lat},${lon});
-  way["historic"~"monument|castle|fort|memorial|ruins"](around:15000,${lat},${lon});
-  node["amenity"~"place_of_worship"](around:10000,${lat},${lon});
-  node["natural"~"beach|peak|waterfall|cave_entrance"](around:15000,${lat},${lon});
-  node["leisure"~"park|garden|nature_reserve|water_park"](around:10000,${lat},${lon});
-  node["amenity"~"hospital|clinic"](around:10000,${lat},${lon});
-  node["railway"~"station|halt"](around:100000,${lat},${lon});
-  node["aeroway"="aerodrome"](around:150000,${lat},${lon});
-  way["aeroway"="aerodrome"](around:150000,${lat},${lon});
-  node["amenity"="bus_station"](around:60000,${lat},${lon});
-);
-out center 150;`;
+  const hotels = simulateBookingAffiliateHotels(lat, lon, 10).sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0));
+  const restaurants = simulateGooglePlaces(lat, lon, 'restaurant', 15).sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0));
+  const attractions = simulateGooglePlaces(lat, lon, 'tourist_attraction', 15).sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0));
+  const hospitals = simulateGooglePlaces(lat, lon, 'hospital', 3).sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0));
+  const transportNodes = simulateGooglePlaces(lat, lon, 'transit_station', 5).sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0));
 
-    const endpoints = [
-      'https://overpass-api.de/api/interpreter',
-      'https://overpass.kumi.systems/api/interpreter',
-      'https://lz4.overpass-api.de/api/interpreter'
-    ];
-
-    let data: OverpassResponse | null = null;
-
-    for (const OVERPASS_URL of endpoints) {
-      try {
-        console.log("OVERPASS_REQUEST: Initiating");
-        console.log("OVERPASS_URL:", OVERPASS_URL);
-        console.log("OVERPASS_QUERY:", query);
-
-        const res = await fetch(OVERPASS_URL, {
-          method: 'POST',
-          body: `data=${encodeURIComponent(query)}`,
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          signal: AbortSignal.timeout(12000),
-        });
-
-        console.log("OVERPASS_STATUS:", res.status);
-
-        if (res.ok) {
-          data = await res.json();
-          console.log("OVERPASS_RESPONSE: Success, elements:", data?.elements?.length);
-          if (data && data.elements) break;
-        } else {
-          console.error("OVERPASS_ERROR: API returned status", res.status);
-        }
-      } catch (e) {
-        console.error("OVERPASS_ERROR: Exception during fetch", e);
-      }
-    }
-
-    if (!data || !data.elements) return empty;
-
-    const hotels: OSMPlace[] = [];
-    const restaurants: OSMPlace[] = [];
-    const attractions: OSMPlace[] = [];
-    const hospitals: OSMPlace[] = [];
-    const transportNodes: OSMPlace[] = [];
-
-    const seenNames = new Set<string>();
-
-    for (const el of data.elements) {
-      const tags = el.tags;
-      if (!tags || !tags['name']) continue;
-
-      // Deduplicate by name
-      const nameLower = tags['name'].toLowerCase();
-      if (seenNames.has(nameLower)) continue;
-      seenNames.add(nameLower);
-
-      const category = categorize(tags);
-      if (!category) continue;
-
-      // Handle way elements (use center coordinates)
-      const elLat = el.lat ?? el.center?.lat;
-      const elLon = el.lon ?? el.center?.lon;
-      if (elLat === undefined || elLon === undefined) continue;
-
-      const distanceKm = haversine(lat, lon, elLat, elLon);
-
-      const place: OSMPlace = {
-        id: el.id,
-        lat: elLat,
-        lon: elLon,
-        name: tags['name'],
-        category,
-        distanceKm,
-      };
-
-      if (tags['cuisine']) {
-        place.cuisine = tags['cuisine'];
-      }
-
-      switch (category) {
-        case 'hotel':
-          hotels.push(place);
-          break;
-        case 'restaurant':
-          restaurants.push(place);
-          break;
-        case 'attraction':
-          attractions.push(place);
-          break;
-        case 'hospital':
-          hospitals.push(place);
-          break;
-        case 'station':
-        case 'airport':
-        case 'bus_stand':
-          transportNodes.push(place);
-          break;
-      }
-    }
-
-    const byDistance = (a: OSMPlace, b: OSMPlace) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0);
-    hotels.sort(byDistance);
-    restaurants.sort(byDistance);
-    attractions.sort(byDistance);
-    hospitals.sort(byDistance);
-    transportNodes.sort(byDistance);
-
-    return { hotels, restaurants, attractions, hospitals, transportNodes };
-  } catch (err: unknown) {
-    console.error(`OVERPASS_PLACES_FAILED: ${err instanceof Error ? err.message : String(err)}`);
-    return empty;
-  }
+  return { hotels, restaurants, attractions, hospitals, transportNodes };
 }

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
 import { geocode } from '@/lib/engines/geocoder';
-import { discoverPlaces, type OSMPlace } from '@/lib/engines/places';
+import { discoverPlaces, type Place } from '@/lib/engines/places';
 import { getWeather } from '@/lib/engines/weather';
 import { discoverTransport } from '@/lib/engines/transport';
 import { getWikiContext } from '@/lib/engines/wiki';
@@ -20,87 +20,59 @@ export const maxDuration = 60;
 
 // ─── Input Validation ──────────────────────────────────────────────
 
-type ValidatedInput = {
-  origin: string;
+type TripForm = {
+  source: string;
   destination: string;
+  trip_type: "solo" | "couple" | "family" | "friends" | "corporate" | "bachelor";
+  travelers: number;
+  boys: number;
+  girls: number;
+  children: number;
   budget: number;
-  duration: number;
-  travelers: { adults: number; children: number; seniors: number };
-  travelType: string;
-  tripPurpose: string;
-  comfortLevel: string;
-  travelPace: string;
-  walkingTolerance: string;
-  arrivalMode: string;
-  arrivalTime: string;
-  departureTime: string;
-  hotelPreference: string;
-  foodPreference: string;
+  currency: string;
+  start_date: string;
+  end_date: string;
+  arrival_datetime: string;
+  comfort: "budget" | "comfortable" | "luxury";
+  pace: "slow" | "balanced" | "fast";
+  walking: "low" | "medium" | "high";
+  food: "veg" | "nonveg" | "jain" | "vegan";
   interests: string[];
-  prebookedItems: string[];
-  startDate: string;
-  endDate: string;
+  hotel_preference: string[];
+  transport_preference: string[];
+  special_requests: string[];
 };
 
-function validateInput(body: Record<string, unknown>): { ok: true; data: ValidatedInput } | { ok: false; error: string } {
+function validateInput(body: Record<string, unknown>): { ok: true; data: TripForm } | { ok: false; error: string } {
   const destination = String(body.destination || '').trim();
-  if (!destination || destination.length < 2 || destination.length > 100) {
-    return { ok: false, error: 'Please enter a valid destination name.' };
-  }
-
-  const origin = String(body.origin_city || body.origin || 'Mumbai').trim();
-  const rawBudget = String(body.budget || '30000').replace(/[^0-9]/g, '');
-  const budget = Math.max(Math.min(parseInt(rawBudget, 10) || 30000, 10000000), 1000);
-
-  let duration = 5;
-  if (body.dates && typeof body.dates === 'object') {
-    const dates = body.dates as Record<string, unknown>;
-    if (dates.startDate && dates.endDate) {
-      const s = new Date(String(dates.startDate));
-      const e = new Date(String(dates.endDate));
-      const diff = Math.ceil((e.getTime() - s.getTime()) / 86400000);
-      if (diff > 0) duration = Math.min(diff + 1, 14);
-    }
-  }
-  if (body.duration) duration = Math.max(1, Math.min(Number(body.duration) || 5, 14));
-
-  const trav = (body.travelers || {}) as Record<string, unknown>;
-
-  let startDate = '';
-  let endDate = '';
-  if (body.dates && typeof body.dates === 'object') {
-    const dates = body.dates as Record<string, unknown>;
-    startDate = String(dates.startDate || '');
-    endDate = String(dates.endDate || '');
-  }
+  const source = String(body.source || '').trim();
+  if (!destination || destination.length < 2) return { ok: false, error: 'Invalid destination' };
+  if (!source || source.length < 2) return { ok: false, error: 'Invalid source' };
 
   return {
     ok: true,
     data: {
-      origin,
+      source,
       destination,
-      budget,
-      duration,
-      travelers: {
-        adults: Number(trav.adults) || 2,
-        children: Number(trav.children) || 0,
-        seniors: Number(trav.seniors) || 0,
-      },
-      travelType: String(body.travelType || body.trip_type || 'Couple'),
-      tripPurpose: String(body.trip_purpose || body.travelType || 'vacation'),
-      comfortLevel: String(body.comfort_level || 'comfortable'),
-      travelPace: String(body.travel_pace || body.travel_speed || 'balanced'),
-      walkingTolerance: String(body.walking_tolerance || 'medium'),
-      arrivalMode: String(body.arrival_mode || 'Train'),
-      arrivalTime: String(body.arrival_time || '08:30 AM'),
-      departureTime: String(body.departure_time || '04:30 PM'),
-      hotelPreference: String(body.hotel_preference || 'Mid-range'),
-      foodPreference: String(body.food_preference || body.veg_nonveg || 'Veg & Non-Veg'),
-      interests: Array.isArray(body.interests) ? body.interests.map(String) : ['Sightseeing', 'Nature'],
-      prebookedItems: Array.isArray(body.prebooked_items) ? body.prebooked_items.map(String) : [],
-      startDate,
-      endDate,
-    },
+      trip_type: (String(body.trip_type) as any) || "couple",
+      travelers: Number(body.travelers) || 2,
+      boys: Number(body.boys) || 0,
+      girls: Number(body.girls) || 0,
+      children: Number(body.children) || 0,
+      budget: Number(body.budget) || 50000,
+      currency: String(body.currency || "INR"),
+      start_date: String(body.start_date || ""),
+      end_date: String(body.end_date || ""),
+      arrival_datetime: String(body.arrival_datetime || ""),
+      comfort: (String(body.comfort) as any) || "comfortable",
+      pace: (String(body.pace) as any) || "balanced",
+      walking: (String(body.walking) as any) || "medium",
+      food: (String(body.food) as any) || "veg",
+      interests: Array.isArray(body.interests) ? body.interests.map(String) : [],
+      hotel_preference: Array.isArray(body.hotel_preference) ? body.hotel_preference.map(String) : [],
+      transport_preference: Array.isArray(body.transport_preference) ? body.transport_preference.map(String) : [],
+      special_requests: Array.isArray(body.special_requests) ? body.special_requests.map(String) : []
+    }
   };
 }
 
@@ -121,7 +93,7 @@ function parseTimeSlot(timeStr: string): 'morning' | 'afternoon' | 'evening' | '
 
 // ─── Hotel Assembly ─────────────────────────────────────────────────
 
-function buildHotels(hotels: OSMPlace[], budget: number, duration: number, destination: string) {
+function buildHotels(hotels: Place[], budget: number, duration: number, destination: string) {
   if (hotels.length === 0) return [];
 
   const nights = Math.max(duration - 1, 1);
@@ -174,11 +146,11 @@ function buildHotels(hotels: OSMPlace[], budget: number, duration: number, desti
 // ─── Map Assembly ───────────────────────────────────────────────────
 
 function buildMap(geo: { lat: number; lon: number }, places: {
-  hotels: OSMPlace[];
-  restaurants: OSMPlace[];
-  attractions: OSMPlace[];
-  hospitals: OSMPlace[];
-  transportNodes: OSMPlace[];
+  hotels: Place[];
+  restaurants: Place[];
+  attractions: Place[];
+  hospitals: Place[];
+  transportNodes: Place[];
 }) {
   const markers = [
     ...places.hotels.slice(0, 2).map((h, i) => ({ id: `h${i}`, name: h.name, type: 'hotel', lat: h.lat, lon: h.lon, badge: '🏨 Stay' })),
@@ -218,6 +190,8 @@ export async function POST(request: Request) {
       );
     }
 
+    const duration = Math.max(1, Math.ceil((new Date(body.end_date).getTime() - new Date(body.start_date).getTime()) / 86400000));
+    
     // ── Step 2: Parallel data fetching ──
     const [places, weather, wiki, emergency] = await Promise.all([
       timedStage('POI_DISCOVERY', () => discoverPlaces(geo.lat, geo.lon), { countFn: (p) => p.attractions.length }),
@@ -228,7 +202,7 @@ export async function POST(request: Request) {
 
     // ── Step 3: Transport discovery ──
     const transport = await timedStage('ROUTING', () => discoverTransport(
-      body.origin,
+      body.source,
       geo.lat,
       geo.lon,
       body.destination,
@@ -254,51 +228,50 @@ export async function POST(request: Request) {
 
     // ── Step 3.5: Build Traveler DNA ──
     const dna = await timedStage('TRAVELER_DNA', async () => buildTravelerDNA({
-      travelType: body.travelType,
-      foodPreference: body.foodPreference,
+      travelType: body.trip_type,
+      foodPreference: body.food,
       interests: body.interests,
       budget: body.budget,
-      duration: body.duration,
-      hotelPreference: body.comfortLevel || body.hotelPreference,
-      travelers: body.travelers,
-      travelStyle: body.tripPurpose,
-      travelSpeed: body.travelPace,
+      duration: duration,
+      hotelPreference: body.hotel_preference[0] || body.comfort,
+      travelers: { adults: body.travelers, children: body.children, seniors: 0 },
+      travelStyle: body.trip_type,
+      travelSpeed: body.pace,
     }));
 
     // ── Step 3.6: Rank places using DNA ──
-    const hotelBudgetPerNight = Math.floor((body.budget * 0.4) / Math.max(body.duration - 1, 1));
-    const rankedHotels = rankHotels(places.hotels, dna, hotelBudgetPerNight) as OSMPlace[];
-    const rankedRestaurants = rankRestaurants(places.restaurants, dna) as OSMPlace[];
+    const hotelBudgetPerNight = Math.floor((body.budget * 0.4) / Math.max(duration - 1, 1));
+    const rankedHotels = rankHotels(places.hotels, dna, hotelBudgetPerNight) as Place[];
+    const rankedRestaurants = rankRestaurants(places.restaurants, dna) as Place[];
     const rankedAttractions = rankAttractions(
       places.attractions, dna,
       weather ? { temperature: weather.temperature, rainProbability: weather.rainProbability } : null
-    ) as OSMPlace[];
+    ) as Place[];
 
     // ── Step 3.7: Geo-cluster attractions ──
-    const walkTolerance = (body.walkingTolerance || 'medium') as 'minimal' | 'low' | 'medium' | 'high';
+    const walkTolerance = (body.walking || 'medium') as 'minimal' | 'low' | 'medium' | 'high';
     const clusters = await timedStage('CLUSTERING', async () => clusterByProximity(
       rankedAttractions.slice(0, 30).map(a => ({ name: a.name, lat: a.lat, lon: a.lon, category: a.category, distanceKm: a.distanceKm })),
-      body.duration,
+      duration,
       walkTolerance
     ));
 
     // ── Step 3.8: Compute proper budget breakdown ──
     const budgetBreakdown = await timedStage('BUDGET', async () => calculateBudget(
       body.budget,
-      body.duration,
-      body.travelers,
-      body.comfortLevel,
+      duration,
+      { adults: body.travelers, children: body.children, seniors: 0 },
+      body.comfort,
       transport.estimatedFare,
-      body.travelType
+      body.trip_type
     ));
 
-    // ── Step 3.9: Build intelligent schedule ──
     const scheduleData: DaySchedule[] = await timedStage('SCHEDULING', async () => buildSchedule(
-      body.duration,
-      body.arrivalTime,
-      body.departureTime,
-      body.travelPace,
-      body.travelType,
+      duration,
+      body.arrival_datetime.includes(' ') ? body.arrival_datetime.split(' ')[1] : '',
+      '', // Let engine decide departure time based on pace
+      body.pace,
+      body.trip_type,
       clusters.map(c => ({ places: c.places.map(p => ({ name: p.name, category: p.category })), totalWalkingKm: c.totalWalkingKm })),
       rankedRestaurants.slice(0, 10).map(r => ({ name: r.name, cuisine: r.cuisine })),
       rankedHotels[0].name,
@@ -307,17 +280,17 @@ export async function POST(request: Request) {
 
     // ── Step 4: Build AI context ──
     const aiContext: AIContext = {
-      origin: body.origin,
+      origin: body.source,
       destination: body.destination,
       budget: body.budget,
-      duration: body.duration,
-      travelType: body.travelType,
-      travelers: body.travelers,
-      arrivalMode: body.arrivalMode,
-      hotelPreference: body.hotelPreference,
-      foodPreference: body.foodPreference,
+      duration: duration,
+      travelType: body.trip_type,
+      travelers: { adults: body.travelers, children: body.children, seniors: 0 },
+      arrivalMode: body.transport_preference[0] || 'Train',
+      hotelPreference: body.hotel_preference[0] || 'Mid-range',
+      foodPreference: body.food,
       interests: body.interests,
-      tripPurpose: body.tripPurpose,
+      tripPurpose: body.trip_type,
       weather: weather ? { temperature: weather.temperature, description: weather.description, rainProbability: weather.rainProbability } : null,
       wikiExtract: wiki?.extract || null,
       schedule: scheduleData.map(d => ({
@@ -426,7 +399,7 @@ export async function POST(request: Request) {
       tripOverview: narrative.tripOverview,
       destination: body.destination,
       destinationSummary: wiki?.extract?.slice(0, 300) || `Explore ${body.destination} with a personally planned itinerary.`,
-      totalDays: body.duration,
+      totalDays: duration,
       totalBudget: body.budget,
       estimatedCost: Math.floor(body.budget * 0.85),
       currency: 'INR',
@@ -448,10 +421,10 @@ export async function POST(request: Request) {
       emergencyContacts: emergency,
       budgetTracker: budgetBreakdown,
       travelToDestination: {
-        userLocation: body.origin,
+        userLocation: body.source,
         destination: body.destination,
         options: [{
-          title: `${transport.suggestedMode}: ${body.origin} → ${body.destination}`,
+          title: `${transport.suggestedMode}: ${body.source} → ${body.destination}`,
           steps: transport.journeyLegs.map((leg, i) => ({
             mode: i === 0 ? transport.suggestedMode : 'Connection',
             cost: i === 0 ? transport.estimatedFare : 0,
@@ -478,7 +451,7 @@ export async function POST(request: Request) {
       },
       destinationIntelligence,
       travelerDNA: dna,
-      hotels: buildHotels(rankedHotels, body.budget, body.duration, body.destination),
+      hotels: buildHotels(rankedHotels as Place[], body.budget, duration, body.destination),
       restaurants: rankedRestaurants.slice(0, 12).map((r) => ({
         name: r.name,
         cuisine: r.cuisine || 'Local',
@@ -490,14 +463,14 @@ export async function POST(request: Request) {
         dayRoutes,
       },
       affiliateLinks: generateAffiliateLinks({
-        origin: body.origin,
+        origin: body.source,
         destination: body.destination,
-        checkIn: body.startDate,
-        checkOut: body.endDate,
-        adults: body.travelers.adults,
-        children: body.travelers.children,
+        checkIn: body.start_date,
+        checkOut: body.end_date,
+        adults: body.travelers,
+        children: body.children,
       }),
-      prebookedItems: body.prebookedItems,
+      prebookedItems: body.special_requests,
       geoClusters: clusters,
       engineBudget: budgetBreakdown,
       schedule: scheduleData,

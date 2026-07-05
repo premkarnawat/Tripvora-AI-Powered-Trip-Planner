@@ -149,30 +149,33 @@ export default function TripPlannerPage() {
     }, 700);
 
     try {
+      const payload = {
+        source: originCity || "Beed",
+        destination: destination || "Ganpatipule",
+        trip_type: travelerType.toLowerCase(),
+        travelers: adultsCount + childrenCount + seniorsCount,
+        boys: boysCount,
+        girls: girlsCount,
+        children: childrenCount,
+        budget: budgetValue,
+        currency: "INR",
+        start_date: fromDate,
+        end_date: toDate,
+        arrival_datetime: `${fromDate} ${arrivalTime}`,
+        comfort: comfortLevel.toLowerCase(),
+        pace: travelPace.toLowerCase(),
+        walking: walkingTolerance.toLowerCase(),
+        food: foodPreference.toLowerCase(),
+        interests: selectedPreferences,
+        hotel_preference: [comfortLevel],
+        transport_preference: [transportPreference],
+        special_requests: prebookedItems
+      };
+
       const response = await fetch('/api/generate-trip', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          origin_city: originCity || "Beed",
-          destination: destination || "Ganpatipule",
-          trip_type: travelerType,
-          budget: budgetValue,
-          travelers: { adults: adultsCount, children: childrenCount, seniors: seniorsCount, soloGender },
-          arrival_mode: arrivalMode,
-          arrival_time: arrivalTime,
-          departure_time: departureTime,
-          hotel_preference: comfortLevel,
-          food_preference: foodPreference,
-          comfort_level: comfortLevel,
-          trip_purpose: tripPurpose,
-          travel_pace: travelPace,
-          walking_tolerance: walkingTolerance,
-          prebooked_items: prebookedItems,
-          interests: selectedPreferences,
-          duration: durationNights,
-          dates: { startDate: fromDate, endDate: toDate },
-          travelType: travelerType
-        })
+        body: JSON.stringify(payload)
       });
 
       const data = await response.json().catch(() => ({}));

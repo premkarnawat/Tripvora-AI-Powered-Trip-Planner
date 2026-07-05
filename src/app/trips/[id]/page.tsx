@@ -3,10 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { 
-  MapPin, Clock, ArrowLeft, Share2, Download, Plane, Utensils, 
-  ExternalLink, Navigation, Heart, Compass, Train, Play, Pause, 
-  RotateCcw, Map as MapIcon, Car, Footprints, MessageSquare, Send, 
-  X, Bot, Sparkles, CheckCircle2, AlertTriangle, Camera, Ticket, CloudSun, Flame, ShieldAlert, Phone
+  ArrowLeft, Share2, Download, ExternalLink, Navigation, 
+  Map as MapIcon, X, Bot, Sparkles, Send, ShieldAlert, Phone, Utensils
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -21,11 +19,8 @@ export default function TripViewerPage() {
   const [realTripData, setRealTripData] = useState<any>(null);
   const [activeDay, setActiveDay] = useState(1);
   const [activeStepIdx, setActiveStepIdx] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
 
-  // Floating map states
   const [isMapMinimized, setIsMapMinimized] = useState(false);
-
   const [showConcierge, setShowConcierge] = useState(false);
   const [conciergeInput, setConciergeInput] = useState("");
   const [conciergeHistory, setConciergeHistory] = useState<Array<{role: string, text: string}>>([
@@ -35,11 +30,9 @@ export default function TripViewerPage() {
   const pageContainerRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: pageContainerRef });
   
-  // Parallax backdrop values
   const bgScale = useTransform(scrollYProgress, [0, 1], [1, 1.08]);
   const heroTranslateY = useTransform(scrollYProgress, [0, 0.3], [0, -100]);
 
-  // Load live data from Supabase API or LocalStorage fallback
   useEffect(() => {
     async function loadLiveTrip() {
       try {
@@ -47,8 +40,9 @@ export default function TripViewerPage() {
           const res = await fetch(`/api/trips/${id}`);
           if (res.ok) {
             const row = await res.json();
-            if (row && row.demographics) {
-              setRealTripData(row.demographics);
+            const dataToSet = row.trip_data || row.data || row.demographics || row;
+            if (dataToSet && dataToSet.destination) {
+              setRealTripData(dataToSet);
               setLoading(false);
               return;
             }
@@ -68,26 +62,6 @@ export default function TripViewerPage() {
     }
     loadLiveTrip();
   }, [id]);
-
-  // Auto playback of OSRM routing marks
-  useEffect(() => {
-    let timer: any;
-    if (isPlaying) {
-      timer = setInterval(() => {
-        setActiveStepIdx(prev => {
-          const routes = realTripData?.mapExperience?.dayRoutes || [];
-          const currRoute = routes.find((r: any) => r.day === activeDay) || routes[0];
-          const maxIdx = currRoute ? currRoute.steps.length - 1 : 0;
-          if (prev >= maxIdx) {
-            setIsPlaying(false);
-            return 0;
-          }
-          return prev + 1;
-        });
-      }, 2500);
-    }
-    return () => clearInterval(timer);
-  }, [isPlaying, activeDay, realTripData]);
 
   if (loading) {
     return (
@@ -121,43 +95,32 @@ export default function TripViewerPage() {
   }
 
   const trip = realTripData;
-  const totalDays = trip.days?.length || trip.totalDays || 5;
+  const totalDays = trip.totalDays || trip.days?.length || 5;
   const totalDaysList = Array.from({ length: totalDays }, (_, i) => i + 1);
 
-  // Dynamic photo spot helper
   const getPhotoSpot = (name: string) => {
+    if (!name) return "Symmetric front facade shot from ground level.";
     const lower = name.toLowerCase();
-    if (lower.includes("temple") || lower.includes("church") || lower.includes("mosque")) {
-      return "Golden hour light framing the main shrine spire.";
-    }
-    if (lower.includes("beach") || lower.includes("sea") || lower.includes("lake") || lower.includes("river")) {
-      return "Low angle perspective capturing shore reflections at sunset.";
-    }
-    if (lower.includes("fort") || lower.includes("castle") || lower.includes("monument")) {
-      return "Bastion ramparts with panoramic sky backdrop.";
-    }
-    if (lower.includes("restaurant") || lower.includes("cafe") || lower.includes("food")) {
-      return "Overhead aesthetic lay of regional cuisines.";
-    }
-    if (lower.includes("market") || lower.includes("bazaar") || lower.includes("shopping")) {
-      return "Vibrant center aisles capturing local shop dynamics.";
-    }
+    if (lower.includes("temple") || lower.includes("church") || lower.includes("mosque")) return "Golden hour light framing the main shrine spire.";
+    if (lower.includes("beach") || lower.includes("sea") || lower.includes("lake") || lower.includes("river")) return "Low angle perspective capturing shore reflections at sunset.";
+    if (lower.includes("fort") || lower.includes("castle") || lower.includes("monument")) return "Bastion ramparts with panoramic sky backdrop.";
+    if (lower.includes("restaurant") || lower.includes("cafe") || lower.includes("food")) return "Overhead aesthetic lay of regional cuisines.";
+    if (lower.includes("market") || lower.includes("bazaar") || lower.includes("shopping")) return "Vibrant center aisles capturing local shop dynamics.";
     return "Symmetric front facade shot from ground level.";
   };
 
-  // Crowd score helper
   const getCrowdScore = (name: string) => {
+    if (!name) return { score: 50, status: "Quiet Hour" };
     let hash = 0;
     for (let j = 0; j < name.length; j++) {
       hash = name.charCodeAt(j) + ((hash << 5) - hash);
     }
-    const score = Math.abs(hash % 40) + 50; // 50% - 90%
+    const score = Math.abs(hash % 40) + 50; 
     const status = score > 80 ? "Peak Flow" : score > 65 ? "Moderate Flow" : "Quiet Hour";
     return { score, status };
   };
 
-  // Safe variables for route summary extraction
-  const originHub = trip.origin_city || trip.origin || "Origin";
+  const originHub = trip.travelToDestination?.userLocation || trip.origin || "Origin";
   const destHub = trip.destination || "Destination";
   const travelModeSymbol = trip.travelerDNA?.comfortLevel === "Luxury" ? "✈️" : "🚍";
 
@@ -210,7 +173,7 @@ export default function TripViewerPage() {
       {/* ─── FULLSCREEN HERO (100vh) ─── */}
       <motion.section 
         style={{ y: heroTranslateY }}
-        className="h-screen w-full relative flex flex-col justify-center items-center px-6 pt-20 text-center relative z-10"
+        className="h-screen w-full relative flex flex-col justify-center items-center px-6 pt-20 text-center z-10"
       >
         <div className="space-y-6 max-w-4xl">
           <motion.span 
@@ -251,11 +214,10 @@ export default function TripViewerPage() {
             </div>
             <div className="bg-white/5 border border-white/10 rounded-[32px] p-4 backdrop-blur-md">
               <p className="text-slate-400 uppercase font-black tracking-wider text-[9px]">Budget</p>
-              <p className="text-white font-extrabold text-sm mt-1">₹{trip.budgetEngine?.allocatedBudget?.toLocaleString('en-IN') || "15,000"}</p>
+              <p className="text-white font-extrabold text-sm mt-1">₹{trip.budgetTracker?.totalBudget?.toLocaleString('en-IN') || trip.totalBudget?.toLocaleString('en-IN') || "15,000"}</p>
             </div>
           </motion.div>
 
-          {/* Animated Route Flow Beed -> Pune -> etc. */}
           <div className="pt-8 max-w-xl mx-auto w-full">
             <p className="text-[10px] text-slate-400 uppercase tracking-widest font-black mb-4">Route Journey Flow</p>
             <div className="flex justify-between items-center relative px-2">
@@ -268,7 +230,7 @@ export default function TripViewerPage() {
                 />
               </div>
               
-              {[originHub, "Pune", "Ratnagiri", destHub].map((node, idx) => (
+              {[originHub, "En Route", "Approaching", destHub].map((node, idx) => (
                 <div key={idx} className="relative z-10 flex flex-col items-center gap-1.5">
                   <div className="w-8 h-8 rounded-full bg-slate-900 border-2 border-white/10 flex items-center justify-center text-xs font-black shadow-lg">
                     {idx === 0 ? "🛫" : idx === 3 ? "🏖️" : travelModeSymbol}
@@ -316,21 +278,21 @@ export default function TripViewerPage() {
                     Day {dayNum} Protocol
                   </span>
                   <h2 className="text-3xl sm:text-5xl font-extrabold font-sora text-white leading-tight mt-2">{dayData.title}</h2>
-                  <p className="text-slate-300 text-sm max-w-md">Your coastal regional journey continues with local heritage exploration.</p>
+                  <p className="text-slate-300 text-sm max-w-md">Your immersive journey continues with expertly curated locations.</p>
                 </div>
               </div>
 
-              {/* ─── HORIZONTAL JOURNEY TIMELINE (MOST IMPORTANT) ─── */}
+              {/* ─── PINTEREST STORY UI: HORIZONTAL JOURNEY TIMELINE ─── */}
               <div className="space-y-4">
                 <h3 className="text-xs uppercase font-black tracking-widest text-slate-400 px-2">Horizontal Journey Timeline</h3>
                 
-                {/* Horizontal scroll container with snap scrolling */}
                 <div className="flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth py-4 px-2 scrollbar-none">
                   {dayActivities.map((stop: any, idx: number) => {
                     const isSelected = activeDay === dayNum && idx === activeStepIdx;
                     return (
-                      <div
+                      <motion.div
                         key={idx}
+                        whileTap={{ scale: 0.98 }}
                         onClick={() => {
                           setActiveDay(dayNum);
                           setActiveStepIdx(idx);
@@ -338,16 +300,15 @@ export default function TripViewerPage() {
                         className={`snap-center shrink-0 w-[290px] sm:w-[330px] rounded-[32px] border backdrop-blur-xl p-5 shadow-2xl cursor-pointer transition-all duration-500 ${
                           isSelected 
                             ? "bg-white/10 border-[#14F1D9] scale-[1.02] shadow-[#14F1D9]/5"
-                            : "bg-[rgba(255,255,255,0.06)] border-white/5 opacity-70 blur-[0.5px]"
+                            : "bg-[rgba(255,255,255,0.06)] border-white/5 opacity-70 blur-[0.5px] hover:opacity-100 hover:blur-none"
                         }`}
                       >
-                        {/* Stop Cover image */}
                         {stop.imageUrl && (
                           <div className="w-full h-32 rounded-[24px] overflow-hidden border border-white/10 mb-4 shrink-0">
                             <img 
                               src={stop.imageUrl} 
                               alt={stop.title} 
-                              className="w-full h-full object-cover" 
+                              className="w-full h-full object-cover transition-transform duration-700 hover:scale-110" 
                             />
                           </div>
                         )}
@@ -361,21 +322,19 @@ export default function TripViewerPage() {
                           
                           <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/5 text-[11px] text-slate-300 font-bold">
                             <p>⭐ {stop.rating || 4.7}</p>
-                            <p className="text-right">💰 ₹{stop.estimatedCost || 100}</p>
-                            <p>📍 {stop.walkingDistance || "2.4 km"}</p>
+                            <p className="text-right">💰 ₹{stop.cost || stop.estimatedCost || 100}</p>
+                            <p>📍 {stop.walkingDistance || "Nearby"}</p>
                             <p className="text-right">🚗 {stop.duration || "45 mins"}</p>
                           </div>
                         </div>
-                      </div>
+                      </motion.div>
                     );
                   })}
                 </div>
               </div>
 
-              {/* ─── ACTIVITIES FEED (Pinterest + Apple Journal style cards) ─── */}
-              <div className="space-y-8 max-w-4xl mx-auto">
-                <h3 className="text-xs uppercase font-black tracking-widest text-slate-400 px-2">Explore Stops Details</h3>
-                
+              {/* ─── PINTEREST STORY UI: IMMERSIVE DAY STORIES & DESTINATION CARDS ─── */}
+              <div className="space-y-8 max-w-4xl mx-auto columns-1 md:columns-2 gap-8">
                 {dayActivities.map((step: any, idx: number) => {
                   const isSelected = activeDay === dayNum && idx === activeStepIdx;
                   const crowd = getCrowdScore(step.title || step.name);
@@ -383,58 +342,60 @@ export default function TripViewerPage() {
                   return (
                     <motion.div
                       key={idx}
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true, margin: "-100px" }}
                       whileHover={{ y: -6 }}
                       onClick={() => {
                         setActiveDay(dayNum);
                         setActiveStepIdx(idx);
                       }}
-                      className={`rounded-[32px] border backdrop-blur-xl overflow-hidden cursor-pointer transition-all duration-300 ${
+                      className={`break-inside-avoid mb-8 rounded-[32px] border backdrop-blur-xl overflow-hidden cursor-pointer transition-all duration-300 ${
                         isSelected 
-                          ? "bg-white/10 border-[#14F1D9] shadow-[#14F1D9]/5" 
+                          ? "bg-white/10 border-[#14F1D9] shadow-2xl shadow-[#14F1D9]/10" 
                           : "bg-[rgba(255,255,255,0.06)] border-white/5"
                       }`}
                     >
-                      {/* Full width photo */}
                       {step.imageUrl && (
-                        <div className="w-full h-64 overflow-hidden relative">
+                        <div className="w-full relative group overflow-hidden" style={{ height: idx % 2 === 0 ? '300px' : '400px' }}>
                           <img 
                             src={step.imageUrl} 
                             alt={step.title} 
-                            className="w-full h-full object-cover" 
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
-                          <div className="absolute bottom-4 left-6">
-                            <span className="px-3 py-1 bg-[#14F1D9] text-[#050816] rounded-full text-[10px] font-black uppercase tracking-wider">{step.type || step.category || "Activity"}</span>
+                          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity" />
+                          <div className="absolute bottom-6 left-6 right-6">
+                            <span className="px-3 py-1 bg-[#14F1D9] text-[#050816] rounded-full text-[10px] font-black uppercase tracking-wider shadow-lg">
+                              {step.type || step.category || "Activity"}
+                            </span>
+                            <h4 className="text-xl font-extrabold font-sora text-white mt-3 leading-tight drop-shadow-md">
+                              {step.title || step.name}
+                            </h4>
                           </div>
                         </div>
                       )}
 
-                      <div className="p-6 space-y-4">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h4 className="text-xl font-extrabold font-sora text-white">{step.title || step.name}</h4>
-                            <p className="text-xs text-slate-400 mt-1">📍 {step.walkingDistance || "2.4 km away from last stop"}</p>
-                          </div>
-                          <span className="text-sm font-mono font-black text-[#14F1D9] bg-white/5 px-3 py-1 rounded-xl">{step.time || "10:00 AM"}</span>
+                      <div className="p-6 space-y-4 bg-slate-950/50">
+                        <div className="flex justify-between items-center pb-2 border-b border-white/10">
+                          <span className="text-sm font-mono font-black text-[#14F1D9] bg-white/5 px-3 py-1 rounded-xl">
+                            {step.time || "10:00 AM"}
+                          </span>
+                          <span className="text-xs text-slate-400 font-bold">
+                            ⏳ {step.duration || "45 mins"}
+                          </span>
                         </div>
 
-                        <p className="text-sm text-slate-200 leading-relaxed font-inter">{step.description}</p>
+                        <p className="text-sm text-slate-300 leading-relaxed font-inter line-clamp-3">
+                          {step.description}
+                        </p>
 
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-white/5 text-xs text-slate-300">
-                          <div className="p-3 bg-white/5 rounded-2xl border border-white/5">
-                            <p className="text-[9px] text-slate-400 uppercase font-black">Entry Fee</p>
-                            <p className="font-extrabold mt-1">₹{step.estimatedCost || 100}</p>
+                        <div className="grid grid-cols-2 gap-3 pt-2 text-xs text-slate-300">
+                          <div className="p-3 bg-white/5 rounded-2xl border border-white/5 hover:border-white/10 transition-colors">
+                            <p className="text-[9px] text-slate-400 uppercase font-black flex items-center gap-1"><ShieldAlert className="w-3 h-3"/> Crowd</p>
+                            <p className="font-extrabold text-amber-400 mt-1">{crowd.status}</p>
                           </div>
-                          <div className="p-3 bg-white/5 rounded-2xl border border-white/5">
-                            <p className="text-[9px] text-slate-400 uppercase font-black">Visiting Hour</p>
-                            <p className="font-extrabold mt-1">{step.duration || "45 mins"}</p>
-                          </div>
-                          <div className="p-3 bg-white/5 rounded-2xl border border-white/5">
-                            <p className="text-[9px] text-slate-400 uppercase font-black">Crowd Density</p>
-                            <p className="font-extrabold text-amber-400 mt-1">{crowd.status} ({crowd.score}%)</p>
-                          </div>
-                          <div className="p-3 bg-white/5 rounded-2xl border border-white/5">
-                            <p className="text-[9px] text-slate-400 uppercase font-black">Photo Guide</p>
+                          <div className="p-3 bg-white/5 rounded-2xl border border-white/5 hover:border-white/10 transition-colors">
+                            <p className="text-[9px] text-slate-400 uppercase font-black flex items-center gap-1"><Bot className="w-3 h-3"/> AI Photo Tip</p>
                             <p className="font-extrabold text-[#14F1D9] mt-1 truncate">{getPhotoSpot(step.title || step.name)}</p>
                           </div>
                         </div>
@@ -444,139 +405,9 @@ export default function TripViewerPage() {
                 })}
               </div>
 
-              {/* ─── FOOD SECTION (Where To Eat Today) ─── */}
-              {trip.foodIntelligence && (
-                <div className="space-y-6">
-                  <div className="flex justify-between items-center px-2">
-                    <h3 className="text-lg font-extrabold font-sora text-white flex items-center gap-2">
-                      <Utensils className="w-5 h-5 text-[#14F1D9]" /> Where To Eat Today
-                    </h3>
-                    <span className="text-[10px] text-slate-400 font-mono">Verified Regional Cuisine</span>
-                  </div>
-
-                  <div className="flex gap-6 overflow-x-auto snap-x snap-mandatory scrollbar-none py-2">
-                    {[
-                      { name: trip.foodIntelligence.bestVeg || "Aaswad Pure Veg", type: "Vegetarian Local Heritage", rating: "4.7" },
-                      { name: trip.foodIntelligence.bestNonVeg || "Kinara Sea Food", type: "Non-Veg Specialty", rating: "4.5" },
-                      { name: trip.foodIntelligence.bestSeafood || "Local Konkan Fish Thali", type: "Local Seafood Grill", rating: "4.6" },
-                      { name: trip.foodIntelligence.streetFood || "Chowpatty Chaat", type: "Street Food Chaat", rating: "4.4" }
-                    ].map((restaurant, idx) => (
-                      <div 
-                        key={idx}
-                        className="snap-center shrink-0 w-[270px] bg-[rgba(255,255,255,0.06)] border border-white/5 rounded-[32px] p-5 shadow-xl space-y-4 hover:border-[#14F1D9]/40 transition-all duration-300"
-                      >
-                        <div className="w-full h-28 bg-slate-900 rounded-[24px] overflow-hidden border border-white/5 relative">
-                          <img 
-                            src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=400&q=80" 
-                            alt={restaurant.name} 
-                            className="w-full h-full object-cover opacity-60" 
-                          />
-                          <span className="absolute top-3 left-3 bg-[#14F1D9] text-[#050816] px-2 py-0.5 rounded-[32px] text-[9px] font-black uppercase tracking-wider">{restaurant.rating} ⭐</span>
-                        </div>
-                        <div>
-                          <h4 className="text-sm font-extrabold font-sora text-white truncate">{restaurant.name}</h4>
-                          <p className="text-[11px] text-slate-400 mt-1">{restaurant.type}</p>
-                          
-                          <div className="flex justify-between items-center pt-3 mt-3 border-t border-white/5">
-                            <span className="text-xs font-mono font-bold text-slate-300">Est: ₹350 / head</span>
-                            <a 
-                              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(restaurant.name + " " + trip.destination)}`} 
-                              target="_blank" 
-                              rel="noreferrer" 
-                              className="text-[10px] font-black text-[#14F1D9] hover:underline flex items-center gap-0.5"
-                            >
-                              Open Maps <ExternalLink className="w-2.5 h-2.5" />
-                            </a>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* ─── HOTEL SECTION (Tonight's Stay) ─── */}
-              {trip.hotels?.[0] && (
-                <div className="space-y-6 max-w-4xl mx-auto">
-                  <h3 className="text-lg font-extrabold font-sora text-white flex items-center gap-2">
-                    🏨 Tonight's Stay
-                  </h3>
-
-                  <div className="bg-[rgba(255,255,255,0.06)] border border-white/5 rounded-[32px] p-6 shadow-2xl flex flex-col md:flex-row gap-6 items-center">
-                    <div className="w-full md:w-48 h-40 rounded-[24px] overflow-hidden border border-white/10 shrink-0">
-                      <img 
-                        src="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=400&q=80" 
-                        alt={trip.hotels[0].name} 
-                        className="w-full h-full object-cover" 
-                      />
-                    </div>
-                    <div className="space-y-3 flex-1">
-                      <div className="flex justify-between items-start flex-wrap gap-2">
-                        <div>
-                          <h4 className="text-lg font-extrabold font-sora text-white">{trip.hotels[0].name}</h4>
-                          <p className="text-xs text-slate-400 mt-1">📍 {trip.hotels[0].distanceKm?.toFixed(1) || "1.2"} km from center landmark</p>
-                        </div>
-                        <span className="px-3 py-1 bg-teal-500/20 text-[#14F1D9] border border-teal-500/40 rounded-full text-xs font-black">Comfort Stay</span>
-                      </div>
-                      
-                      <p className="text-xs text-slate-300 font-inter">Highly rated residency option offering local hospitality and verified comfort standards.</p>
-                      
-                      <div className="flex justify-between items-center pt-3 border-t border-white/5">
-                        <span className="text-sm font-mono font-black text-[#14F1D9]">Est. Room: ₹4,500 / night</span>
-                        <a 
-                          href={`https://www.booking.com/searchresults.html?ss=${encodeURIComponent(trip.hotels[0].name)}`} 
-                          target="_blank" 
-                          rel="noreferrer" 
-                          className="px-4 py-2 bg-[#14F1D9] hover:bg-[#14F1D9]/80 text-[#050816] text-xs font-black rounded-xl transition-all shadow-md"
-                        >
-                          Book via Booking.com
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
             </div>
           );
         })}
-
-        {/* ─── SUNSET EXPERIENCE OVERLAY (Cinematic beach sunset section) ─── */}
-        {destHub.toLowerCase().includes("ganpati") && (
-          <section className="h-[90vh] w-full rounded-[32px] overflow-hidden relative flex flex-col justify-end p-8 sm:p-16 border border-white/10 shadow-2xl">
-            <div 
-              className="absolute inset-0 bg-cover bg-center brightness-[0.4]"
-              style={{ backgroundImage: `url(https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80)` }}
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#050816] via-transparent to-transparent z-0" />
-            
-            <div className="relative z-10 max-w-2xl space-y-4">
-              <span className="px-3.5 py-1 bg-amber-500/20 border border-amber-400/30 text-amber-300 text-xs font-black uppercase tracking-widest rounded-full">
-                🌅 Sunset Experience
-              </span>
-              <h2 className="text-3xl sm:text-5xl font-extrabold font-sora text-white leading-tight mt-2">Sunset At {destHub} Beach</h2>
-              
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 text-xs font-bold text-slate-300">
-                <div className="p-3 bg-black/40 rounded-2xl border border-white/5">
-                  <p className="text-[9px] text-slate-400 uppercase font-black">Best Arrival Time</p>
-                  <p className="mt-1 font-extrabold text-white">05:15 PM</p>
-                </div>
-                <div className="p-3 bg-black/40 rounded-2xl border border-white/5">
-                  <p className="text-[9px] text-slate-400 uppercase font-black">Sunset Time</p>
-                  <p className="mt-1 font-extrabold text-white">06:34 PM</p>
-                </div>
-                <div className="p-3 bg-black/40 rounded-2xl border border-white/5">
-                  <p className="text-[9px] text-slate-400 uppercase font-black">Weather Summary</p>
-                  <p className="mt-1 font-extrabold text-white">Clear Coast 24°C</p>
-                </div>
-                <div className="p-3 bg-black/40 rounded-2xl border border-white/5">
-                  <p className="text-[9px] text-slate-400 uppercase font-black">Photo Tips</p>
-                  <p className="mt-1 font-extrabold text-[#14F1D9] truncate">Golden hour reflections on wet sand.</p>
-                </div>
-              </div>
-            </div>
-          </section>
-        )}
 
         {/* ─── BUDGET SECTION (Animated Budget Journey) ─── */}
         <section className="bg-[rgba(255,255,255,0.06)] border border-white/5 rounded-[32px] p-6 sm:p-8 shadow-2xl max-w-4xl mx-auto space-y-6">
@@ -614,53 +445,9 @@ export default function TripViewerPage() {
           </div>
         </section>
 
-        {/* ─── EMERGENCY SECTION ─── */}
-        <section className="bg-rose-950/20 border border-rose-500/20 rounded-[32px] p-6 shadow-2xl max-w-4xl mx-auto space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-rose-500/20 rounded-xl border border-rose-500/30">
-              <ShieldAlert className="w-5 h-5 text-rose-400 animate-pulse" />
-            </div>
-            <div>
-              <h4 className="text-sm font-extrabold font-sora text-white">Emergency Assistance Protocol</h4>
-              <p className="text-[10px] text-slate-400">Regional support phone contacts for {trip.destination}</p>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
-            <div className="p-3 bg-black/20 rounded-2xl border border-white/5 flex flex-col justify-between">
-              <p className="text-[9px] text-slate-400 uppercase font-black">🏥 Hospital</p>
-              <p className="font-extrabold text-white mt-1 leading-tight">{trip.emergencyContacts?.hospital?.name || "Local City Hospital"}</p>
-              <p className="text-[10px] text-rose-300 font-bold mt-2 inline-flex items-center gap-1 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20 w-fit">
-                <Phone className="w-2.5 h-2.5" /> {trip.emergencyContacts?.helplines?.ambulance || "102"}
-              </p>
-            </div>
-            <div className="p-3 bg-black/20 rounded-2xl border border-white/5 flex flex-col justify-between">
-              <p className="text-[9px] text-slate-400 uppercase font-black">🚨 Police</p>
-              <p className="font-extrabold text-white mt-1 leading-tight">{trip.emergencyContacts?.police?.name || "Regional Police Station"}</p>
-              <p className="text-[10px] text-rose-300 font-bold mt-2 inline-flex items-center gap-1 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20 w-fit">
-                <Phone className="w-2.5 h-2.5" /> {trip.emergencyContacts?.helplines?.police || "112"}
-              </p>
-            </div>
-            <div className="p-3 bg-black/20 rounded-2xl border border-white/5 flex flex-col justify-between">
-              <p className="text-[9px] text-slate-400 uppercase font-black">💊 Pharmacy</p>
-              <p className="font-extrabold text-white mt-1 leading-tight">{trip.emergencyContacts?.pharmacy?.name || "24/7 Wellness Pharmacy"}</p>
-              <p className="text-[10px] text-slate-300 font-bold mt-2 bg-white/5 px-2 py-0.5 rounded border border-white/10 w-fit">
-                Dist: {trip.emergencyContacts?.pharmacy?.distanceKm?.toFixed(1) || "1.5"} km
-              </p>
-            </div>
-            <div className="p-3 bg-black/20 rounded-2xl border border-white/5 flex flex-col justify-between">
-              <p className="text-[9px] text-slate-400 uppercase font-black">🚒 Fire Rescue</p>
-              <p className="font-extrabold text-white mt-1 leading-tight">{trip.emergencyContacts?.fire?.name || "Coastal Fire Station"}</p>
-              <p className="text-[10px] text-rose-300 font-bold mt-2 inline-flex items-center gap-1 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20 w-fit">
-                <Phone className="w-2.5 h-2.5" /> {trip.emergencyContacts?.helplines?.fire || "101"}
-              </p>
-            </div>
-          </div>
-        </section>
-
       </div>
 
-      {/* ─── STICKY FLOATING MAP SECTION (Not split screen) ─── */}
+      {/* ─── STICKY FLOATING MAP SECTION ─── */}
       <div className="fixed bottom-8 left-8 z-30 hidden xl:block">
         <motion.div 
           animate={{ width: isMapMinimized ? 64 : 320, height: isMapMinimized ? 64 : 350 }}
@@ -692,6 +479,8 @@ export default function TripViewerPage() {
                   const routes = trip.mapExperience?.dayRoutes || [];
                   const currRoute = routes.find((r: any) => r.day === activeDay) || routes[0];
                   const steps = currRoute?.steps || [];
+
+                  if (!steps.length) return <div className="text-xs text-slate-500 font-medium">Map Syncing...</div>;
 
                   let minLat = 90, maxLat = -90, minLon = 180, maxLon = -180;
                   steps.forEach((s: any) => {
@@ -807,7 +596,7 @@ export default function TripViewerPage() {
             </div>
 
             <div className="p-3 bg-slate-900 border-t border-slate-800 space-y-2">
-              <div className="flex gap-1.5 overflow-x-auto pb-1 text-[10px]">
+              <div className="flex gap-1.5 overflow-x-auto pb-1 text-[10px] scrollbar-none">
                 <button onClick={() => setConciergeInput("Best cab app here?")} className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-teal-300 rounded-full shrink-0 border border-slate-700 font-bold">🚕 Cab App?</button>
                 <button onClick={() => setConciergeInput("Where to keep luggage?")} className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-teal-300 rounded-full shrink-0 border border-slate-700 font-bold">🎒 Luggage storage?</button>
                 <button onClick={() => setConciergeInput("Emergency tourist help")} className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-teal-300 rounded-full shrink-0 border border-slate-700 font-bold">🚨 Emergency?</button>

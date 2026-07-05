@@ -125,35 +125,93 @@ CREATE TABLE communication_logs (
 -- 4. Itinerary & Package Engine
 CREATE TABLE trips (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    owner_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    type trip_type DEFAULT 'user_generated',
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     title TEXT NOT NULL,
+    source TEXT NOT NULL,
     destination TEXT NOT NULL,
+    trip_type TEXT,
+    group_type TEXT,
+    budget NUMERIC,
+    currency TEXT DEFAULT 'INR',
     start_date DATE,
     end_date DATE,
-    duration_nights INTEGER,
-    date_flexibility_type TEXT,
-    demographics JSONB,
-    target_budget NUMERIC,
-    travel_styles TEXT[],
-    status trip_status DEFAULT 'Draft',
+    travelers INTEGER DEFAULT 1,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE TABLE trip_components (
+CREATE TABLE traveler_dna (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
-    category component_category NOT NULL,
-    vendor_id UUID REFERENCES agency_vendors(id) ON DELETE SET NULL,
-    day_number INTEGER,
-    time TEXT,
-    title TEXT NOT NULL,
-    description TEXT,
-    internal_cost NUMERIC DEFAULT 0,
-    selling_price NUMERIC DEFAULT 0,
-    qty INTEGER DEFAULT 1,
-    is_ai_generated BOOLEAN DEFAULT false,
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    profile TEXT,
+    comfort_score NUMERIC,
+    crowd_tolerance NUMERIC,
+    walking_limit NUMERIC,
+    wakeup_time TEXT,
+    sleep_time TEXT,
+    activity_capacity INTEGER,
+    transport_preference TEXT[],
+    food_preference TEXT[]
+);
+
+CREATE TABLE destinations (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    lat NUMERIC,
+    lon NUMERIC,
+    country TEXT,
+    state TEXT,
+    city TEXT,
+    timezone TEXT,
+    sunrise TEXT,
+    sunset TEXT
+);
+
+CREATE TABLE transport (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+    mode TEXT,
+    source TEXT,
+    destination TEXT,
+    distance NUMERIC,
+    duration NUMERIC,
+    fare NUMERIC,
+    transfers INTEGER,
+    comfort_score NUMERIC
+);
+
+CREATE TABLE hotels (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    area TEXT,
+    price NUMERIC,
+    rating NUMERIC,
+    image TEXT,
+    affiliate_link TEXT
+);
+
+CREATE TABLE restaurants (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    cuisine TEXT,
+    speciality TEXT[],
+    rating NUMERIC,
+    location TEXT
+);
+
+CREATE TABLE poi (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    category TEXT,
+    lat NUMERIC,
+    lon NUMERIC,
+    rating NUMERIC,
+    visit_duration INTEGER,
+    opening_hours TEXT,
+    priority_score NUMERIC
 );
 
 CREATE TABLE quotations (
