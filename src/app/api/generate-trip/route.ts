@@ -509,15 +509,15 @@ export async function POST(request: Request) {
           await Promise.allSettled([
             supabase.from('traveler_dna').insert({
               trip_id: tripId,
-              profile: dna.profile,
-              comfort_score: dna.comfort_score,
-              crowd_tolerance: dna.crowd_tolerance,
-              walking_limit: dna.walking_limit,
-              wakeup_time: dna.wake_up,
-              sleep_time: dna.sleep,
-              activity_capacity: dna.activities_per_day,
-              transport_preference: dna.transport,
-              food_preference: dna.food_priority
+              profile: dna.travelerType,
+              comfort_score: dna.comfortLevel,
+              crowd_tolerance: 50,
+              walking_limit: dna.walkingTolerance,
+              wakeup_time: '08:00',
+              sleep_time: '22:00',
+              activity_capacity: dna.maxActivitiesPerDay,
+              transport_preference: transport.suggestedMode,
+              food_preference: dna.foodPreference
             }),
             
             supabase.from('destinations').insert({
