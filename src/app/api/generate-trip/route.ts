@@ -235,6 +235,14 @@ export async function POST(request: Request) {
       places.transportNodes.map(n => ({ name: n.name, category: n.category, distanceKm: n.distanceKm }))
     ));
 
+    // ── Step 3.1: STRICT REAL DATA VALIDATION ──
+    if (places.hotels.length === 0 || places.restaurants.length === 0 || places.attractions.length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'INSUFFICIENT_REAL_DATA', message: 'Unable to discover enough verified hotels, restaurants, or attractions in this region.' },
+        { status: 422 }
+      );
+    }
+
     // ── Step 3.5: Build Traveler DNA ──
     const dna = await timedStage('TRAVELER_DNA', async () => buildTravelerDNA({
       travelType: body.travelType,
@@ -284,7 +292,7 @@ export async function POST(request: Request) {
       body.travelType,
       clusters.map(c => ({ places: c.places.map(p => ({ name: p.name, category: p.category })), totalWalkingKm: c.totalWalkingKm })),
       rankedRestaurants.slice(0, 10).map(r => ({ name: r.name, cuisine: r.cuisine })),
-      rankedHotels[0]?.name || body.destination + ' Hotel',
+      rankedHotels[0].name,
       transport.durationHours
     ));
 

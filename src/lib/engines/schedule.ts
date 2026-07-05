@@ -162,7 +162,7 @@ function buildDaySlots(
       title: 'Arrive & Travel to Hotel',
       type: 'travel',
       duration: transitMins,
-      notes: `Transit to ${hotelName || 'accommodation'}`,
+      notes: `Transit to ${hotelName}`,
     });
     cursor += transitMins;
     activeMinutes += transitMins;
@@ -173,7 +173,7 @@ function buildDaySlots(
       slots.push({
         time: formatTime(cursor),
         endTime: formatTime(cursor + checkinDur),
-        title: `Check-in at ${hotelName || 'Hotel'}`,
+        title: `Check-in at ${hotelName}`,
         type: 'hotel',
         duration: checkinDur,
         notes: 'Check-in, freshen up, and settle in',
@@ -194,12 +194,8 @@ function buildDaySlots(
         const restaurantName = restaurant?.name;
         const cuisine = restaurant?.cuisine;
 
-        const mealTitle = restaurantName
-          ? `${meal.name} at ${restaurantName}`
-          : meal.name;
-        const mealNotes = cuisine
-          ? `${cuisine} cuisine`
-          : `${meal.name.toLowerCase()} break`;
+        const mealTitle = `${meal.name} at ${restaurantName}`;
+        const mealNotes = cuisine ? `${cuisine} cuisine` : `Local dining`;
 
         if (cursor + meal.duration <= endMinutes) {
           slots.push({
@@ -287,18 +283,6 @@ function buildDaySlots(
       // No more places, advance cursor to next meal or end
       const nextMealStart = MEAL_WINDOWS.find(m => m.earliest > cursor);
       if (nextMealStart && nextMealStart.earliest < endMinutes) {
-        // Free time until next meal
-        const freeTime = nextMealStart.earliest - cursor;
-        if (freeTime >= 30) {
-          slots.push({
-            time: formatTime(cursor),
-            endTime: formatTime(cursor + freeTime),
-            title: 'Free Time',
-            type: 'rest',
-            duration: freeTime,
-            notes: 'Explore the neighborhood, relax, or shop',
-          });
-        }
         cursor = nextMealStart.earliest;
       } else {
         break;
@@ -313,7 +297,7 @@ function buildDaySlots(
       slots.push({
         time: formatTime(cursor),
         endTime: formatTime(cursor + prepDuration),
-        title: `Checkout from ${hotelName || 'Hotel'}`,
+        title: `Checkout from ${hotelName}`,
         type: 'hotel',
         duration: prepDuration,
         notes: 'Pack up and checkout',
