@@ -341,7 +341,7 @@ export async function POST(request: Request) {
     // ── Step 6: Hero image ──
     let heroImage: string | null = wiki?.thumbnail || null;
     if (!heroImage && places.attractions.length > 0) {
-      heroImage = await timedStage('IMAGES', () => getPlaceImage(places.attractions[0].name, body.destination));
+      heroImage = await timedStage('IMAGES', () => getDestinationImage(body.destination));
     }
 
     // ── Step 7: Assemble response ──
