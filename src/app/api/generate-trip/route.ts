@@ -583,6 +583,11 @@ export async function POST(request: Request) {
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error';
     console.error('Trip generation error:', message);
-    return NextResponse.json({ status: 'FAILED', reason: message }, { status: 500 });
+    
+    if (message.includes('INSUFFICIENT_VERIFIED_DATA')) {
+      return NextResponse.json({ success: false, error: 'INSUFFICIENT_VERIFIED_DATA' }, { status: 404 });
+    }
+    
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

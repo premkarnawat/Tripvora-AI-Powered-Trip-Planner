@@ -61,23 +61,25 @@ async function geocodeCity(city: string): Promise<{ lat: number; lon: number } |
   }
 }
 
-// ─── OSRM driving route ────────────────────────────────────────────
+// ─── OpenRouteService driving route ────────────────────────────────────────────
 
-async function getOSRMRoute(
+async function getOpenRouteServiceRoute(
   oLat: number, oLon: number, dLat: number, dLon: number
 ): Promise<{ distanceKm: number; durationHours: number } | null> {
   try {
-    const url = `https://router.project-osrm.org/route/v1/driving/${oLon},${oLat};${dLon},${dLat}?overview=false`;
-    const res = await fetch(url, { signal: AbortSignal.timeout(4000) });
+    const apiKey = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjI2N2U1MmNlMjY2YzQyNDk4OTliYzBjNTYzM2RjMmU0IiwiaCI6Im11cm11cjY0In0=';
+    const url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${apiKey}&start=${oLon},${oLat}&end=${dLon},${dLat}`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
     if (!res.ok) return null;
-    const data: { code: string; routes?: Array<{ distance: number; duration: number }> } = await res.json();
-    if (data.code !== 'Ok' || !data.routes?.length) return null;
+    const data = await res.json();
+    if (!data.features || !data.features.length) return null;
+    const summary = data.features[0].properties.summary;
     return {
-      distanceKm: Math.round(data.routes[0].distance / 1000),
-      durationHours: Math.round((data.routes[0].duration / 3600) * 10) / 10,
+      distanceKm: Math.round(summary.distance / 1000),
+      durationHours: Math.round((summary.duration / 3600) * 10) / 10,
     };
   } catch (err: unknown) {
-    throw new Error(`OSRM_ROUTE_FAILED: Failed to fetch OSRM route - ${err instanceof Error ? err.message : String(err)}`);
+    throw new Error(`OPENROUTESERVICE_FAILED: Failed to fetch OpenRouteService route - ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 
@@ -164,8 +166,8 @@ export async function discoverTransport(
     let durationHours = 0;
 
     if (originGeo) {
-      // 3. Get OSRM driving route
-      const osrm = await getOSRMRoute(originGeo.lat, originGeo.lon, destinationLat, destinationLon);
+      // 3. Get OpenRouteService driving route
+      const osrm = await getOpenRouteServiceRoute(originGeo.lat, originGeo.lon, destinationLat, destinationLon);
       if (osrm) {
         distanceKm = osrm.distanceKm;
         durationHours = osrm.durationHours;

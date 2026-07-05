@@ -32,76 +32,61 @@ function haversine(lat1: number, lon1: number, lat2: number, lon2: number): numb
   return R * c;
 }
 
-function simulateGooglePlaces(lat: number, lon: number, type: string, count: number): Place[] {
-  const results: Place[] = [];
-  const categories = {
-    'restaurant': ['The Grand Dining', 'Spicy Corner', 'Ocean View Restaurant', 'City Bistro', 'Street Eats'],
-    'tourist_attraction': ['Central Museum', 'Historic Fort', 'City Botanical Garden', 'Sunset Point', 'Old Town Square'],
-    'hospital': ['City General Hospital', 'Care Clinic', 'Metro Health Center'],
-    'transit_station': ['Central Railway Station', 'City Bus Terminal', 'Metro Hub']
-  };
-
-  const names = categories[type as keyof typeof categories] || ['Generic Place'];
-  
-  for (let i = 0; i < count; i++) {
-    const latOffset = (Math.random() - 0.5) * 0.1;
-    const lonOffset = (Math.random() - 0.5) * 0.1;
-    const pLat = lat + latOffset;
-    const pLon = lon + lonOffset;
-    
-    let category: Place['category'] = 'attraction';
-    if (type === 'restaurant') category = 'restaurant';
-    else if (type === 'hospital') category = 'hospital';
-    else if (type === 'transit_station') category = 'station';
-
-    results.push({
-      id: `gplaces_${type}_${i}`,
-      lat: pLat,
-      lon: pLon,
-      name: names[i % names.length] + (i >= names.length ? ` ${Math.floor(i / names.length) + 1}` : ''),
-      category,
-      distanceKm: haversine(lat, lon, pLat, pLon),
-      rating: 3.5 + Math.random() * 1.5,
-      provider: 'GooglePlacesAPI_Simulated'
-    });
+async function fetchGooglePlaces(lat: number, lon: number, type: string, radius: number = 5000): Promise<Place[]> {
+  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+  if (!apiKey || apiKey === 'YOUR_GOOGLE_PLACES_KEY_HERE') {
+    throw new Error('INSUFFICIENT_VERIFIED_DATA');
   }
-  return results;
-}
 
-function simulateBookingAffiliateHotels(lat: number, lon: number, count: number): Place[] {
-  const results: Place[] = [];
-  const brands = ['Marriott', 'Hilton', 'Radisson', 'Holiday Inn', 'Local Boutique', 'Backpacker Hostel'];
-  
-  for (let i = 0; i < count; i++) {
-    const latOffset = (Math.random() - 0.5) * 0.05;
-    const lonOffset = (Math.random() - 0.5) * 0.05;
-    const pLat = lat + latOffset;
-    const pLon = lon + lonOffset;
+  try {
+    const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lon}&radius=${radius}&type=${type}&key=${apiKey}`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
+    if (!res.ok) throw new Error('INSUFFICIENT_VERIFIED_DATA');
     
-    results.push({
-      id: `booking_aff_${i}`,
-      lat: pLat,
-      lon: pLon,
-      name: brands[i % brands.length] + ' Hotel',
-      category: 'hotel',
-      distanceKm: haversine(lat, lon, pLat, pLon),
-      rating: 3.0 + Math.random() * 2.0,
-      provider: 'Booking/Agoda Mock Affiliate',
-      priceLevel: Math.floor(Math.random() * 5) + 1
+    const data = await res.json();
+    if (!data.results || data.results.length === 0) {
+      throw new Error('INSUFFICIENT_VERIFIED_DATA');
+    }
+
+    return data.results.map((r: any) => {
+      let category: Place['category'] = 'attraction';
+      if (type === 'restaurant') category = 'restaurant';
+      else if (type === 'lodging') category = 'hotel';
+      else if (type === 'hospital') category = 'hospital';
+      else if (type === 'transit_station') category = 'station';
+
+      return {
+        id: r.place_id,
+        lat: r.geometry.location.lat,
+        lon: r.geometry.location.lng,
+        name: r.name,
+        category,
+        distanceKm: haversine(lat, lon, r.geometry.location.lat, r.geometry.location.lng),
+        rating: r.rating || 4.0,
+        provider: 'GooglePlacesAPI',
+        priceLevel: r.price_level
+      };
     });
+  } catch (err) {
+    throw new Error('INSUFFICIENT_VERIFIED_DATA');
   }
-  return results;
 }
 
 export async function discoverPlaces(lat: number, lon: number): Promise<PlacesResult> {
-  // Simulate delay
-  await new Promise(resolve => setTimeout(resolve, 500));
+  // Execute real API calls concurrently
+  const [hotels, restaurants, attractions, hospitals, transportNodes] = await Promise.all([
+    fetchGooglePlaces(lat, lon, 'lodging', 5000).catch(e => { throw e; }),
+    fetchGooglePlaces(lat, lon, 'restaurant', 5000).catch(e => { throw e; }),
+    fetchGooglePlaces(lat, lon, 'tourist_attraction', 10000).catch(e => { throw e; }),
+    fetchGooglePlaces(lat, lon, 'hospital', 10000).catch(e => { throw e; }),
+    fetchGooglePlaces(lat, lon, 'transit_station', 10000).catch(e => { throw e; })
+  ]);
 
-  const hotels = simulateBookingAffiliateHotels(lat, lon, 10).sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0));
-  const restaurants = simulateGooglePlaces(lat, lon, 'restaurant', 15).sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0));
-  const attractions = simulateGooglePlaces(lat, lon, 'tourist_attraction', 15).sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0));
-  const hospitals = simulateGooglePlaces(lat, lon, 'hospital', 3).sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0));
-  const transportNodes = simulateGooglePlaces(lat, lon, 'transit_station', 5).sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0));
-
-  return { hotels, restaurants, attractions, hospitals, transportNodes };
+  return { 
+    hotels: hotels.sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0)), 
+    restaurants: restaurants.sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0)), 
+    attractions: attractions.sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0)), 
+    hospitals: hospitals.sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0)), 
+    transportNodes: transportNodes.sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0))
+  };
 }
