@@ -35,17 +35,18 @@ function haversine(lat1: number, lon1: number, lat2: number, lon2: number): numb
 async function fetchGooglePlaces(lat: number, lon: number, type: string, radius: number = 5000): Promise<Place[]> {
   const apiKey = process.env.GOOGLE_PLACES_API_KEY;
   if (!apiKey || apiKey === 'YOUR_GOOGLE_PLACES_KEY_HERE') {
-    throw new Error('INSUFFICIENT_VERIFIED_DATA');
+    console.warn(`[Places API] Missing key. Returning empty array for ${type}.`);
+    return [];
   }
 
   try {
     const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lon}&radius=${radius}&type=${type}&key=${apiKey}`;
     const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
-    if (!res.ok) throw new Error('INSUFFICIENT_VERIFIED_DATA');
+    if (!res.ok) return [];
     
     const data = await res.json();
     if (!data.results || data.results.length === 0) {
-      throw new Error('INSUFFICIENT_VERIFIED_DATA');
+      return [];
     }
 
     return data.results.map((r: any) => {
@@ -68,7 +69,8 @@ async function fetchGooglePlaces(lat: number, lon: number, type: string, radius:
       };
     });
   } catch (err) {
-    throw new Error('INSUFFICIENT_VERIFIED_DATA');
+    console.warn(`[Places API] Fetch failed for ${type}. Returning empty array.`);
+    return [];
   }
 }
 

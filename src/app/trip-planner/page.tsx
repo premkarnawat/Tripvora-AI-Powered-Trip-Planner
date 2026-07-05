@@ -73,7 +73,7 @@ export default function TripPlannerPage() {
       if (resData?.status === "INSUFFICIENT_REAL_DATA") {
         throw new Error(`Trip rejected. Missing verified data: ${resData.missing.join(", ")}.`);
       }
-      if (!response.ok) throw new Error(resData?.reason || "Failed to generate itinerary");
+      if (!response.ok) throw new Error(resData?.error || resData?.reason || "Failed to generate itinerary");
       
       localStorage.setItem('last_generated_trip', JSON.stringify(resData));
       
