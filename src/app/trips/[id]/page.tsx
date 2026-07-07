@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { 
-  ArrowLeft, Share2, Download, Map as MapIcon, ShieldAlert,
+  ArrowLeft, ArrowRight, Share2, Download, Map as MapIcon, ShieldAlert,
   Clock, MapPin, Coffee, Utensils, Bed, Compass, CloudSun, AlertCircle, Phone
 } from "lucide-react";
 import Link from "next/link";
