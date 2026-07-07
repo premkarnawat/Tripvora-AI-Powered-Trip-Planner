@@ -106,12 +106,13 @@ export async function buildSchedule(
         notes: "Settle in and drop off your luggage.",
         lat: hotel.lat,
         lon: hotel.lon,
+        imageUrl: hotel.imageUrl,
       });
       currentTimeMins += 60;
     }
 
     // ── Build sequence for the day ──
-    const dailyQuota = Math.min(maxActivitiesPerDay, attractionPool.length);
+    const dailyQuota = maxActivitiesPerDay; // Never base this on the depleted pool length!
     let mealsTaken = 0;
 
     for (let actIdx = 0; actIdx < dailyQuota; actIdx++) {
@@ -157,6 +158,7 @@ export async function buildSchedule(
         lon: nextAttraction.lon,
         cost: nextAttraction.priceLevel ? nextAttraction.priceLevel * 300 : undefined,
         walkingDistance: `${distKm} km drive`,
+        imageUrl: nextAttraction.imageUrl,
       });
       
       currentTimeMins += actDuration;
@@ -192,12 +194,16 @@ export async function buildSchedule(
             lat: nextRestaurant.lat,
             lon: nextRestaurant.lon,
             cost: nextRestaurant.priceLevel ? nextRestaurant.priceLevel * 400 : 500,
+            imageUrl: nextRestaurant.imageUrl,
           });
           
           currentTimeMins += 60;
           lastLat = nextRestaurant.lat;
           lastLon = nextRestaurant.lon;
           mealsTaken++;
+        } else {
+          // If restaurant pool is empty, reload it!
+          restaurantPool = [...places.restaurants].filter(p => p.name && p.lat && p.lon);
         }
       }
     }
@@ -218,6 +224,7 @@ export async function buildSchedule(
         notes: "Head back to rest for the day.",
         lat: hotel.lat,
         lon: hotel.lon,
+        imageUrl: hotel.imageUrl,
       });
     }
 
