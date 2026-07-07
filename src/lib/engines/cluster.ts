@@ -237,7 +237,7 @@ export function greedyCluster(places: Place[], maxClusters: number, maxRadiusKm:
 // ─── Main Export ────────────────────────────────────────────────────
 
 export function clusterByProximity(
-  places: Array<{ name: string; lat: number; lon: number; category: string; distanceKm?: number }>,
+  places: Place[],
   maxClusters: number,
   walkingTolerance: 'minimal' | 'low' | 'medium' | 'high'
 ): GeoCluster[] {
