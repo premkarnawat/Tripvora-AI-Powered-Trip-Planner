@@ -292,7 +292,7 @@ export async function POST(request: Request) {
     // ── Step 3.7: Geo-cluster & Hidden Gems & Destination Intel ──
     const walkTolerance = (body.walking || 'medium') as 'minimal' | 'low' | 'medium' | 'high';
     const clusters = await timedStage('CLUSTERING', async () => clusterByProximity(
-      rankedAttractions.slice(0, 30).map(a => ({ name: a.name, lat: a.lat, lon: a.lon, category: a.category, distanceKm: a.distanceKm })),
+      rankedAttractions.slice(0, 30),
       duration,
       walkTolerance
     ));
