@@ -16,6 +16,7 @@ export interface PlacesResult {
   restaurants: Place[];
   attractions: Place[];
   hospitals: Place[];
+  police: Place[];
   transportNodes: Place[];
 }
 
@@ -54,6 +55,7 @@ async function fetchGooglePlaces(lat: number, lon: number, type: string, radius:
       if (type === 'restaurant') category = 'restaurant';
       else if (type === 'lodging') category = 'hotel';
       else if (type === 'hospital') category = 'hospital';
+      else if (type === 'police') category = 'station';
       else if (type === 'transit_station') category = 'station';
 
       return {
@@ -76,11 +78,12 @@ async function fetchGooglePlaces(lat: number, lon: number, type: string, radius:
 
 export async function discoverPlaces(lat: number, lon: number): Promise<PlacesResult> {
   // Execute real API calls concurrently
-  const [hotels, restaurants, attractions, hospitals, transportNodes] = await Promise.all([
+  const [hotels, restaurants, attractions, hospitals, police, transportNodes] = await Promise.all([
     fetchGooglePlaces(lat, lon, 'lodging', 5000).catch(e => { throw e; }),
     fetchGooglePlaces(lat, lon, 'restaurant', 5000).catch(e => { throw e; }),
     fetchGooglePlaces(lat, lon, 'tourist_attraction', 10000).catch(e => { throw e; }),
     fetchGooglePlaces(lat, lon, 'hospital', 10000).catch(e => { throw e; }),
+    fetchGooglePlaces(lat, lon, 'police', 10000).catch(e => { throw e; }),
     fetchGooglePlaces(lat, lon, 'transit_station', 10000).catch(e => { throw e; })
   ]);
 
@@ -89,6 +92,7 @@ export async function discoverPlaces(lat: number, lon: number): Promise<PlacesRe
     restaurants: restaurants.sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0)), 
     attractions: attractions.sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0)), 
     hospitals: hospitals.sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0)), 
+    police: police.sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0)),
     transportNodes: transportNodes.sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0))
   };
 }

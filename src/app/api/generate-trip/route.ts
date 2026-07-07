@@ -18,7 +18,7 @@ import { generateAffiliateLinks } from '@/lib/engines/affiliates';
 import { clusterByProximity } from '@/lib/engines/cluster';
 import { calculateBudget } from '@/lib/engines/budget';
 import { buildSchedule, type DaySchedule } from '@/lib/engines/schedule';
-import { discoverEmergencyContacts } from '@/lib/engines/emergency';
+// import removed
 import { timedStage, clearPipelineLogs, getPipelineLogs } from '@/lib/engines/logger';
 
 export const maxDuration = 60;
@@ -198,13 +198,20 @@ export async function POST(request: Request) {
     const duration = Math.max(1, Math.ceil((new Date(body.end_date).getTime() - new Date(body.start_date).getTime()) / 86400000));
     
     // ── Step 2: Parallel data fetching ──
-    const [places, weather, wiki, emergency, destinationImage] = await Promise.all([
+    const [places, weather, wiki, destinationImage] = await Promise.all([
       timedStage('POI_DISCOVERY', () => discoverPlaces(geo.lat, geo.lon), { countFn: (p) => p.attractions.length }),
       timedStage('WEATHER', () => getWeather(geo.lat, geo.lon)),
       timedStage('SANITIZATION', () => getWikiContext(body.destination, geo.lat, geo.lon)),
-      timedStage('EMERGENCY', () => discoverEmergencyContacts(geo.lat, geo.lon)),
       timedStage('IMAGE_ENGINE', () => getDestinationImage(body.destination)),
     ]);
+
+    const emergency = {
+      hospital: places.hospitals.length > 0 ? { name: places.hospitals[0].name, type: 'hospital', lat: places.hospitals[0].lat, lon: places.hospitals[0].lon, distanceKm: places.hospitals[0].distanceKm || 0 } : null,
+      police: places.police?.length > 0 ? { name: places.police[0].name, type: 'police', lat: places.police[0].lat, lon: places.police[0].lon, distanceKm: places.police[0].distanceKm || 0 } : null,
+      pharmacy: null,
+      fire: null,
+      helplines: { police: '112', ambulance: '102', fire: '101', tourist: '1363' }
+    };
 
     // ── Step 2.5: Context & Group Engines ──
     const tripContext = await timedStage('TRIP_CONTEXT', async () => buildTripContext(
