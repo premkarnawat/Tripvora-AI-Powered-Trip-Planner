@@ -169,8 +169,10 @@ export function calculateBudget(
   const planned = intercityTotal + localTransport + accommodationTotal + foodTotal + activitiesTotal + shoppingPool + bufferPool;
   const remaining = totalBudget - planned;
 
+  // Instead of throwing a hard error and blocking generation, we let it pass with a negative remaining budget.
+  // The frontend can display this as a warning, but the user still gets their itinerary.
   if (remaining < 0) {
-     throw new Error(`STRICT_BUDGET_EXCEEDED: This itinerary requires at least ₹${Math.ceil(planned).toLocaleString('en-IN')}, but your budget is only ₹${totalBudget.toLocaleString('en-IN')}. Please increase your budget or lower your comfort tier.`);
+    console.warn(`STRICT_BUDGET_WARNING: Itinerary requires ₹${planned}, budget is ₹${totalBudget}`);
   }
 
   const healthScore = computeHealthScore(totalBudget, remaining);
