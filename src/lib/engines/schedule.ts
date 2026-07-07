@@ -115,7 +115,11 @@ export async function buildSchedule(
     let mealsTaken = 0;
 
     for (let actIdx = 0; actIdx < dailyQuota; actIdx++) {
-      if (attractionPool.length === 0) break;
+      if (attractionPool.length === 0) {
+         // Reload the pool if we run out, so multi-day trips don't abruptly end
+         attractionPool = [...places.attractions].filter(p => p.name && p.lat && p.lon);
+         if (attractionPool.length === 0) break; // If literally no places exist, break
+      }
       
       // 1. Pick next nearest attraction
       attractionPool.sort((a, b) => {

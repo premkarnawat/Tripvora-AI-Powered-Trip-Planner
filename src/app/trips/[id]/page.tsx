@@ -167,6 +167,14 @@ export default function TripDashboardPage() {
                     {/* Activity Card */}
                     <div className="flex-1 pb-6">
                       <div className="bg-white/5 border border-white/5 hover:border-white/10 rounded-2xl p-5 transition-colors">
+                        {activity.imageUrl && (
+                          <div className="w-full h-48 mb-4 rounded-xl overflow-hidden relative group/img">
+                            <img src={activity.imageUrl} alt={activity.title} className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-500" />
+                            {(activity.type === 'hotel' || activity.type === 'checkin') && (
+                               <a href={`https://www.google.com/search?q=${encodeURIComponent(activity.name + " booking")}`} target="_blank" rel="noreferrer" className="absolute bottom-3 right-3 bg-black/80 backdrop-blur-md border border-white/10 text-teal-400 font-bold text-xs px-4 py-2 rounded-full hover:bg-black hover:text-white transition-all shadow-lg flex items-center gap-2">Book Stay <ArrowRight className="w-3 h-3" /></a>
+                            )}
+                          </div>
+                        )}
                         <div className="flex justify-between items-start mb-2">
                           <div>
                             <span className="text-xs font-bold text-teal-400 bg-teal-400/10 px-2 py-1 rounded mb-2 inline-block">
@@ -217,7 +225,7 @@ export default function TripDashboardPage() {
           {/* Budget Widget */}
           <div className="bg-white/5 border border-white/5 rounded-2xl p-5">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Total Budget</h3>
-            <p className="text-2xl font-sora font-bold text-white">₹{budget?.totalBudget?.toLocaleString('en-IN') || "0"}</p>
+            <p className="text-2xl font-sora font-bold text-white">₹{budget?.planned?.toLocaleString('en-IN') || trip?.totalBudget?.toLocaleString('en-IN') || "0"}</p>
             <p className="text-xs text-slate-400 mt-2">Highly optimized based on your strict financial limits.</p>
           </div>
 
