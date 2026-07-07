@@ -9,6 +9,7 @@ export interface Place {
   rating?: number;
   provider?: string;
   priceLevel?: number;
+  imageUrl?: string;
 }
 
 export interface PlacesResult {
@@ -33,7 +34,7 @@ function haversine(lat1: number, lon1: number, lat2: number, lon2: number): numb
   return R * c;
 }
 
-async function fetchGooglePlaces(lat: number, lon: number, type: string, radius: number = 5000): Promise<Place[]> {
+async function fetchGooglePlaces(lat: number, lon: number, type: string, radius: number = 30000): Promise<Place[]> {
   const apiKey = process.env.GOOGLE_PLACES_API_KEY;
   if (!apiKey || apiKey === 'YOUR_GOOGLE_PLACES_KEY_HERE') {
     console.warn(`[Places API] Missing key. Returning empty array for ${type}.`);
@@ -58,6 +59,11 @@ async function fetchGooglePlaces(lat: number, lon: number, type: string, radius:
       else if (type === 'police') category = 'station';
       else if (type === 'transit_station') category = 'station';
 
+      let imageUrl;
+      if (r.photos && r.photos.length > 0) {
+        imageUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${r.photos[0].photo_reference}&key=${apiKey}`;
+      }
+
       return {
         id: r.place_id,
         lat: r.geometry.location.lat,
@@ -67,7 +73,8 @@ async function fetchGooglePlaces(lat: number, lon: number, type: string, radius:
         distanceKm: haversine(lat, lon, r.geometry.location.lat, r.geometry.location.lng),
         rating: r.rating || 4.0,
         provider: 'GooglePlacesAPI',
-        priceLevel: r.price_level
+        priceLevel: r.price_level,
+        imageUrl
       };
     });
   } catch (err) {

@@ -83,6 +83,26 @@ async function getOpenRouteServiceRoute(
   }
 }
 
+export async function getMicroRoute(
+  oLat: number, oLon: number, dLat: number, dLon: number
+): Promise<{ distanceKm: number; durationMinutes: number } | null> {
+  try {
+    const apiKey = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjI2N2U1MmNlMjY2YzQyNDk4OTliYzBjNTYzM2RjMmU0IiwiaCI6Im11cm11cjY0In0=';
+    const url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${apiKey}&start=${oLon},${oLat}&end=${dLon},${dLat}`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(3000) });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data.features || !data.features.length) return null;
+    const summary = data.features[0].properties.summary;
+    return {
+      distanceKm: Number((summary.distance / 1000).toFixed(2)),
+      durationMinutes: Math.ceil(summary.duration / 60),
+    };
+  } catch (err) {
+    return null; // Silent fallback for micro routing to avoid crashing the whole pipeline
+  }
+}
+
 // ─── Find nearest transport hubs ────────────────────────────────────
 
 function findNearest(nodes: TransportNode[], category: string): { name: string; distanceKm: number } | null {

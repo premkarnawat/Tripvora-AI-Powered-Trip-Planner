@@ -129,30 +129,18 @@ export function calculateBudget(
   travelers: { adults: number; children: number; seniors: number },
   comfortLevel: string,
   transportFare: number,
-  travelType: string
+  travelType: string,
+  hotelCostPerNight: number = 3000 // default fallback
 ): BudgetBreakdown {
   const safeDuration = Math.max(1, duration);
   const nights = Math.max(0, safeDuration - 1);
   const comfortKey = comfortLevel.toLowerCase().trim();
-  const ratios = ALLOCATION_RATIOS[comfortKey] ?? ALLOCATION_RATIOS.comfortable;
   const effectiveCount = effectiveTravelerCount(travelers);
   const heads = totalHeadcount(travelers);
 
-  // ── Allocate total budget into categories ───────────────────────
-  const transportPool = totalBudget * ratios.transport;
-  const hotelPool = totalBudget * ratios.hotel;
-  const foodPool = totalBudget * ratios.food;
-  const activitiesPool = totalBudget * ratios.activities;
-  const shoppingPool = totalBudget * ratios.shopping;
-  const bufferPool = totalBudget * ratios.buffer;
-
-  // ── Transport: intercity fare is given, local is remainder ──────
+  // STRICT SUBTRACTIVE ALLOCATION
   const intercityTotal = transportFare * heads;
-  const localTransport = Math.max(0, transportPool - intercityTotal);
-  const transportTotal = intercityTotal + localTransport;
-
-  // ── Accommodation ──────────────────────────────────────────────
-  // Rooms needed: couples share, families share, solos individual
+  
   const roomMultiplier = (travelType === 'couple' || travelType === 'honeymoon')
     ? Math.ceil(heads / 2)
     : (travelType === 'family')
@@ -161,42 +149,41 @@ export function calculateBudget(
         ? Math.max(1, Math.ceil(heads / 2))
         : Math.max(1, Math.ceil(heads / 2));
 
-  const perNightTotal = nights > 0 ? hotelPool / nights : 0;
-  const perNightPerRoom = roomMultiplier > 0 ? perNightTotal / roomMultiplier : perNightTotal;
-  const accommodationTotal = nights > 0 ? perNightPerRoom * roomMultiplier * nights : 0;
+  const accommodationTotal = nights * hotelCostPerNight * roomMultiplier;
 
-  // ── Food ───────────────────────────────────────────────────────
-  const foodPerDay = safeDuration > 0 ? foodPool / safeDuration : 0;
-  const foodPerDayPerPerson = effectiveCount > 0 ? foodPerDay / effectiveCount : foodPerDay;
-
-  // Breakdown per person per day
-  const breakfastPerPerson = foodPerDayPerPerson * 0.20;
-  const lunchPerPerson = foodPerDayPerPerson * 0.35;
-  const dinnerPerPerson = foodPerDayPerPerson * 0.35;
-  const snacksPerPerson = foodPerDayPerPerson * 0.10;
-
+  // Food costs based on real world estimates per comfort level
+  const baseMealCost = comfortKey === 'budget' ? 200 : comfortKey === 'luxury' ? 1200 : 500;
+  const foodPerDay = baseMealCost * 3 * effectiveCount; // 3 meals
   const foodTotal = foodPerDay * safeDuration;
 
-  // ── Activities ─────────────────────────────────────────────────
-  const activitiesPerDay = safeDuration > 0 ? activitiesPool / safeDuration : 0;
+  // Activities cost
+  const baseActivityCost = comfortKey === 'budget' ? 300 : comfortKey === 'luxury' ? 2500 : 800;
+  const activitiesPerDay = baseActivityCost * effectiveCount;
   const activitiesTotal = activitiesPerDay * safeDuration;
 
-  // ── Totals ─────────────────────────────────────────────────────
-  const planned = transportTotal + accommodationTotal + foodTotal + activitiesTotal + shoppingPool + bufferPool;
-  const remaining = totalBudget - planned;
-  const healthScore = computeHealthScore(totalBudget, remaining);
+  const localTransport = (transportFare * 0.2) * heads * safeDuration; // estimate
 
-  // ── Savings tips ───────────────────────────────────────────────
+  const shoppingPool = totalBudget * 0.05;
+  const bufferPool = totalBudget * 0.05;
+
+  const planned = intercityTotal + localTransport + accommodationTotal + foodTotal + activitiesTotal + shoppingPool + bufferPool;
+  const remaining = totalBudget - planned;
+
+  if (remaining < 0) {
+     throw new Error(`STRICT_BUDGET_EXCEEDED: This itinerary requires at least ₹${Math.ceil(planned).toLocaleString('en-IN')}, but your budget is only ₹${totalBudget.toLocaleString('en-IN')}. Please increase your budget or lower your comfort tier.`);
+  }
+
+  const healthScore = computeHealthScore(totalBudget, remaining);
   const savingsTips = generateSavingsTips(comfortKey, travelType.toLowerCase().trim(), safeDuration, travelers);
 
   return {
     transport: {
       intercity: Math.round(intercityTotal),
       local: Math.round(localTransport),
-      total: Math.round(transportTotal),
+      total: Math.round(intercityTotal + localTransport),
     },
     accommodation: {
-      perNight: Math.round(perNightPerRoom),
+      perNight: Math.round(hotelCostPerNight),
       total: Math.round(accommodationTotal),
       nights,
     },
@@ -204,10 +191,10 @@ export function calculateBudget(
       perDay: Math.round(foodPerDay),
       total: Math.round(foodTotal),
       breakdown: {
-        breakfast: Math.round(breakfastPerPerson * effectiveCount),
-        lunch: Math.round(lunchPerPerson * effectiveCount),
-        dinner: Math.round(dinnerPerPerson * effectiveCount),
-        snacks: Math.round(snacksPerPerson * effectiveCount),
+        breakfast: Math.round(foodPerDay * 0.2),
+        lunch: Math.round(foodPerDay * 0.4),
+        dinner: Math.round(foodPerDay * 0.3),
+        snacks: Math.round(foodPerDay * 0.1),
       },
     },
     activities: {

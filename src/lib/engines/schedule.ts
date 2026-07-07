@@ -1,20 +1,24 @@
-// ─── Intelligent Time Scheduling Engine ─────────────────────────────
-// Builds day-by-day itineraries from cluster + restaurant data
+import { getMicroRoute } from './transport';
 
 export interface ScheduleSlot {
-  time: string;    // e.g. '09:30'
-  endTime: string; // e.g. '11:00'
+  time: string;
+  endTime: string;
   title: string;
-  type: 'travel' | 'meal' | 'activity' | 'rest' | 'hotel';
+  type: 'travel' | 'meal' | 'activity' | 'rest' | 'hotel' | 'checkin' | 'checkout';
   duration: number; // minutes
   notes: string;
+  lat?: number;
+  lon?: number;
+  imageUrl?: string;
+  cost?: number;
+  walkingDistance?: string;
 }
 
 export interface DaySchedule {
   day: number;
   date: string;
   theme: string;
-  slots: ScheduleSlot[];
+  activities: ScheduleSlot[];
   totalActiveHours: number;
 }
 
@@ -26,451 +30,201 @@ function parseTime(t: string): number {
 }
 
 function formatTime(mins: number): string {
-  const clamped = Math.max(0, Math.min(mins, 1439)); // 23:59 max
-  const h = Math.floor(clamped / 60);
+  const clamped = Math.max(0, Math.min(mins, 1439));
+  let h = Math.floor(clamped / 60);
   const m = clamped % 60;
-  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')} ${ampm}`;
 }
 
-function addMinutes(time: string, mins: number): string {
-  return formatTime(parseTime(time) + mins);
+function addMinutes(timeMins: number, addMins: number): number {
+  return timeMins + addMins;
 }
-
-// ─── Pace config ────────────────────────────────────────────────────
-
-const PACE_HOURS: Record<string, number> = {
-  relaxed: 6,
-  balanced: 8,
-  explorer: 10,
-  packed: 12,
-};
 
 // ─── Category-based duration estimates (minutes) ────────────────────
 
 function estimateActivityDuration(category: string): number {
   const cat = category.toLowerCase();
-  if (/museum|gallery|aquarium/.test(cat)) return 90;
-  if (/temple|church|mosque|shrine|place_of_worship/.test(cat)) return 45;
-  if (/fort|castle|palace|ruins/.test(cat)) return 75;
-  if (/park|garden|nature/.test(cat)) return 60;
-  if (/viewpoint|monument|memorial/.test(cat)) return 30;
-  if (/zoo|theme_park|water_park/.test(cat)) return 120;
-  if (/beach/.test(cat)) return 90;
-  if (/market|bazaar|shopping/.test(cat)) return 60;
-  return 60; // default
+  if (/museum|gallery|aquarium/.test(cat)) return 120;
+  if (/temple|church|mosque|shrine|place_of_worship/.test(cat)) return 60;
+  if (/fort|castle|palace|ruins/.test(cat)) return 90;
+  if (/park|garden|nature/.test(cat)) return 75;
+  if (/viewpoint|monument|memorial/.test(cat)) return 45;
+  if (/zoo|theme_park|water_park/.test(cat)) return 180;
+  if (/beach/.test(cat)) return 120;
+  if (/market|bazaar|shopping/.test(cat)) return 90;
+  return 60;
 }
 
-// ─── Theme generator from cluster content ───────────────────────────
+// ─── The Smart Scheduler ──────────────────────────────────────────
 
-function generateTheme(
-  places: Array<{ name: string; category: string }>,
-  dayNum: number,
-  totalDays: number,
-  isArrival: boolean,
-  isDeparture: boolean
-): string {
-  if (isArrival && isDeparture) return 'Arrival, Explore & Departure';
-  if (isArrival) return 'Arrival & Local Exploration';
-  if (isDeparture) return 'Final Highlights & Departure';
-
-  if (places.length === 0) {
-    if (dayNum === Math.ceil(totalDays / 2)) return 'Leisure & Rest Day';
-    return `Day ${dayNum} Exploration`;
-  }
-
-  // Analyze categories present
-  const categories = places.map(p => p.category.toLowerCase());
-  const hasHistoric = categories.some(c => /fort|castle|monument|ruins|historic|temple|church|mosque/.test(c));
-  const hasNature = categories.some(c => /park|garden|beach|nature|viewpoint|peak|waterfall/.test(c));
-  const hasMuseum = categories.some(c => /museum|gallery/.test(c));
-  const hasAdventure = categories.some(c => /zoo|theme_park|water_park|aquarium/.test(c));
-  const hasMarket = categories.some(c => /market|bazaar|shopping/.test(c));
-
-  const parts: string[] = [];
-  if (hasHistoric) parts.push('Heritage');
-  if (hasNature) parts.push('Nature');
-  if (hasMuseum) parts.push('Culture');
-  if (hasAdventure) parts.push('Adventure');
-  if (hasMarket) parts.push('Shopping');
-
-  if (parts.length === 0) {
-    // Use top place names
-    const topNames = places.slice(0, 2).map(p => p.name);
-    return topNames.join(' & ') || `Day ${dayNum} Exploration`;
-  }
-
-  return parts.slice(0, 3).join(' & ') + ' Day';
-}
-
-// ─── Meal slot insertion ────────────────────────────────────────────
-
-interface MealWindow {
-  name: string;
-  earliest: number; // minutes from midnight
-  latest: number;
-  duration: number;
-}
-
-const MEAL_WINDOWS: MealWindow[] = [
-  { name: 'Breakfast', earliest: 480, latest: 570, duration: 45 }, // 08:00-09:30
-  { name: 'Lunch', earliest: 750, latest: 840, duration: 60 },    // 12:30-14:00
-  { name: 'Dinner', earliest: 1170, latest: 1260, duration: 75 }, // 19:30-21:00
-];
-
-// ─── Check if travel type allows night activities ───────────────────
-
-function allowsNightActivities(travelType: string): boolean {
-  const t = travelType.toLowerCase().trim();
-  return t === 'bachelor' || t === 'friends';
-}
-
-function getRestIntervalMins(travelType: string, pace: string): number {
-  const t = travelType.toLowerCase().trim();
-  const p = pace.toLowerCase().trim();
-  if (t === 'senior') return 90;
-  if (t === 'family') return 120;
-  if (p === 'relaxed') return 120;
-  if (p === 'packed') return 240;
-  return 180;
-}
-
-// ─── Build a single day's schedule ──────────────────────────────────
-
-function buildDaySlots(
-  startMinutes: number,
-  endMinutes: number,
-  maxActiveMinutes: number,
-  places: Array<{ name: string; category: string }>,
-  restaurants: Array<{ name: string; cuisine?: string }>,
-  hotelName: string,
+export async function buildSchedule(
+  places: { attractions: any[]; restaurants: any[]; hotels: any[] },
+  daysCount: number,
+  hotel: any,
   travelType: string,
-  isArrival: boolean,
-  isDeparture: boolean,
-  transitDurationMinutes: number
-): ScheduleSlot[] {
-  const slots: ScheduleSlot[] = [];
-  let cursor = startMinutes;
-  let activeMinutes = 0;
-  let activityIndex = 0;
-  let restaurantIndex = 0;
-  let lastRestAt = startMinutes;
-  const restInterval = getRestIntervalMins(travelType, (maxActiveMinutes > 600 ? 'packed' : 'balanced'));
-  const nightOk = allowsNightActivities(travelType);
-  const activityCutoff = nightOk ? 1380 : 1200; // 23:00 or 20:00
+  pace: string,
+  arrivalDatetime: string
+): Promise<DaySchedule[]> {
+  const schedule: DaySchedule[] = [];
+  
+  // Clone pools to avoid mutation and track usage
+  let attractionPool = [...places.attractions].filter(p => p.name && p.lat && p.lon);
+  let restaurantPool = [...places.restaurants].filter(p => p.name && p.lat && p.lon);
 
-  // Arrival transit slot
-  if (isArrival && transitDurationMinutes > 0) {
-    const transitMins = Math.min(transitDurationMinutes, endMinutes - cursor);
-    slots.push({
-      time: formatTime(cursor),
-      endTime: formatTime(cursor + transitMins),
-      title: 'Arrive & Travel to Hotel',
-      type: 'travel',
-      duration: transitMins,
-      notes: `Transit to ${hotelName}`,
-    });
-    cursor += transitMins;
-    activeMinutes += transitMins;
-
-    // Check-in / freshen up
-    if (cursor + 30 <= endMinutes) {
-      const checkinDur = 30;
-      slots.push({
-        time: formatTime(cursor),
-        endTime: formatTime(cursor + checkinDur),
-        title: `Check-in at ${hotelName}`,
-        type: 'hotel',
-        duration: checkinDur,
-        notes: 'Check-in, freshen up, and settle in',
-      });
-      cursor += checkinDur;
+  // Parse arrival
+  let currentGlobalTimeMins = parseTime("09:00"); // Default
+  if (arrivalDatetime) {
+    const arrivalDateObj = new Date(arrivalDatetime);
+    if (!isNaN(arrivalDateObj.getTime())) {
+       const h = arrivalDateObj.getHours();
+       const m = arrivalDateObj.getMinutes();
+       currentGlobalTimeMins = h * 60 + m;
     }
   }
 
-  // Helper: try to insert a meal if we're in the right window
-  function tryInsertMeal(): boolean {
-    for (const meal of MEAL_WINDOWS) {
-      if (cursor >= meal.earliest && cursor <= meal.latest) {
-        // Check if this meal is already inserted
-        const alreadyHas = slots.some(s => s.title.startsWith(meal.name));
-        if (alreadyHas) continue;
+  // Base fatigue model
+  const isRelaxed = pace.toLowerCase().includes('relax') || travelType.toLowerCase().includes('senior');
+  const maxActivitiesPerDay = isRelaxed ? 3 : 5;
+  
+  for (let dayNum = 1; dayNum <= daysCount; dayNum++) {
+    const dayActivities: ScheduleSlot[] = [];
+    let currentTimeMins = dayNum === 1 ? currentGlobalTimeMins : parseTime("09:00"); // Day 1 respects arrival time
 
-        const restaurant = restaurants[restaurantIndex % Math.max(1, restaurants.length)];
-        const restaurantName = restaurant?.name || 'Exclusive Dining';
-        const cuisine = restaurant?.cuisine;
+    // ── Check-in for Day 1 ──
+    let lastLat = hotel?.lat || 0;
+    let lastLon = hotel?.lon || 0;
 
-        const mealTitle = restaurantName ? `${meal.name} at ${restaurantName}` : `${meal.name} Experience`;
-        const mealNotes = cuisine ? `Savor authentic ${cuisine} flavors` : `Exclusive culinary experience`;
+    if (dayNum === 1 && hotel) {
+      dayActivities.push({
+        time: formatTime(currentTimeMins),
+        endTime: formatTime(currentTimeMins + 60),
+        title: `Check-in at ${hotel.name}`,
+        type: 'checkin',
+        duration: 60,
+        notes: "Settle in and drop off your luggage.",
+        lat: hotel.lat,
+        lon: hotel.lon,
+      });
+      currentTimeMins += 60;
+    }
 
-        if (cursor + meal.duration <= endMinutes) {
-          slots.push({
-            time: formatTime(cursor),
-            endTime: formatTime(cursor + meal.duration),
-            title: mealTitle,
-            type: 'meal',
-            duration: meal.duration,
-            notes: mealNotes,
+    // ── Build sequence for the day ──
+    const dailyQuota = Math.min(maxActivitiesPerDay, attractionPool.length);
+    let mealsTaken = 0;
+
+    for (let actIdx = 0; actIdx < dailyQuota; actIdx++) {
+      if (attractionPool.length === 0) break;
+      
+      // 1. Pick next nearest attraction
+      attractionPool.sort((a, b) => {
+        const distA = Math.pow(a.lat - lastLat, 2) + Math.pow(a.lon - lastLon, 2);
+        const distB = Math.pow(b.lat - lastLat, 2) + Math.pow(b.lon - lastLon, 2);
+        return distA - distB;
+      });
+      
+      const nextAttraction = attractionPool.shift()!;
+      
+      // 2. Micro-routing travel time (A -> B)
+      let travelMins = 15; // default
+      let distKm = 2.5; // default
+      if (lastLat && lastLon) {
+        const micro = await getMicroRoute(lastLat, lastLon, nextAttraction.lat, nextAttraction.lon);
+        if (micro) {
+          travelMins = Math.max(10, micro.durationMinutes);
+          distKm = micro.distanceKm;
+        }
+      }
+
+      // Add travel offset
+      currentTimeMins += travelMins;
+
+      // 3. Add Activity
+      const actDuration = estimateActivityDuration(nextAttraction.category);
+      dayActivities.push({
+        time: formatTime(currentTimeMins),
+        endTime: formatTime(currentTimeMins + actDuration),
+        title: nextAttraction.name,
+        type: 'activity',
+        duration: actDuration,
+        notes: `Explore ${nextAttraction.category.replace('_', ' ')}. Ranked highly for this destination.`,
+        lat: nextAttraction.lat,
+        lon: nextAttraction.lon,
+        cost: nextAttraction.priceLevel ? nextAttraction.priceLevel * 300 : undefined,
+        walkingDistance: `${distKm} km drive`,
+      });
+      
+      currentTimeMins += actDuration;
+      lastLat = nextAttraction.lat;
+      lastLon = nextAttraction.lon;
+
+      // 4. Smart Meal Insertion (Only if a real restaurant is nearby and time fits)
+      // Check if it's lunch time (12:30 PM - 2:30 PM) or dinner time (7:00 PM - 9:00 PM)
+      const isLunchTime = currentTimeMins >= 750 && currentTimeMins <= 870;
+      const isDinnerTime = currentTimeMins >= 1140 && currentTimeMins <= 1260;
+      
+      if ((isLunchTime && mealsTaken < 1) || (isDinnerTime && mealsTaken < 2)) {
+        if (restaurantPool.length > 0) {
+          restaurantPool.sort((a, b) => {
+            const distA = Math.pow(a.lat - lastLat, 2) + Math.pow(a.lon - lastLon, 2);
+            const distB = Math.pow(b.lat - lastLat, 2) + Math.pow(b.lon - lastLon, 2);
+            return distA - distB;
           });
-          cursor += meal.duration;
-          restaurantIndex++;
-          return true;
+          const nextRestaurant = restaurantPool.shift()!;
+          
+          let rTravelMins = 10;
+          const rMicro = await getMicroRoute(lastLat, lastLon, nextRestaurant.lat, nextRestaurant.lon);
+          if (rMicro) rTravelMins = Math.max(5, rMicro.durationMinutes);
+          
+          currentTimeMins += rTravelMins;
+          dayActivities.push({
+            time: formatTime(currentTimeMins),
+            endTime: formatTime(currentTimeMins + 60),
+            title: `Meal at ${nextRestaurant.name}`,
+            type: 'meal',
+            duration: 60,
+            notes: `Highly rated ${nextRestaurant.cuisine || 'local'} cuisine near your last activity.`,
+            lat: nextRestaurant.lat,
+            lon: nextRestaurant.lon,
+            cost: nextRestaurant.priceLevel ? nextRestaurant.priceLevel * 400 : 500,
+          });
+          
+          currentTimeMins += 60;
+          lastLat = nextRestaurant.lat;
+          lastLon = nextRestaurant.lon;
+          mealsTaken++;
         }
       }
     }
-    return false;
-  }
 
-  // Main scheduling loop
-  while (cursor < endMinutes && activeMinutes < maxActiveMinutes) {
-    // Check for departure transit
-    if (isDeparture) {
-      const departureBuffer = transitDurationMinutes + 60; // transit + buffer
-      if (cursor + departureBuffer >= endMinutes) {
-        break; // Reserve time for departure
-      }
-    }
-
-    // Try to insert a meal
-    if (tryInsertMeal()) continue;
-
-    // Insert rest break if needed based on fatigue/pace
-    if ((cursor - lastRestAt) >= restInterval && cursor + 20 <= endMinutes) {
-      slots.push({
-        time: formatTime(cursor),
-        endTime: formatTime(cursor + 20),
-        title: 'Rest Break',
-        type: 'rest',
-        duration: 20,
-        notes: 'Take a breather, hydrate, and relax',
-      });
-      cursor += 20;
-      lastRestAt = cursor;
-      continue;
-    }
-
-    // Check activity cutoff
-    if (cursor >= activityCutoff) break;
-
-    // Insert an activity
-    if (activityIndex < places.length) {
-      const place = places[activityIndex];
-      const duration = estimateActivityDuration(place.category);
-      const effectiveDuration = Math.min(duration, endMinutes - cursor, maxActiveMinutes - activeMinutes);
-
-      if (effectiveDuration < 20) break; // Not enough time for meaningful activity
-
-      // Travel time between activities (15 min walking/transit gap)
-      if (activityIndex > 0 && cursor + 15 + effectiveDuration <= endMinutes) {
-        slots.push({
-          time: formatTime(cursor),
-          endTime: formatTime(cursor + 15),
-          title: `Travel to ${place.name}`,
-          type: 'travel',
-          duration: 15,
-          notes: 'Walking or local transport',
-        });
-        cursor += 15;
-        activeMinutes += 15;
-      }
-
-      slots.push({
-        time: formatTime(cursor),
-        endTime: formatTime(cursor + effectiveDuration),
-        title: `Visit ${place.name}`,
-        type: 'activity',
-        duration: effectiveDuration,
-        notes: `Explore ${place.name} (${place.category})`,
-      });
-      cursor += effectiveDuration;
-      activeMinutes += effectiveDuration;
-      activityIndex++;
-    } else {
-      // No more places, advance cursor to next meal or end
-      const nextMealStart = MEAL_WINDOWS.find(m => m.earliest > cursor);
-      if (nextMealStart && nextMealStart.earliest < endMinutes) {
-        cursor = nextMealStart.earliest;
-      } else {
-        break;
-      }
-    }
-  }
-
-  // Departure transit
-  if (isDeparture && transitDurationMinutes > 0) {
-    const prepDuration = 30;
-    if (cursor + prepDuration + transitDurationMinutes <= endMinutes + 60) {
-      slots.push({
-        time: formatTime(cursor),
-        endTime: formatTime(cursor + prepDuration),
-        title: `Checkout from ${hotelName}`,
+    // End of day return to hotel
+    if (hotel && dayActivities.length > 0) {
+      let rTravelMins = 20;
+      const rMicro = await getMicroRoute(lastLat, lastLon, hotel.lat, hotel.lon);
+      if (rMicro) rTravelMins = Math.max(10, rMicro.durationMinutes);
+      currentTimeMins += rTravelMins;
+      
+      dayActivities.push({
+        time: formatTime(currentTimeMins),
+        endTime: formatTime(currentTimeMins + 30),
+        title: `Return to ${hotel.name}`,
         type: 'hotel',
-        duration: prepDuration,
-        notes: 'Pack up and checkout',
+        duration: 30,
+        notes: "Head back to rest for the day.",
+        lat: hotel.lat,
+        lon: hotel.lon,
       });
-      cursor += prepDuration;
-
-      slots.push({
-        time: formatTime(cursor),
-        endTime: formatTime(cursor + transitDurationMinutes),
-        title: 'Depart — Travel to Station/Airport',
-        type: 'travel',
-        duration: transitDurationMinutes,
-        notes: 'Head to departure point',
-      });
-      cursor += transitDurationMinutes;
     }
-  }
 
-  // End-of-day hotel return (if not departure day)
-  if (!isDeparture && hotelName) {
-    const returnDur = 15;
-    slots.push({
-      time: formatTime(cursor),
-      endTime: formatTime(cursor + returnDur),
-      title: `Return to ${hotelName}`,
-      type: 'hotel',
-      duration: returnDur,
-      notes: 'Head back to accommodation for the night',
+    schedule.push({
+      day: dayNum,
+      date: `Day ${dayNum}`,
+      theme: `Day ${dayNum} Exploration`,
+      activities: dayActivities,
+      totalActiveHours: Math.round((currentTimeMins - (dayNum === 1 ? currentGlobalTimeMins : parseTime("09:00"))) / 60)
     });
   }
 
-  return slots;
-}
-
-// ─── Format date string ─────────────────────────────────────────────
-
-function formatDate(startDate: Date, dayOffset: number): string {
-  const d = new Date(startDate);
-  d.setDate(d.getDate() + dayOffset);
-  const year = d.getFullYear();
-  const month = (d.getMonth() + 1).toString().padStart(2, '0');
-  const day = d.getDate().toString().padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
-// ─── Main Export ────────────────────────────────────────────────────
-
-export function buildSchedule(
-  duration: number,
-  arrivalTime: string,
-  departureTime: string,
-  pace: string,
-  travelType: string,
-  clusters: Array<{ places: Array<{ name: string; category: string }>; totalWalkingKm: number }>,
-  restaurants: Array<{ name: string; cuisine?: string }>,
-  hotelName: string,
-  transportDurationHours: number
-): DaySchedule[] {
-  const safeDuration = Math.max(1, duration);
-  const paceKey = pace.toLowerCase().trim();
-  const dailyActiveMinutes = (PACE_HOURS[paceKey] ?? PACE_HOURS.balanced) * 60;
-  const transitMinutes = Math.round(transportDurationHours * 60);
-
-  // Flatten all cluster places to distribute across days
-  const allPlaces: Array<{ name: string; category: string }>[] = [];
-  if (clusters.length > 0) {
-    // Distribute cluster places across days
-    for (const cluster of clusters) {
-      allPlaces.push(cluster.places);
-    }
-  }
-
-  // Distribute restaurants across days (round-robin)
-  const restaurantsPerDay: Array<Array<{ name: string; cuisine?: string }>> = [];
-  for (let d = 0; d < safeDuration; d++) {
-    restaurantsPerDay.push([]);
-  }
-  for (let i = 0; i < restaurants.length; i++) {
-    restaurantsPerDay[i % safeDuration].push(restaurants[i]);
-  }
-
-  // Distribute places across days
-  const placesPerDay: Array<Array<{ name: string; category: string }>> = [];
-  for (let d = 0; d < safeDuration; d++) {
-    placesPerDay.push([]);
-  }
-
-  // Assign entire clusters to days first (best fit)
-  let dayPointer = 0;
-  for (const clusterPlaces of allPlaces) {
-    // Assign to current day, advance if needed
-    const targetDay = dayPointer % safeDuration;
-    for (const place of clusterPlaces) {
-      placesPerDay[targetDay].push(place);
-    }
-    dayPointer++;
-  }
-
-  // Build schedules
-  const schedules: DaySchedule[] = [];
-  const startDate = new Date();
-
-  for (let d = 0; d < safeDuration; d++) {
-    const isFirstDay = d === 0;
-    const isLastDay = d === safeDuration - 1;
-    const isOnlyDay = safeDuration === 1;
-
-    // Determine start and end times for this day
-    let dayStartMinutes: number;
-    let dayEndMinutes: number;
-
-    if (isFirstDay) {
-      dayStartMinutes = parseTime(arrivalTime && arrivalTime.trim() !== '' ? arrivalTime : '09:30');
-    } else {
-      dayStartMinutes = parseTime(paceKey === 'relaxed' ? '09:30' : paceKey === 'explorer' || paceKey === 'packed' ? '07:30' : '08:30');
-    }
-
-    if (isLastDay) {
-      dayEndMinutes = parseTime(departureTime && departureTime.trim() !== '' ? departureTime : '17:45');
-    } else {
-      dayEndMinutes = parseTime(paceKey === 'relaxed' ? '20:30' : paceKey === 'packed' ? '23:30' : '21:30');
-    }
-
-    // Ensure valid range
-    if (dayEndMinutes <= dayStartMinutes) {
-      dayEndMinutes = dayStartMinutes + 120; // At least 2 hours
-    }
-
-    const dayPlaces = placesPerDay[d] || [];
-    const dayRestaurants = restaurantsPerDay[d] || [];
-
-    const slots = buildDaySlots(
-      dayStartMinutes,
-      dayEndMinutes,
-      dailyActiveMinutes,
-      dayPlaces,
-      dayRestaurants,
-      hotelName,
-      travelType,
-      isFirstDay,
-      isLastDay,
-      isOnlyDay ? Math.min(transitMinutes, 60) : (isFirstDay || isLastDay ? transitMinutes : 0)
-    );
-
-    // Calculate total active hours
-    const totalActiveMins = slots.reduce((sum, slot) => {
-      if (slot.type !== 'rest' && slot.type !== 'hotel') {
-        return sum + slot.duration;
-      }
-      return sum;
-    }, 0);
-
-    const theme = generateTheme(
-      dayPlaces,
-      d + 1,
-      safeDuration,
-      isFirstDay,
-      isLastDay
-    );
-
-    schedules.push({
-      day: d + 1,
-      date: formatDate(startDate, d),
-      theme,
-      slots,
-      totalActiveHours: Math.round((totalActiveMins / 60) * 10) / 10,
-    });
-  }
-
-  return schedules;
+  return schedule;
 }

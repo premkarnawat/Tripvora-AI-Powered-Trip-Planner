@@ -297,7 +297,8 @@ export async function POST(request: Request) {
       { adults: body.travelers, children: body.children, seniors: 0 },
       body.comfort,
       transport.estimatedFare,
-      body.trip_type
+      body.trip_type,
+      rankedHotels.length > 0 ? (rankedHotels[0].priceLevel || 3) * 1500 : 3000
     ));
 
     // ── Step 3.9: Comfort & Schedule Optimizer ──
@@ -308,16 +309,13 @@ export async function POST(request: Request) {
       transport.durationHours
     ));
 
-    const scheduleData: DaySchedule[] = await timedStage('SCHEDULING', async () => buildSchedule(
+    const scheduleData = await timedStage('SCHEDULING', async () => buildSchedule(
+      places,
       duration,
-      tripContext.arrival_day_start,
-      '', // Let engine decide departure time based on pace
-      body.pace,
+      rankedHotels.length > 0 ? rankedHotels[0] : null,
       body.trip_type,
-      clusters.map(c => ({ places: c.places.map(p => ({ name: p.name, category: p.category })), totalWalkingKm: c.totalWalkingKm })),
-      rankedRestaurants.slice(0, 10).map(r => ({ name: r.name, cuisine: r.cuisine })),
-      rankedHotels[0].name,
-      transport.durationHours
+      body.pace,
+      body.arrival_datetime
     ));
 
     // ── Step 4: Build AI context ──
@@ -338,7 +336,7 @@ export async function POST(request: Request) {
       schedule: scheduleData.map(d => ({
         day: d.day,
         theme: d.theme,
-        places: d.slots.filter(s => s.type === 'activity').map(s => s.title.replace(/^Visit /, '')),
+        places: d.activities.filter(s => s.type === 'activity').map(s => s.title.replace(/^Visit /, '')),
       })),
     };
 
@@ -360,71 +358,35 @@ export async function POST(request: Request) {
     }
 
     const days = scheduleData.map(day => {
-      const activities = day.slots.map(slot => {
+      const activities = day.activities.map(slot => {
         let cleanTitle = slot.title;
         if (slot.type === 'activity') cleanTitle = slot.title.replace(/^Visit /, '');
-        else if (slot.type === 'meal') cleanTitle = slot.title.replace(/^(Breakfast|Lunch|Dinner) at /, '');
-        
-        const coords = placeCoordMap.get(cleanTitle.toLowerCase().trim()) || { lat: geo.lat, lon: geo.lon };
         
         return {
           time: slot.time,
-          timeSlot: parseTimeSlot(slot.time),
+          timeSlot: 'day',
           title: slot.title,
           name: cleanTitle,
-          description: narrative.placeDescriptions[cleanTitle] || slot.notes,
+          description: narrative.placeDescriptions?.[cleanTitle] || slot.notes,
           category: slot.type,
           type: slot.type,
-          cost: slot.type === 'meal' ? 500 : (slot.type === 'travel' ? 100 : 0), // Base estimates since pricing is hard to get
+          cost: slot.cost || 0,
           location: body.destination,
-          distance: '',
+          distance: slot.walkingDistance || '',
           travelTime: '',
           duration: `${slot.duration} min`,
           aiTip: '',
-          imageUrl: heroImage || '',
-          lat: coords.lat,
-          lon: coords.lon,
+          imageUrl: slot.imageUrl || heroImage || '',
+          lat: slot.lat || geo.lat,
+          lon: slot.lon || geo.lon,
         };
       });
-
-      const morning = activities.filter(a => a.timeSlot === 'morning');
-      const afternoon = activities.filter(a => a.timeSlot === 'afternoon');
-      const evening = activities.filter(a => a.timeSlot === 'evening');
-      const night = activities.filter(a => a.timeSlot === 'night');
 
       return {
         day: day.day,
         date: day.date,
-        title: narrative.dayThemes[day.day] || day.theme,
-        morning,
-        afternoon,
-        evening,
-        night,
+        title: narrative.dayThemes?.[day.day] || day.theme,
         activities,
-      };
-    });
-
-    const dayRoutes = days.map(d => {
-      const steps = d.activities.map(act => ({
-        time: act.time,
-        etaToNext: '10 min',
-        type: act.type,
-        name: act.name,
-        lat: act.lat,
-        lon: act.lon,
-        distanceToNext: '1 km',
-      }));
-
-      return {
-        day: d.day,
-        title: d.title,
-        totalDistanceKm: (steps.length * 1.4).toFixed(1),
-        totalEstTimeMin: steps.length * 12,
-        trafficStatus: 'Moderate',
-        weatherSummary: weather ? `${weather.description} ${weather.temperature}°C` : 'Clear 26°C',
-        travelMode: 'OSRM Route',
-        estFare: steps.length * 50,
-        steps,
       };
     });
 
