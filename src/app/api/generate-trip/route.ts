@@ -199,7 +199,7 @@ export async function POST(request: Request) {
     
     // ── Step 2: Parallel data fetching ──
     const [places, weather, wiki, destinationImage] = await Promise.all([
-      timedStage('POI_DISCOVERY', () => discoverPlaces(geo.lat, geo.lon), { countFn: (p) => p.attractions.length }),
+      timedStage('POI_DISCOVERY', () => discoverPlaces(geo.lat, geo.lon, duration, body.destination), { countFn: (p) => p.attractions.length }),
       timedStage('WEATHER', () => getWeather(geo.lat, geo.lon)),
       timedStage('SANITIZATION', () => getWikiContext(body.destination, geo.lat, geo.lon)),
       timedStage('IMAGE_ENGINE', () => getDestinationImage(body.destination)),
@@ -237,11 +237,25 @@ export async function POST(request: Request) {
     ));
 
     // ── Step 3.1: STRICT REAL DATA VALIDATION ──
-    if (places.hotels.length === 0 || places.restaurants.length === 0 || places.attractions.length === 0) {
+    const isRelaxed = body.pace?.toLowerCase().includes('relax') || body.trip_type?.toLowerCase().includes('senior');
+    const minRequiredAttractions = duration * (isRelaxed ? 2 : 3);
+    
+    if (places.attractions.length < minRequiredAttractions) {
+      return NextResponse.json(
+        { 
+          status: 'REJECTED',
+          reason: 'Insufficient verified attractions to generate a high-quality itinerary without repeating locations. Please expand your destination scope or shorten the trip duration.',
+          found: places.attractions.length,
+          required: minRequiredAttractions
+        },
+        { status: 422 }
+      );
+    }
+
+    if (places.hotels.length === 0 || places.restaurants.length === 0) {
       const missing = [];
       if (places.hotels.length === 0) missing.push('Hotels');
       if (places.restaurants.length === 0) missing.push('Restaurants');
-      if (places.attractions.length === 0) missing.push('Attractions');
 
       return NextResponse.json(
         { 

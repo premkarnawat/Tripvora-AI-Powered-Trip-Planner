@@ -110,7 +110,7 @@ function totalWalkingDistance(places: Place[], order: string[]): number {
 
 // ─── Greedy k-means-like clustering ─────────────────────────────────
 
-function greedyCluster(places: Place[], maxClusters: number, maxRadiusKm: number): Place[][] {
+export function greedyCluster(places: Place[], maxClusters: number, maxRadiusKm: number): Place[][] {
   if (places.length === 0) return [];
   if (places.length === 1) return [[places[0]]];
 

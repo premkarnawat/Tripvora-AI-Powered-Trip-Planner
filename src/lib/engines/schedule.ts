@@ -1,4 +1,5 @@
 import { getMicroRoute } from './transport';
+import { greedyCluster } from './cluster';
 
 export interface ScheduleSlot {
   time: string;
@@ -22,8 +23,6 @@ export interface DaySchedule {
   totalActiveHours: number;
 }
 
-// ─── Time utilities ─────────────────────────────────────────────────
-
 function parseTime(t: string): number {
   const parts = t.split(':');
   return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
@@ -38,12 +37,6 @@ function formatTime(mins: number): string {
   return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')} ${ampm}`;
 }
 
-function addMinutes(timeMins: number, addMins: number): number {
-  return timeMins + addMins;
-}
-
-// ─── Category-based duration estimates (minutes) ────────────────────
-
 function estimateActivityDuration(category: string): number {
   const cat = category.toLowerCase();
   if (/museum|gallery|aquarium/.test(cat)) return 120;
@@ -57,8 +50,6 @@ function estimateActivityDuration(category: string): number {
   return 60;
 }
 
-// ─── The Smart Scheduler ──────────────────────────────────────────
-
 export async function buildSchedule(
   places: { attractions: any[]; restaurants: any[]; hotels: any[] },
   daysCount: number,
@@ -69,33 +60,36 @@ export async function buildSchedule(
 ): Promise<DaySchedule[]> {
   const schedule: DaySchedule[] = [];
   
-  // Clone pools to avoid mutation and track usage
-  let attractionPool = [...places.attractions].filter(p => p.name && p.lat && p.lon);
+  // ── 1. Strict Day Clustering ──
+  // We use the new Deduplicated Adaptive Pool. We cluster it into `daysCount` regions.
+  // Each day gets one exclusive cluster. No looping. No repeating.
+  const validAttractions = places.attractions.filter(p => p.name && p.lat && p.lon);
+  const attractionClusters = greedyCluster(
+    validAttractions, 
+    daysCount, 
+    20 // max 20km cluster radius if possible
+  );
+
   let restaurantPool = [...places.restaurants].filter(p => p.name && p.lat && p.lon);
 
-  // Parse arrival
-  let currentGlobalTimeMins = parseTime("09:00"); // Default
+  let currentGlobalTimeMins = parseTime("09:00");
   if (arrivalDatetime) {
     const arrivalDateObj = new Date(arrivalDatetime);
     if (!isNaN(arrivalDateObj.getTime())) {
-       const h = arrivalDateObj.getHours();
-       const m = arrivalDateObj.getMinutes();
-       currentGlobalTimeMins = h * 60 + m;
+       currentGlobalTimeMins = arrivalDateObj.getHours() * 60 + arrivalDateObj.getMinutes();
     }
   }
 
-  // Base fatigue model
   const isRelaxed = pace.toLowerCase().includes('relax') || travelType.toLowerCase().includes('senior');
   const maxActivitiesPerDay = isRelaxed ? 3 : 5;
   
   for (let dayNum = 1; dayNum <= daysCount; dayNum++) {
     const dayActivities: ScheduleSlot[] = [];
-    let currentTimeMins = dayNum === 1 ? currentGlobalTimeMins : parseTime("09:00"); // Day 1 respects arrival time
-
-    // ── Check-in for Day 1 ──
+    let currentTimeMins = dayNum === 1 ? currentGlobalTimeMins : parseTime("09:00");
     let lastLat = hotel?.lat || 0;
     let lastLon = hotel?.lon || 0;
 
+    // Check-in
     if (dayNum === 1 && hotel) {
       dayActivities.push({
         time: formatTime(currentTimeMins),
@@ -111,29 +105,27 @@ export async function buildSchedule(
       currentTimeMins += 60;
     }
 
-    // ── Build sequence for the day ──
-    const dailyQuota = maxActivitiesPerDay; // Never base this on the depleted pool length!
+    // ── Consume this day's strict cluster ──
+    // If the cluster has fewer items than maxActivitiesPerDay, we just run out and finish early.
+    // If the cluster has more, we slice it at maxActivitiesPerDay. 
+    // We NEVER borrow from other days or reload the array.
+    const clusterForDay = attractionClusters[dayNum - 1] || [];
+    const dailyQuota = Math.min(maxActivitiesPerDay, clusterForDay.length);
     let mealsTaken = 0;
 
     for (let actIdx = 0; actIdx < dailyQuota; actIdx++) {
-      if (attractionPool.length === 0) {
-         // Reload the pool if we run out, so multi-day trips don't abruptly end
-         attractionPool = [...places.attractions].filter(p => p.name && p.lat && p.lon);
-         if (attractionPool.length === 0) break; // If literally no places exist, break
-      }
+      if (clusterForDay.length === 0) break;
       
-      // 1. Pick next nearest attraction
-      attractionPool.sort((a, b) => {
+      clusterForDay.sort((a, b) => {
         const distA = Math.pow(a.lat - lastLat, 2) + Math.pow(a.lon - lastLon, 2);
         const distB = Math.pow(b.lat - lastLat, 2) + Math.pow(b.lon - lastLon, 2);
         return distA - distB;
       });
       
-      const nextAttraction = attractionPool.shift()!;
+      const nextAttraction = clusterForDay.shift()!;
       
-      // 2. Micro-routing travel time (A -> B)
-      let travelMins = 15; // default
-      let distKm = 2.5; // default
+      let travelMins = 15;
+      let distKm = 2.5;
       if (lastLat && lastLon) {
         const micro = await getMicroRoute(lastLat, lastLon, nextAttraction.lat, nextAttraction.lon);
         if (micro) {
@@ -142,10 +134,7 @@ export async function buildSchedule(
         }
       }
 
-      // Add travel offset
       currentTimeMins += travelMins;
-
-      // 3. Add Activity
       const actDuration = estimateActivityDuration(nextAttraction.category);
       dayActivities.push({
         time: formatTime(currentTimeMins),
@@ -153,20 +142,18 @@ export async function buildSchedule(
         title: nextAttraction.name,
         type: 'activity',
         duration: actDuration,
-        notes: `Explore ${nextAttraction.category.replace('_', ' ')}. Ranked highly for this destination.`,
+        notes: `Explore ${nextAttraction.category.replace('_', ' ')}. Strict non-repeating geographic routing.`,
         lat: nextAttraction.lat,
         lon: nextAttraction.lon,
         cost: nextAttraction.priceLevel ? nextAttraction.priceLevel * 300 : undefined,
         walkingDistance: `${distKm} km drive`,
-        imageUrl: nextAttraction.imageUrl,
+        imageUrl: nextAttraction.imageUrl, // FIXED: Now dynamically pushes unique API images to UI
       });
       
       currentTimeMins += actDuration;
       lastLat = nextAttraction.lat;
       lastLon = nextAttraction.lon;
 
-      // 4. Smart Meal Insertion (Only if a real restaurant is nearby and time fits)
-      // Check if it's lunch time (12:30 PM - 2:30 PM) or dinner time (7:00 PM - 9:00 PM)
       const isLunchTime = currentTimeMins >= 750 && currentTimeMins <= 870;
       const isDinnerTime = currentTimeMins >= 1140 && currentTimeMins <= 1260;
       
@@ -190,7 +177,7 @@ export async function buildSchedule(
             title: `Meal at ${nextRestaurant.name}`,
             type: 'meal',
             duration: 60,
-            notes: `Highly rated ${nextRestaurant.cuisine || 'local'} cuisine near your last activity.`,
+            notes: `Highly rated real-world restaurant near your location.`,
             lat: nextRestaurant.lat,
             lon: nextRestaurant.lon,
             cost: nextRestaurant.priceLevel ? nextRestaurant.priceLevel * 400 : 500,
@@ -201,14 +188,10 @@ export async function buildSchedule(
           lastLat = nextRestaurant.lat;
           lastLon = nextRestaurant.lon;
           mealsTaken++;
-        } else {
-          // If restaurant pool is empty, reload it!
-          restaurantPool = [...places.restaurants].filter(p => p.name && p.lat && p.lon);
         }
       }
     }
 
-    // End of day return to hotel
     if (hotel && dayActivities.length > 0) {
       let rTravelMins = 20;
       const rMicro = await getMicroRoute(lastLat, lastLon, hotel.lat, hotel.lon);
@@ -231,7 +214,7 @@ export async function buildSchedule(
     schedule.push({
       day: dayNum,
       date: `Day ${dayNum}`,
-      theme: `Day ${dayNum} Exploration`,
+      theme: `Region Cluster ${dayNum}`,
       activities: dayActivities,
       totalActiveHours: Math.round((currentTimeMins - (dayNum === 1 ? currentGlobalTimeMins : parseTime("09:00"))) / 60)
     });

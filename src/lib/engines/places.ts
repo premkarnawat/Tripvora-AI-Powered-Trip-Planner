@@ -1,3 +1,5 @@
+import { getWikiContext } from './wiki';
+
 export interface Place {
   id: string;
   lat: number;
@@ -34,22 +36,45 @@ function haversine(lat1: number, lon1: number, lat2: number, lon2: number): numb
   return R * c;
 }
 
-async function fetchGooglePlaces(lat: number, lon: number, type: string, radius: number = 30000): Promise<Place[]> {
-  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
-  if (!apiKey || apiKey === 'YOUR_GOOGLE_PLACES_KEY_HERE') {
-    console.warn(`[Places API] Missing key. Returning empty array for ${type}.`);
-    return [];
+// ─── Deduplication Engine ───
+function deduplicatePOIs(places: Place[]): Place[] {
+  const unique: Place[] = [];
+  
+  for (const p of places) {
+    const isDuplicate = unique.some(u => {
+      // Exact ID match
+      if (u.id === p.id) return true;
+      // Coordinates extremely close (< 200m) AND similar name
+      const dist = haversine(u.lat, u.lon, p.lat, p.lon);
+      if (dist < 0.2) {
+        const nameA = u.name.toLowerCase().replace(/[^a-z]/g, '');
+        const nameB = p.name.toLowerCase().replace(/[^a-z]/g, '');
+        if (nameA.includes(nameB) || nameB.includes(nameA)) return true;
+      }
+      return false;
+    });
+
+    if (!isDuplicate) {
+      unique.push(p);
+    }
   }
+  
+  return unique;
+}
+
+async function fetchGooglePlaces(lat: number, lon: number, type: string, radius: number = 30000, keyword?: string): Promise<Place[]> {
+  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+  if (!apiKey || apiKey === 'YOUR_GOOGLE_PLACES_KEY_HERE') return [];
 
   try {
-    const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lon}&radius=${radius}&type=${type}&key=${apiKey}`;
+    let url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lon}&radius=${radius}&type=${type}&key=${apiKey}`;
+    if (keyword) url += `&keyword=${encodeURIComponent(keyword)}`;
+    
     const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
     if (!res.ok) return [];
     
     const data = await res.json();
-    if (!data.results || data.results.length === 0) {
-      return [];
-    }
+    if (!data.results || data.results.length === 0) return [];
 
     return data.results.map((r: any) => {
       let category: Place['category'] = 'attraction';
@@ -72,31 +97,72 @@ async function fetchGooglePlaces(lat: number, lon: number, type: string, radius:
         category,
         distanceKm: haversine(lat, lon, r.geometry.location.lat, r.geometry.location.lng),
         rating: r.rating || 4.0,
-        provider: 'GooglePlacesAPI',
+        provider: 'Google',
         priceLevel: r.price_level,
         imageUrl
       };
     });
   } catch (err) {
-    console.warn(`[Places API] Fetch failed for ${type}. Returning empty array.`);
     return [];
   }
 }
 
-export async function discoverPlaces(lat: number, lon: number): Promise<PlacesResult> {
-  // Execute real API calls concurrently
-  const [hotels, restaurants, attractions, hospitals, police, transportNodes] = await Promise.all([
-    fetchGooglePlaces(lat, lon, 'lodging', 5000).catch(e => { throw e; }),
-    fetchGooglePlaces(lat, lon, 'restaurant', 5000).catch(e => { throw e; }),
-    fetchGooglePlaces(lat, lon, 'tourist_attraction', 10000).catch(e => { throw e; }),
-    fetchGooglePlaces(lat, lon, 'hospital', 10000).catch(e => { throw e; }),
-    fetchGooglePlaces(lat, lon, 'police', 10000).catch(e => { throw e; }),
-    fetchGooglePlaces(lat, lon, 'transit_station', 10000).catch(e => { throw e; })
+// ─── Adaptive Search Engine ───
+export async function discoverPlaces(lat: number, lon: number, daysCount: number, destinationName: string): Promise<PlacesResult> {
+  const requiredAttractions = daysCount * 4;
+  let attractions: Place[] = [];
+  
+  // RADIUS EXPANSION LOOP
+  const radii = [10000, 25000, 50000];
+  
+  for (const radius of radii) {
+    const newPlaces = await fetchGooglePlaces(lat, lon, 'tourist_attraction', radius);
+    attractions = deduplicatePOIs([...attractions, ...newPlaces]);
+    if (attractions.length >= requiredAttractions) break;
+    
+    // If still short, try querying with specific keywords to force different results
+    if (attractions.length < requiredAttractions) {
+       const nature = await fetchGooglePlaces(lat, lon, 'tourist_attraction', radius, 'nature');
+       const historic = await fetchGooglePlaces(lat, lon, 'tourist_attraction', radius, 'historic');
+       attractions = deduplicatePOIs([...attractions, ...nature, ...historic]);
+       if (attractions.length >= requiredAttractions) break;
+    }
+  }
+
+  // WIKIPEDIA FALLBACK
+  if (attractions.length < requiredAttractions) {
+    try {
+      const wikiRes = await getWikiContext(destinationName, lat, lon);
+      if (wikiRes && wikiRes.nearbyPlaces.length > 0) {
+        const wikiPlaces = wikiRes.nearbyPlaces.map(p => ({
+          id: `wiki_${p.pageid}`,
+          lat: p.lat,
+          lon: p.lon,
+          name: p.title,
+          category: 'attraction' as const,
+          distanceKm: haversine(lat, lon, p.lat, p.lon),
+          rating: 4.0,
+          provider: 'Wikipedia'
+        }));
+        attractions = deduplicatePOIs([...attractions, ...wikiPlaces]);
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  // Execute standard fetches for others (radius 10km for essentials, 20km for hotels/restaurants)
+  const [hotels, restaurants, hospitals, police, transportNodes] = await Promise.all([
+    fetchGooglePlaces(lat, lon, 'lodging', 20000),
+    fetchGooglePlaces(lat, lon, 'restaurant', 20000),
+    fetchGooglePlaces(lat, lon, 'hospital', 15000),
+    fetchGooglePlaces(lat, lon, 'police', 15000),
+    fetchGooglePlaces(lat, lon, 'transit_station', 15000)
   ]);
 
   return { 
-    hotels: hotels.sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0)), 
-    restaurants: restaurants.sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0)), 
+    hotels: deduplicatePOIs(hotels).sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0)), 
+    restaurants: deduplicatePOIs(restaurants).sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0)), 
     attractions: attractions.sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0)), 
     hospitals: hospitals.sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0)), 
     police: police.sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0)),
