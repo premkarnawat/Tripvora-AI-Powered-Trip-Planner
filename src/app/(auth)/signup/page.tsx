@@ -12,17 +12,23 @@ export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [accountType, setAccountType] = useState<"traveler" | "agency">("traveler");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const router = useRouter();
 
   const [error, setError] = useState<string | null>(null);
 
-  const finalizeSignup = () => {
-    document.cookie = `travixa_role=traveler; path=/; max-age=86400; SameSite=Lax`;
+  const finalizeSignup = (role: string) => {
+    document.cookie = `travixa_role=${role}; path=/; max-age=86400; SameSite=Lax`;
     localStorage.setItem("traveler_auth", "true");
-    localStorage.setItem("travixa_role", "traveler");
-    window.location.href = "/dashboard?welcome=true";
+    localStorage.setItem("travixa_role", role);
+    
+    if (role === "agency") {
+      window.location.href = "/agency?welcome=true";
+    } else {
+      window.location.href = "/dashboard?welcome=true";
+    }
   };
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -41,7 +47,7 @@ export default function SignupPage() {
           options: {
             data: {
               full_name: name,
-              role: 'traveler'
+              role: accountType
             }
           }
         });
@@ -51,8 +57,8 @@ export default function SignupPage() {
             id: data.user.id,
             email: data.user.email || email,
             full_name: name,
-            role: 'traveler',
-            subscription_tier: 'Free Tier',
+            role: accountType,
+            subscription_tier: accountType === 'agency' ? 'Partner Tier' : 'Free Tier',
             preferences: { destinations: [], styles: [], foods: [] }
           });
         }
@@ -60,7 +66,7 @@ export default function SignupPage() {
         // Fallback for seamless demo signup
       }
 
-      finalizeSignup();
+      finalizeSignup(accountType);
     } catch (err: any) {
       setError(err.message || "Failed to create account.");
     } finally {
@@ -69,7 +75,7 @@ export default function SignupPage() {
   };
 
   const handleGoogleSignup = () => {
-    finalizeSignup();
+    finalizeSignup(accountType);
   };
 
   return (
@@ -183,6 +189,27 @@ export default function SignupPage() {
 
                 <div className="text-center text-[10px] font-black text-slate-300 tracking-wider my-3 uppercase">
                   OR
+                </div>
+
+                {/* Account Type Toggle */}
+                <div className="mb-4">
+                  <label className="text-xs font-bold text-slate-700 mb-2 block">Account Type</label>
+                  <div className="flex bg-slate-50 p-1 rounded-xl border border-slate-100">
+                    <button
+                      type="button"
+                      onClick={() => setAccountType('traveler')}
+                      className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${accountType === 'traveler' ? 'bg-white text-black shadow-sm' : 'text-slate-400 hover:text-black'}`}
+                    >
+                      Traveler
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAccountType('agency')}
+                      className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${accountType === 'agency' ? 'bg-white text-black shadow-sm' : 'text-slate-400 hover:text-black'}`}
+                    >
+                      Agency / Partner
+                    </button>
+                  </div>
                 </div>
 
                 {/* Full Name Input */}
