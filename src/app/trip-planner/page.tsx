@@ -78,7 +78,7 @@ export default function TripPlannerPage() {
       localStorage.setItem('last_generated_trip', JSON.stringify(resData));
       
       setTimeout(() => {
-        router.push('/trips');
+        router.push('/trips/generated');
       }, 500);
 
     } catch (err: any) {
