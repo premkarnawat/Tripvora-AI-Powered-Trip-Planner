@@ -3,12 +3,12 @@
 
 export interface GeoCluster {
   centroid: { lat: number; lon: number };
-  places: Array<{ name: string; lat: number; lon: number; category: string; distanceKm?: number }>;
+  places: Place[];
   totalWalkingKm: number;
   suggestedOrder: string[];
 }
 
-type Place = { name: string; lat: number; lon: number; category: string; distanceKm?: number };
+import { Place } from './places';
 
 // ─── Walking tolerance radius mapping ───────────────────────────────
 
