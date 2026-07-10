@@ -86,7 +86,7 @@ async function fetchGooglePlaces(lat: number, lon: number, type: string, radius:
 
       let imageUrl;
       if (r.photos && r.photos.length > 0) {
-        imageUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${r.photos[0].photo_reference}&key=${apiKey}`;
+        imageUrl = `/api/images/proxy?ref=${r.photos[0].photo_reference}`;
       }
 
       return {
