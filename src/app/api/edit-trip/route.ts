@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import type { ItineraryData } from '@/types/trip';
 import { ItinerarySchema } from '@/lib/validations/itinerary';
+import { withSecurity } from '@/lib/security/api-wrapper';
+import { z } from 'zod';
 
 // Automated Server-Side Budget Intelligence Recalculator
 function recalculateBudgetTotals(itinerary: any): any {
@@ -52,20 +54,28 @@ function recalculateBudgetTotals(itinerary: any): any {
   return itinerary;
 }
 
-export async function POST(request: Request) {
-  try {
-    const body = await request.json();
-    const { currentItinerary, userMessage, chatHistory } = body;
+const editTripSchema = z.object({
+  currentItinerary: z.any(),
+  userMessage: z.string().min(1),
+  chatHistory: z.array(z.any()).optional()
+});
 
-    if (!currentItinerary || !userMessage) {
-      return NextResponse.json({ error: "Missing required editing parameters" }, { status: 400 });
-    }
+export const POST = withSecurity(
+  {
+    rateLimit: { limit: 120, windowSeconds: 60 },
+    schema: editTripSchema,
+    requireAuth: false // Public for now, could be protected
+  },
+  async (request: Request) => {
+    try {
+      const body = await request.json();
+      const { currentItinerary, userMessage, chatHistory } = body;
 
-    const geminiKey = process.env.GEMINI_API_KEY;
-    if (!geminiKey) return NextResponse.json({ error: "Server API configuration missing" }, { status: 500 });
-    const editUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${geminiKey}`;
+      const geminiKey = process.env.GEMINI_API_KEY;
+      if (!geminiKey) return NextResponse.json({ error: "Server API configuration missing" }, { status: 500 });
+      const editUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${geminiKey}`;
 
-    const systemInstruction = `You are the Travixa AI Travel Intelligence Engine — Granular Document Editor.
+      const systemInstruction = `You are the Travixa AI Travel Intelligence Engine — Granular Document Editor.
 Your mandate is to treat the provided JSON itinerary as a strict structured editable document.
 
 CRITICAL EDITING RULES:
@@ -73,45 +83,46 @@ CRITICAL EDITING RULES:
 2. BUDGET ADJUSTMENT: If the user says "Reduce my budget by INR 15000", systematically optimize affected cost items while preserving the core flow.
 3. STRICT SCHEMA: Return pure valid JSON strictly conforming to the exact input schema. Never include markdown code fencing (\`\`\`json) or conversational commentary outside JSON.`;
 
-    const promptText = `${systemInstruction}\n\nCurrent Itinerary Document:\n${JSON.stringify(currentItinerary)}\n\nRecent Conversation History:\n${JSON.stringify(chatHistory || [])}\n\nUser Modification Instruction:\n"${userMessage}"\n\nReturn the updated JSON document matching the exact schema. Pure JSON only.`;
+      const promptText = `${systemInstruction}\n\nCurrent Itinerary Document:\n${JSON.stringify(currentItinerary)}\n\nRecent Conversation History:\n${JSON.stringify(chatHistory || [])}\n\nUser Modification Instruction:\n"${userMessage}"\n\nReturn the updated JSON document matching the exact schema. Pure JSON only.`;
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 12000);
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 12000);
 
-    const res = await fetch(editUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: promptText }] }],
-        generationConfig: { temperature: 0.3, responseMimeType: "application/json" }
-      }),
-      signal: controller.signal
-    });
-    clearTimeout(timeout);
+      const res = await fetch(editUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: promptText }] }],
+          generationConfig: { temperature: 0.3, responseMimeType: "application/json" }
+        }),
+        signal: controller.signal
+      });
+      clearTimeout(timeout);
 
-    if (!res.ok) {
-      throw new Error(`AI Editor API returned HTTP ${res.status}`);
+      if (!res.ok) {
+        throw new Error(`AI Editor API returned HTTP ${res.status}`);
+      }
+
+      const aiData = await res.json();
+      let rawText = aiData?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!rawText) throw new Error("Empty editor response");
+
+      rawText = rawText.replace(/^```json\s*/i, '').replace(/\s*```$/i, '').trim();
+      const parsedJson = JSON.parse(rawText);
+
+      // Enforce Zod Schema Validation
+      let validated = ItinerarySchema.parse(parsedJson);
+
+      // Enforce Automated Budget Intelligence Recalculation
+      validated = recalculateBudgetTotals(validated);
+
+      return NextResponse.json({
+        updatedItinerary: validated,
+        message: `I have updated your itinerary based on: "${userMessage}". All budget metrics have been dynamically re-audited.`
+      });
+    } catch (err: any) {
+      console.error("Granular edit API error:", err);
+      return NextResponse.json({ error: err.message || "Failed to edit itinerary" }, { status: 500 });
     }
-
-    const aiData = await res.json();
-    let rawText = aiData?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!rawText) throw new Error("Empty editor response");
-
-    rawText = rawText.replace(/^```json\s*/i, '').replace(/\s*```$/i, '').trim();
-    const parsedJson = JSON.parse(rawText);
-
-    // Enforce Zod Schema Validation
-    let validated = ItinerarySchema.parse(parsedJson);
-
-    // Enforce Automated Budget Intelligence Recalculation
-    validated = recalculateBudgetTotals(validated);
-
-    return NextResponse.json({
-      updatedItinerary: validated,
-      message: `I have updated your itinerary based on: "${userMessage}". All budget metrics have been dynamically re-audited.`
-    });
-  } catch (err: any) {
-    console.error("Granular edit API error:", err);
-    return NextResponse.json({ error: err.message || "Failed to edit itinerary" }, { status: 500 });
   }
-}
+);

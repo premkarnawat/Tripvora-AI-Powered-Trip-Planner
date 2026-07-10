@@ -18,6 +18,7 @@ import { generateAffiliateLinks } from '@/lib/engines/affiliates';
 import { clusterByProximity } from '@/lib/engines/cluster';
 import { calculateBudget } from '@/lib/engines/budget';
 import { buildSchedule, type DaySchedule } from '@/lib/engines/schedule';
+import { withSecurity } from '@/lib/security/api-wrapper';
 // import removed
 import { timedStage, clearPipelineLogs, getPipelineLogs } from '@/lib/engines/logger';
 
@@ -175,7 +176,12 @@ function buildMap(geo: { lat: number; lon: number }, places: {
 
 // ─── POST Handler ───────────────────────────────────────────────────
 
-export async function POST(request: Request) {
+export const POST = withSecurity(
+  {
+    rateLimit: { limit: 120, windowSeconds: 60 },
+    requireAuth: false
+  },
+  async (request: Request) => {
   try {
     clearPipelineLogs();
     const rawBody = await request.json();
@@ -566,4 +572,4 @@ export async function POST(request: Request) {
     
     return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
-}
+});
