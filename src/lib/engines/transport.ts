@@ -67,7 +67,7 @@ async function getOpenRouteServiceRoute(
   oLat: number, oLon: number, dLat: number, dLon: number
 ): Promise<{ distanceKm: number; durationHours: number } | null> {
   try {
-    const apiKey = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjI2N2U1MmNlMjY2YzQyNDk4OTliYzBjNTYzM2RjMmU0IiwiaCI6Im11cm11cjY0In0=';
+    const apiKey = process.env.ORS_API_KEY;
     const url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${apiKey}&start=${oLon},${oLat}&end=${dLon},${dLat}`;
     const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
     if (!res.ok) return null;
@@ -87,7 +87,7 @@ export async function getMicroRoute(
   oLat: number, oLon: number, dLat: number, dLon: number
 ): Promise<{ distanceKm: number; durationMinutes: number } | null> {
   try {
-    const apiKey = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjI2N2U1MmNlMjY2YzQyNDk4OTliYzBjNTYzM2RjMmU0IiwiaCI6Im11cm11cjY0In0=';
+    const apiKey = process.env.ORS_API_KEY;
     const url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${apiKey}&start=${oLon},${oLat}&end=${dLon},${dLat}`;
     const res = await fetch(url, { signal: AbortSignal.timeout(3000) });
     if (!res.ok) return null;

@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 function verifyAdmin(user: any) {
   if (!user) return false;
   const role = user.user_metadata?.role || 'traveler';
-  return role === 'admin' || role === 'super_admin' || user.email?.includes('admin') || user.email === 'prem@example.com';
+  return role === 'admin' || role === 'super_admin';
 }
 
 export async function GET(request: Request) {

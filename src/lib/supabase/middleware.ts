@@ -39,8 +39,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   const pathname = request.nextUrl.pathname;
-  const roleCookie = request.cookies.get('travixa_role')?.value;
-  const hasAuth = !!user || !!roleCookie;
+  const hasAuth = !!user;
 
   // Protect private routes
   const protectedRoutes = ['/dashboard', '/agency', '/admin', '/saved-trips', '/settings'];
@@ -56,8 +55,8 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (hasAuth) {
-    const userRole = user?.user_metadata?.role || roleCookie || 'traveler';
-    const isAdmin = userRole === 'admin' || userRole === 'super_admin' || user?.email?.includes('admin') || user?.email === 'prem@example.com' || roleCookie === 'admin';
+    const userRole = user?.user_metadata?.role || 'traveler';
+    const isAdmin = userRole === 'admin' || userRole === 'super_admin';
 
     // 1. Protect Admin Panel
     if (pathname.startsWith('/admin') && !pathname.startsWith('/admin/login')) {
