@@ -81,7 +81,11 @@ export default function LoginPage() {
       }
 
       // Hard navigation ensures middleware processes fresh auth cookies
-      window.location.href = destination;
+      // Delay by 800ms to allow browser to flush the cookie from createBrowserClient
+      setTimeout(() => {
+        window.location.href = destination;
+      }, 800);
+      
       // Don't setLoading(false) — page is navigating away
 
     } catch {
