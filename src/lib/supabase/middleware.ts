@@ -8,8 +8,12 @@ export async function updateSession(request: NextRequest) {
 
   let user = null;
 
+  let authErrorMsg = "";
+
   try {
-    if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      authErrorMsg = "missing_env_vars";
+    } else {
       const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
@@ -32,12 +36,17 @@ export async function updateSession(request: NextRequest) {
       );
 
       const { data, error } = await supabase.auth.getSession();
-      if (!error && data?.session?.user) {
+      if (error) {
+        authErrorMsg = "session_error_" + error.message.replace(/\s+/g, '_');
+      } else if (data?.session?.user) {
         user = data.session.user;
+      } else {
+        authErrorMsg = "no_user_in_session";
       }
     }
-  } catch (err) {
+  } catch (err: any) {
     console.error("Supabase middleware error:", err);
+    authErrorMsg = "catch_" + (err?.message || "unknown").replace(/\s+/g, '_');
   }
 
   const pathname = request.nextUrl.pathname;
@@ -53,6 +62,9 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     url.searchParams.set('redirect', pathname);
+    if (authErrorMsg) {
+      url.searchParams.set('err_diag', authErrorMsg);
+    }
     return NextResponse.redirect(url)
   }
 
