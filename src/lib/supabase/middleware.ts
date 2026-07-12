@@ -47,8 +47,18 @@ export async function updateSession(request: NextRequest) {
       const { data, error } = await supabase.auth.getUser();
       if (error) {
         const authCookie = request.cookies.getAll().find(c => c.name.includes('-auth-token') && !c.name.includes('-code-verifier'));
-        const cookiePreview = authCookie ? authCookie.value.substring(0, 15) : "none";
-        authErrorMsg = "user_error_" + error.message.replace(/\s+/g, '_') + "_val_" + cookiePreview;
+        let parseDiagnostic = "none";
+        let cookieLen = 0;
+        if (authCookie) {
+          cookieLen = authCookie.value.length;
+          try {
+            JSON.parse(decodeURIComponent(authCookie.value));
+            parseDiagnostic = "json_parse_success";
+          } catch (e: any) {
+            parseDiagnostic = "json_parse_error_" + e.message.replace(/\s+/g, '_');
+          }
+        }
+        authErrorMsg = "user_error_" + error.message.replace(/\s+/g, '_') + "_len_" + cookieLen + "_" + parseDiagnostic;
       } else if (data?.user) {
         user = data.user;
       } else {
