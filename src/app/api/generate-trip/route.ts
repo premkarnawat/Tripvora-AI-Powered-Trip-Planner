@@ -178,8 +178,8 @@ function buildMap(geo: { lat: number; lon: number }, places: {
 
 export const POST = withSecurity(
   {
-    rateLimit: { limit: 120, windowSeconds: 60 },
-    requireAuth: false
+    rateLimit: { limit: 10, windowSeconds: 60 },
+    requireAuth: true,
   },
   async (request: Request) => {
   try {

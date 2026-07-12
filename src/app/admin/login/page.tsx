@@ -23,21 +23,30 @@ export default function AdminLoginPage() {
       const { createClient } = await import('@/lib/supabase/client');
       const supabase = createClient();
 
-      try {
-        await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-      } catch (e) {
-        // Fallback for seamless admin demo preview
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error || !data.user) {
+        setError(error?.message || "Authentication failed. Invalid credentials.");
+        setLoading(false);
+        return;
       }
 
-      document.cookie = `travixa_role=admin; path=/; max-age=86400; SameSite=Lax`;
-      localStorage.setItem("traveler_auth", "true");
-      localStorage.setItem("travixa_role", "admin");
-      window.location.href = "/admin";
+      // Check role
+      const role = data.user.user_metadata?.role;
+      if (role !== 'admin' && role !== 'super_admin') {
+        // Sign out immediately if not admin
+        await supabase.auth.signOut();
+        setError("Access denied. Admin privileges required.");
+        setLoading(false);
+        return;
+      }
+
+      router.push("/admin");
     } catch (err: any) {
-      setError(err.message || "Authentication failed.");
+      setError(err.message || "An unexpected error occurred.");
     } finally {
       setLoading(false);
     }

@@ -6,6 +6,26 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, Sparkles, Check } from "lucide-react";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
+
+const PASSWORD_RULES = {
+  minLength: 8,
+  hasUppercase: /[A-Z]/,
+  hasNumber: /[0-9]/,
+};
+
+function validatePassword(pw: string): string | null {
+  if (pw.length < PASSWORD_RULES.minLength) {
+    return `Password must be at least ${PASSWORD_RULES.minLength} characters.`;
+  }
+  if (!PASSWORD_RULES.hasUppercase.test(pw)) {
+    return "Password must contain at least one uppercase letter.";
+  }
+  if (!PASSWORD_RULES.hasNumber.test(pw)) {
+    return "Password must contain at least one number.";
+  }
+  return null;
+}
 
 export default function SignupPage() {
   const [name, setName] = useState("");
@@ -19,63 +39,99 @@ export default function SignupPage() {
 
   const [error, setError] = useState<string | null>(null);
 
-  const finalizeSignup = (role: string) => {
-    document.cookie = `travixa_role=${role}; path=/; max-age=86400; SameSite=Lax`;
-    localStorage.setItem("traveler_auth", "true");
-    localStorage.setItem("travixa_role", role);
-    
-    if (role === "agency") {
-      window.location.href = "/agency?welcome=true";
-    } else {
-      window.location.href = "/dashboard?welcome=true";
-    }
-  };
-
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    
-    try {
-      const { createClient } = await import('@/lib/supabase/client');
-      const supabase = createClient();
-      
-      try {
-        const { data } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              full_name: name,
-              role: accountType
-            }
-          }
-        });
 
-        if (data?.user) {
-          await supabase.from('users').upsert({
-            id: data.user.id,
-            email: data.user.email || email,
-            full_name: name,
+    // Enforce password policy client-side (Supabase enforces server-side too)
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      setError(passwordError);
+      setLoading(false);
+      return;
+    }
+
+    // Sanitize name input
+    const sanitizedName = name.trim();
+    if (sanitizedName.length < 1 || sanitizedName.length > 200) {
+      setError("Please enter a valid name.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const supabase = createClient();
+
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: sanitizedName,
             role: accountType,
-            subscription_tier: accountType === 'agency' ? 'Partner Tier' : 'Free Tier',
-            preferences: { destinations: [], styles: [], foods: [] }
-          });
-        }
-      } catch (err) {
-        // Fallback for seamless demo signup
+          },
+        },
+      });
+
+      if (signUpError) {
+        setError(signUpError.message || "Failed to create account.");
+        setLoading(false);
+        return;
       }
 
-      finalizeSignup(accountType);
-    } catch (err: any) {
-      setError(err.message || "Failed to create account.");
+      if (!data?.user) {
+        setError("Failed to create account. Please try again.");
+        setLoading(false);
+        return;
+      }
+
+      // Attempt to create profile row — non-blocking for UX but we log the error
+      try {
+        await supabase.from("users").upsert({
+          id: data.user.id,
+          email: data.user.email || email,
+          full_name: sanitizedName,
+          role: accountType,
+          subscription_tier: accountType === "agency" ? "Partner Tier" : "Free Tier",
+          preferences: { destinations: [], styles: [], foods: [] },
+        });
+      } catch {
+        // Profile creation failure is non-fatal; user can complete profile later
+      }
+
+      // Show email verification screen — do NOT auto-redirect
+      setSuccess(true);
+    } catch {
+      setError("An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogleSignup = () => {
-    finalizeSignup(accountType);
+  const handleGoogleSignup = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const supabase = createClient();
+
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+
+      if (oauthError) {
+        setError(oauthError.message || "Google sign-up failed.");
+        setLoading(false);
+      }
+      // Browser will redirect to Google — no further action needed
+    } catch {
+      setError("Failed to initiate Google sign-up.");
+      setLoading(false);
+    }
   };
 
   return (
@@ -103,7 +159,7 @@ export default function SignupPage() {
             transition={{ delay: 0.2 }}
             className="text-3xl md:text-4xl font-extrabold font-sora leading-[1.2] mb-6 max-w-sm"
           >
-            "Your next journey starts here."
+            &quot;Your next journey starts here.&quot;
           </motion.h3>
           
           {/* Avatar list */}
@@ -141,7 +197,7 @@ export default function SignupPage() {
               </div>
               <h2 className="text-2xl font-black text-black mb-2">Check your email</h2>
               <p className="text-slate-500 text-xs leading-relaxed mb-8">
-                We've sent a confirmation link to <span className="font-bold text-black">{email}</span>. Please verify your email to continue.
+                We&apos;ve sent a confirmation link to <span className="font-bold text-black">{email}</span>. Please verify your email to continue.
               </p>
               <Link 
                 href="/login" 
@@ -176,7 +232,8 @@ export default function SignupPage() {
                 <button 
                   type="button"
                   onClick={handleGoogleSignup}
-                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 transition-colors shadow-sm"
+                  disabled={loading}
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 transition-colors shadow-sm disabled:opacity-50"
                 >
                   <svg className="w-4 h-4" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -218,6 +275,7 @@ export default function SignupPage() {
                   <input 
                     type="text" 
                     required
+                    maxLength={200}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="e.g. John Doe" 
@@ -244,6 +302,7 @@ export default function SignupPage() {
                   <input 
                     type={showPassword ? "text" : "password"} 
                     required
+                    minLength={8}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••" 
@@ -257,6 +316,24 @@ export default function SignupPage() {
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
+
+                {/* Password strength hints */}
+                {password.length > 0 && (
+                  <div className="space-y-1">
+                    <div className={`flex items-center gap-1.5 text-[10px] font-bold ${password.length >= 8 ? 'text-teal-500' : 'text-slate-400'}`}>
+                      <Check className="w-3 h-3" />
+                      <span>At least 8 characters</span>
+                    </div>
+                    <div className={`flex items-center gap-1.5 text-[10px] font-bold ${PASSWORD_RULES.hasUppercase.test(password) ? 'text-teal-500' : 'text-slate-400'}`}>
+                      <Check className="w-3 h-3" />
+                      <span>One uppercase letter</span>
+                    </div>
+                    <div className={`flex items-center gap-1.5 text-[10px] font-bold ${PASSWORD_RULES.hasNumber.test(password) ? 'text-teal-500' : 'text-slate-400'}`}>
+                      <Check className="w-3 h-3" />
+                      <span>One number</span>
+                    </div>
+                  </div>
+                )}
 
                 <Button 
                   type="submit"

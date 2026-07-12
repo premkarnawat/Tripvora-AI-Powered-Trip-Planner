@@ -1,21 +1,23 @@
 import { NextResponse } from 'next/server';
+import { withSecurity } from '@/lib/security/api-wrapper';
 
 // Asynchronous Queue Pattern (BullMQ / Inngest Serverless Abstraction)
-// Returns 202 Accepted immediately while compilation runs in background worker
-export async function POST(request: Request) {
-  try {
-    const jobId = `pdf_job_${Date.now()}`;
-    console.log(`[Async Queue Worker] Job ${jobId} enqueued for background itinerary PDF compilation.`);
-    
-    // Simulate async job dispatch
-    return NextResponse.json({ 
-      success: true, 
-      jobId,
-      status: "accepted",
-      pollUrl: `/api/pdf/status?jobId=${jobId}`,
-      estimatedCompletionSeconds: 3
-    }, { status: 202 });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-}
+// Returns 501 until the PDF compilation worker is deployed
+const handler = async (request: Request) => {
+  return NextResponse.json(
+    {
+      success: false,
+      error: 'Not Implemented',
+      message: 'PDF generation service is not yet available. This feature is under development.',
+    },
+    { status: 501 }
+  );
+};
+
+export const POST = withSecurity(
+  {
+    requireAuth: true,
+    rateLimit: { limit: 10, windowSeconds: 60 },
+  },
+  handler
+);

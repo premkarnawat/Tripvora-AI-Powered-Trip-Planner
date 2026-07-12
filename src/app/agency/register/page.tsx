@@ -31,49 +31,53 @@ export default function AgencyRegisterPage() {
       const { createClient } = await import('@/lib/supabase/client');
       const supabase = createClient();
 
-      // 1. Sign up user via Supabase Auth
-      try {
-        const { data } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              full_name: ownerName,
-              role: 'agency'
-            }
-          }
-        });
-
-        if (data?.user) {
-          await supabase.from('users').upsert({
-            id: data.user.id,
-            email: data.user.email || email,
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
             full_name: ownerName,
-            role: 'agency',
-            phone: phone || null,
-            subscription_tier: 'Free Tier',
-            preferences: { destinations: [], styles: [], foods: [] }
-          });
-
-          await supabase.from('agencies').insert({
-            user_id: data.user.id,
-            agency_name: agencyName,
-            owner_name: ownerName,
-            business_email: email,
-            business_address: address || null,
-            phone: phone || null,
-            website: website || null,
-            gst_number: gstNumber || null,
-            subscription_plan: 'Free Tier'
-          });
+            role: 'agency'
+          }
         }
-      } catch (err) {
-        // Fallback for seamless demo agency onboarding
+      });
+
+      if (error || !data?.user) {
+        setError(error?.message || "Failed to create account. Please try again.");
+        setLoading(false);
+        return;
       }
 
-      document.cookie = `travixa_role=agency; path=/; max-age=86400; SameSite=Lax`;
-      localStorage.setItem("traveler_auth", "true");
-      localStorage.setItem("travixa_role", "agency");
+      const { error: userError } = await supabase.from('users').upsert({
+        id: data.user.id,
+        email: data.user.email || email,
+        full_name: ownerName,
+        role: 'agency',
+        phone: phone || null,
+        subscription_tier: 'Free Tier',
+        preferences: { destinations: [], styles: [], foods: [] }
+      });
+
+      if (userError) {
+        console.error("User insert failed:", userError);
+      }
+
+      const { error: agencyError } = await supabase.from('agencies').insert({
+        user_id: data.user.id,
+        agency_name: agencyName,
+        owner_name: ownerName,
+        business_email: email,
+        business_address: address || null,
+        phone: phone || null,
+        website: website || null,
+        gst_number: gstNumber || null,
+        subscription_plan: 'Free Tier'
+      });
+
+      if (agencyError) {
+        console.error("Agency insert failed:", agencyError);
+      }
+
       window.location.href = "/agency?welcome=true";
     } catch (err: any) {
       setError(err.message || "Failed to register agency.");

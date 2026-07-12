@@ -77,10 +77,20 @@ export async function PUT(request: Request) {
     if (!user || !verifyAdmin(user)) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
 
     const body = await request.json();
-    const { id, ...updates } = body;
+    const { id, name, slug, seo_description, popular_attractions, popular_activities, images } = body;
+    
+    // Explicitly reconstruct the updates object to prevent Mass Assignment
+    const safeUpdates: any = {};
+    if (name !== undefined) safeUpdates.name = name;
+    if (slug !== undefined) safeUpdates.slug = slug;
+    if (seo_description !== undefined) safeUpdates.seo_description = seo_description;
+    if (popular_attractions !== undefined) safeUpdates.popular_attractions = popular_attractions;
+    if (popular_activities !== undefined) safeUpdates.popular_activities = popular_activities;
+    if (images !== undefined) safeUpdates.images = images;
+
     const { data: updated, error } = await supabase
       .from('destination_cache')
-      .update(updates)
+      .update(safeUpdates)
       .eq('id', id)
       .select()
       .single();

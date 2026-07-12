@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { 
   LayoutDashboard, Users, Building2, Store, Megaphone, Percent, Compass, 
   Coins, CreditCard, Send, LifeBuoy, LayoutTemplate, Settings, Menu, X, 
@@ -28,9 +28,39 @@ const sidebarLinks = [
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isMessagesOpen, setIsMessagesOpen] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    async function checkSession() {
+      try {
+        const { createClient } = await import('@/lib/supabase/client');
+        const supabase = createClient();
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error || !session) {
+          if (mounted) router.push("/admin/login");
+          return;
+        }
+        
+        const role = session.user.user_metadata?.role;
+        if (role !== 'admin' && role !== 'super_admin') {
+          if (mounted) router.push("/unauthorized");
+          return;
+        }
+
+        if (mounted) setCheckingAuth(false);
+      } catch (e) {
+        if (mounted) router.push("/admin/login");
+      }
+    }
+    checkSession();
+    return () => { mounted = false; };
+  }, [router]);
   
   // Dummy data for dropdowns
   const notifications = [
@@ -44,6 +74,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { id: 2, sender: "Sunita Travel", snippet: "Query regarding Razorpay split payments...", time: "30m ago" },
     { id: 3, sender: "Rajesh (Traveler)", snippet: "Is Viator integration down?", time: "1h ago" },
   ];
+
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center font-sans">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-slate-200 border-t-[#0EA5A4] rounded-full animate-spin" />
+          <p className="text-xs text-slate-500 font-bold">Securing Admin Panel...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="admin-theme min-h-screen bg-[#F8FAFC] text-[#0F172A] font-sans antialiased relative z-50">
@@ -95,15 +136,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="p-4 border-t border-[#E5E7EB] shrink-0 bg-white">
           <div 
             onClick={async () => {
-              document.cookie = "travixa_role=; path=/; max-age=0";
-              localStorage.removeItem("traveler_auth");
-              localStorage.removeItem("travixa_role");
               try {
                 const { createClient } = await import('@/lib/supabase/client');
                 const supabase = createClient();
                 await supabase.auth.signOut();
               } catch (e) {}
-              window.location.href = "/admin/login";
+              router.push("/admin/login");
             }}
             className="flex items-center gap-3 p-2 rounded-xl hover:bg-[#F1F5F9] transition-colors cursor-pointer group"
           >

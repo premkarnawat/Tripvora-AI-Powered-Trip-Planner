@@ -97,10 +97,18 @@ export async function PUT(request: Request) {
     if (!user || !verifyAdmin(user)) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
 
     const body = await request.json();
-    const { id, ...updates } = body;
+    const { id, name, slug, address, subscription_tier, subscription_status } = body;
+    
+    const safeUpdates: any = {};
+    if (name !== undefined) safeUpdates.name = name;
+    if (slug !== undefined) safeUpdates.slug = slug;
+    if (address !== undefined) safeUpdates.address = address;
+    if (subscription_tier !== undefined) safeUpdates.subscription_tier = subscription_tier;
+    if (subscription_status !== undefined) safeUpdates.subscription_status = subscription_status;
+
     const { data: updated, error } = await supabase
       .from('agencies')
-      .update(updates)
+      .update(safeUpdates)
       .eq('id', id)
       .select()
       .single();

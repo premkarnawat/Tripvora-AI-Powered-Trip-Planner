@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { 
   LayoutDashboard, Users, FileText, Settings, Menu, X,
   TrendingUp, Search, Bell, CalendarCheck, Package,
@@ -48,9 +48,50 @@ const sidebarGroups = [
 
 export default function CRMLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    async function checkSession() {
+      try {
+        const { createClient } = await import('@/lib/supabase/client');
+        const supabase = createClient();
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error || !session) {
+          if (mounted) router.push("/login");
+          return;
+        }
+        
+        const role = session.user.user_metadata?.role;
+        if (role !== 'agency') {
+          if (mounted) router.push("/unauthorized");
+          return;
+        }
+
+        if (mounted) setCheckingAuth(false);
+      } catch (e) {
+        if (mounted) router.push("/login");
+      }
+    }
+    checkSession();
+    return () => { mounted = false; };
+  }, [router]);
+
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen bg-[#020817] flex items-center justify-center font-sans">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-slate-800 border-t-[#14B8A6] rounded-full animate-spin" />
+          <p className="text-xs text-slate-400 font-bold">Securing Workspace...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="admin-theme bg-[#020817] min-h-screen w-full flex font-sans text-white relative">
@@ -304,15 +345,12 @@ export default function CRMLayout({ children }: { children: React.ReactNode }) {
             </div>
             <button 
               onClick={async () => {
-                document.cookie = "travixa_role=; path=/; max-age=0";
-                localStorage.removeItem("traveler_auth");
-                localStorage.removeItem("travixa_role");
                 try {
                   const { createClient } = await import('@/lib/supabase/client');
                   const supabase = createClient();
                   await supabase.auth.signOut();
                 } catch (e) {}
-                window.location.href = "/login";
+                router.push("/login");
               }}
               title="Sign Out"
               className="w-8 h-8 rounded-md flex items-center justify-center text-[#94A3B8] hover:text-red-400 hover:bg-white/5 transition-colors"

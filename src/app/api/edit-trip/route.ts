@@ -62,14 +62,19 @@ const editTripSchema = z.object({
 
 export const POST = withSecurity(
   {
-    rateLimit: { limit: 120, windowSeconds: 60 },
+    rateLimit: { limit: 10, windowSeconds: 60 },
     schema: editTripSchema,
-    requireAuth: false // Public for now, could be protected
+    requireAuth: true
   },
   async (request: Request) => {
     try {
       const body = await request.json();
       const { currentItinerary, userMessage, chatHistory } = body;
+      
+      // Basic prompt injection sanitization
+      const safeMessage = typeof userMessage === 'string' 
+        ? userMessage.replace(/(ignore|forget|disregard).*previous.*instructions/gi, '[REDACTED]') 
+        : '';
 
       const geminiKey = process.env.GEMINI_API_KEY;
       if (!geminiKey) return NextResponse.json({ error: "Server API configuration missing" }, { status: 500 });
@@ -83,7 +88,7 @@ CRITICAL EDITING RULES:
 2. BUDGET ADJUSTMENT: If the user says "Reduce my budget by INR 15000", systematically optimize affected cost items while preserving the core flow.
 3. STRICT SCHEMA: Return pure valid JSON strictly conforming to the exact input schema. Never include markdown code fencing (\`\`\`json) or conversational commentary outside JSON.`;
 
-      const promptText = `${systemInstruction}\n\nCurrent Itinerary Document:\n${JSON.stringify(currentItinerary)}\n\nRecent Conversation History:\n${JSON.stringify(chatHistory || [])}\n\nUser Modification Instruction:\n"${userMessage}"\n\nReturn the updated JSON document matching the exact schema. Pure JSON only.`;
+      const promptText = `${systemInstruction}\n\nCurrent Itinerary Document:\n${JSON.stringify(currentItinerary)}\n\nRecent Conversation History:\n${JSON.stringify(chatHistory || [])}\n\nUser Modification Instruction:\n"${safeMessage}"\n\nReturn the updated JSON document matching the exact schema. Pure JSON only.`;
 
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 12000);

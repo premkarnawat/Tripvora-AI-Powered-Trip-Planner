@@ -33,19 +33,28 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [checkingAuth, setCheckingAuth] = useState(true);
 
   useEffect(() => {
-    const isAuthed = localStorage.getItem("traveler_auth") === "true";
-    if (!isAuthed) {
-      router.push("/login");
-    } else {
-      setCheckingAuth(false);
+    let mounted = true;
+    async function checkSession() {
+      try {
+        const { createClient } = await import('@/lib/supabase/client');
+        const supabase = createClient();
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error || !session) {
+          if (mounted) router.push("/login");
+        } else {
+          if (mounted) setCheckingAuth(false);
+        }
+      } catch (e) {
+        if (mounted) router.push("/login");
+      }
     }
+    checkSession();
+    return () => { mounted = false; };
   }, [router]);
 
   const handleSignOut = async (e: React.MouseEvent) => {
     e.preventDefault();
-    document.cookie = "travixa_role=; path=/; max-age=0";
-    localStorage.removeItem("traveler_auth");
-    localStorage.removeItem("travixa_role");
     try {
       const { createClient } = await import('@/lib/supabase/client');
       const supabase = createClient();

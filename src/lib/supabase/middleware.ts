@@ -31,18 +31,20 @@ export async function updateSession(request: NextRequest) {
         }
       );
 
-      const { data } = await supabase.auth.getUser();
-      user = data?.user || null;
+      const { data, error } = await supabase.auth.getUser();
+      if (!error && data?.user) {
+        user = data.user;
+      }
     }
   } catch (err) {
-    // Graceful fallback for demo preview environments
+    console.error("Supabase middleware error:", err);
   }
 
   const pathname = request.nextUrl.pathname;
   const hasAuth = !!user;
 
   // Protect private routes
-  const protectedRoutes = ['/dashboard', '/agency', '/admin', '/saved-trips', '/settings'];
+  const protectedRoutes = ['/dashboard', '/agency', '/admin', '/saved-trips', '/settings', '/trips', '/profile', '/plan'];
   const isProtected = protectedRoutes.some(route => pathname.startsWith(route)) &&
                       !pathname.startsWith('/admin/login') &&
                       !pathname.startsWith('/agency/register');
@@ -53,6 +55,33 @@ export async function updateSession(request: NextRequest) {
     url.searchParams.set('redirect', pathname);
     return NextResponse.redirect(url)
   }
+
+  // --- ZERO TRUST GLOBAL API FIREWALL ---
+  const isApiRoute = pathname.startsWith('/api/');
+  const isAdminApi = pathname.startsWith('/api/admin/');
+  const isCrmApi = pathname.startsWith('/api/crm/');
+
+  if (isAdminApi || isCrmApi) {
+    // 1. Block Unauthenticated API Access
+    if (!hasAuth) {
+      return NextResponse.json({ error: 'Unauthorized: Authentication required' }, { status: 401 });
+    }
+
+    const userRole = user?.user_metadata?.role || 'traveler';
+    const isAdmin = userRole === 'admin' || userRole === 'super_admin';
+    const isAgency = userRole === 'agency' || userRole === 'agency_admin' || userRole === 'agency_agent';
+
+    // 2. Block Unauthorized Admin API Access
+    if (isAdminApi && !isAdmin) {
+      return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+    }
+
+    // 3. Block Unauthorized CRM API Access
+    if (isCrmApi && !isAgency && !isAdmin) { // Admins usually can access CRM routes too
+      return NextResponse.json({ error: 'Forbidden: Agency access required' }, { status: 403 });
+    }
+  }
+  // --- END API FIREWALL ---
 
   if (hasAuth) {
     const userRole = user?.user_metadata?.role || 'traveler';

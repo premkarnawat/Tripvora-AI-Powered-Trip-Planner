@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, Sparkles } from "lucide-react";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -15,72 +16,92 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  const finalizeAuth = (targetRole: string) => {
-    document.cookie = `travixa_role=${targetRole}; path=/; max-age=86400; SameSite=Lax`;
-    localStorage.setItem("traveler_auth", "true");
-    localStorage.setItem("travixa_role", targetRole);
-
-    if (targetRole === "admin" || targetRole === "super_admin") {
-      window.location.href = "/admin";
-    } else if (targetRole === "agency") {
-      window.location.href = "/agency";
-    } else {
-      window.location.href = "/dashboard";
-    }
-  };
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    
+
+    // Client-side password length check (server validates too via Supabase)
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      setLoading(false);
+      return;
+    }
+
     try {
-      const { createClient } = await import("@/lib/supabase/client");
       const supabase = createClient();
-      
+
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (signInError) {
+        // Surface Supabase error without leaking internal details
+        setError(signInError.message || "Invalid email or password.");
+        setLoading(false);
+        return;
+      }
+
+      if (!data?.user) {
+        setError("Authentication failed. Please try again.");
+        setLoading(false);
+        return;
+      }
+
+      // Determine role from profile table, then user_metadata fallback
       let targetRole = "traveler";
-      let liveSuccess = false;
-
       try {
-        const { data, error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+        const { data: profile } = await supabase
+          .from("users")
+          .select("role")
+          .eq("id", data.user.id)
+          .single();
 
-        if (!signInError && data?.user) {
-          liveSuccess = true;
-          const { data: profile } = await supabase
-            .from("users")
-            .select("role")
-            .eq("id", data.user.id)
-            .single();
-
-          targetRole = profile?.role || data.user.user_metadata?.role || "traveler";
-        }
-      } catch (e) {
-        // Fallback for demo preview
+        targetRole = profile?.role || data.user.user_metadata?.role || "traveler";
+      } catch {
+        // If profile query fails, fall back to user_metadata
+        targetRole = data.user.user_metadata?.role || "traveler";
       }
 
-      if (!liveSuccess) {
-        if (email.includes("admin") || email === "prem@example.com") {
-          targetRole = "admin";
-        } else if (email.includes("agency") || email.includes("partner")) {
-          targetRole = "agency";
-        } else {
-          targetRole = "traveler";
-        }
+      // Redirect based on verified role — middleware manages session cookies
+      if (targetRole === "admin" || targetRole === "super_admin") {
+        router.push("/admin");
+      } else if (targetRole === "agency") {
+        router.push("/agency");
+      } else {
+        router.push("/dashboard");
       }
-
-      finalizeAuth(targetRole);
-    } catch (err: any) {
-      setError(err.message || "Failed to sign in.");
+    } catch {
+      setError("An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogleLogin = () => {
-    finalizeAuth("traveler");
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const supabase = createClient();
+
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+
+      if (oauthError) {
+        setError(oauthError.message || "Google sign-in failed.");
+        setLoading(false);
+      }
+      // Browser will redirect to Google — no further action needed
+    } catch {
+      setError("Failed to initiate Google sign-in.");
+      setLoading(false);
+    }
   };
 
   return (
@@ -108,7 +129,7 @@ export default function LoginPage() {
             transition={{ delay: 0.2 }}
             className="text-3xl md:text-4xl font-extrabold font-sora leading-[1.2] mb-6 max-w-sm"
           >
-            "Your next journey starts here."
+            &quot;Your next journey starts here.&quot;
           </motion.h3>
           
           {/* Avatar list */}
@@ -160,7 +181,8 @@ export default function LoginPage() {
             <button 
               type="button"
               onClick={handleGoogleLogin}
-              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 transition-colors shadow-sm"
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 transition-colors shadow-sm disabled:opacity-50"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -197,6 +219,7 @@ export default function LoginPage() {
               <input 
                 type={showPassword ? "text" : "password"} 
                 required
+                minLength={8}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••" 

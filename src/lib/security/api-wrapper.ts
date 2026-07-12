@@ -15,36 +15,48 @@ export interface WrapperOptions {
 export function withSecurity(options: WrapperOptions, handler: ApiHandler): ApiHandler {
   return async (req: Request, ctx: any) => {
     try {
-      // 1. Rate Limiting
-      if (options.rateLimit) {
-        const ip = req.headers.get('x-forwarded-for') || 'anonymous';
-        const url = new URL(req.url);
-        const { success, headers } = checkRateLimit(ip, url.pathname, options.rateLimit);
-        
-        if (!success) {
-          return rateLimitResponse(headers);
-        }
-      }
-
-      // 2. Authentication
+      // 1. Authentication
       let user = null;
+      let authAttempted = false;
+      const supabase = await createClient();
+
       if (options.requireAuth || options.requireRoles) {
-        const supabase = await createClient();
+        authAttempted = true;
         const { data, error } = await supabase.auth.getUser();
         
         if (error || !data?.user) {
           return NextResponse.json({ success: false, error: 'Unauthorized', message: 'Valid session required' }, { status: 401 });
         }
         user = data.user;
+      } else if (options.rateLimit) {
+        // Even if auth isn't required, try to get the user for rate limiting to prevent IP rotation
+        authAttempted = true;
+        const { data } = await supabase.auth.getUser();
+        if (data?.user) {
+          user = data.user;
+        }
+      }
 
-        // 3. Authorization (RBAC)
-        if (options.requireRoles && options.requireRoles.length > 0) {
-          const userRole = user.user_metadata?.role || 'traveler';
-          
-          // Super admin overrides everything
-          if (userRole !== 'super_admin' && !options.requireRoles.includes(userRole)) {
-            return NextResponse.json({ success: false, error: 'Forbidden', message: 'Insufficient privileges' }, { status: 403 });
-          }
+      // 2. Identity-Based Rate Limiting
+      if (options.rateLimit) {
+        const ip = req.headers.get('x-forwarded-for') || 'anonymous';
+        // Use user.id if authenticated, otherwise fallback to IP
+        const identifier = user ? `usr_${user.id}` : `ip_${ip}`;
+        const url = new URL(req.url);
+        const { success, headers } = await checkRateLimit(identifier, url.pathname, options.rateLimit);
+        
+        if (!success) {
+          return rateLimitResponse(headers);
+        }
+      }
+
+      // 3. Authorization (RBAC)
+      if (options.requireRoles && options.requireRoles.length > 0 && user) {
+        const userRole = user.user_metadata?.role || 'traveler';
+        
+        // Super admin overrides everything
+        if (userRole !== 'super_admin' && !options.requireRoles.includes(userRole)) {
+          return NextResponse.json({ success: false, error: 'Forbidden', message: 'Insufficient privileges' }, { status: 403 });
         }
       }
 
