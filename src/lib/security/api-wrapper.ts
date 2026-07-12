@@ -23,11 +23,13 @@ export function withSecurity(options: WrapperOptions, handler: ApiHandler): ApiH
       if (options.requireAuth || options.requireRoles) {
         authAttempted = true;
         
-        // Manual bulletproof session injection
+        // Manual bulletproof session extraction
         const { cookies } = await import('next/headers');
         const cookieStore = await cookies();
         const allCookies = cookieStore.getAll();
         const authCookie = allCookies.find(c => c.name.includes('-auth-token') && !c.name.includes('-code-verifier'));
+        let directToken = null;
+        
         if (authCookie) {
           try {
             let parsed;
@@ -36,18 +38,17 @@ export function withSecurity(options: WrapperOptions, handler: ApiHandler): ApiH
             } catch {
               parsed = JSON.parse(decodeURIComponent(authCookie.value));
             }
-            if (parsed && parsed.access_token && parsed.refresh_token) {
-              await supabase.auth.setSession({
-                access_token: parsed.access_token,
-                refresh_token: parsed.refresh_token,
-              });
+            if (parsed && parsed.access_token) {
+              directToken = parsed.access_token;
             }
           } catch (e) {
             // fallback gracefully
           }
         }
 
-        const { data, error } = await supabase.auth.getUser();
+        const { data, error } = directToken 
+          ? await supabase.auth.getUser(directToken)
+          : await supabase.auth.getUser();
         
         if (error || !data?.user) {
           const errMsg = error?.message || "No user found in session";
@@ -87,17 +88,21 @@ export function withSecurity(options: WrapperOptions, handler: ApiHandler): ApiH
       }
 
       // 4. Input Validation
-      if (options.schema && req.method !== 'GET' && req.method !== 'DELETE') {
+      if (options.schema) {
         try {
           const clonedReq = req.clone();
           const body = await clonedReq.json();
-          options.schema.parse(body);
-        } catch (validationError: any) {
-          return NextResponse.json({ 
-            success: false, 
-            error: 'Validation Error', 
-            details: validationError.errors 
-          }, { status: 400 });
+          const validationResult = options.schema.safeParse(body);
+          
+          if (!validationResult.success) {
+            return NextResponse.json({ 
+              success: false, 
+              error: 'Validation Error', 
+              details: validationResult.error.format() 
+            }, { status: 400 });
+          }
+        } catch (e) {
+          return NextResponse.json({ success: false, error: 'Bad Request', message: 'Invalid JSON body' }, { status: 400 });
         }
       }
 
@@ -105,11 +110,12 @@ export function withSecurity(options: WrapperOptions, handler: ApiHandler): ApiH
       return await handler(req, ctx);
 
     } catch (error: any) {
-      console.error('[API_ERROR]', error);
-      return NextResponse.json(
-        { success: false, error: 'Internal Server Error', message: process.env.NODE_ENV === 'development' ? error.message : 'An unexpected error occurred' },
-        { status: 500 }
-      );
+      console.error('API Error:', error);
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Internal Server Error',
+        message: process.env.NODE_ENV === 'development' ? error.message : 'An unexpected error occurred'
+      }, { status: 500 });
     }
   };
 }
