@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { loginUser } from "./actions";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -30,24 +29,47 @@ export default function LoginPage() {
     }
 
     try {
-      // Check for redirect query param (set by middleware when redirecting to login)
-      const params = new URLSearchParams(window.location.search);
-      const redirectTo = params.get("redirect");
+      const supabase = createClient();
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-      const result = await loginUser(email, password, redirectTo);
-
-      if (result?.error) {
-        setError(result.error);
+      if (authError || !authData?.user) {
+        setError(authError?.message || "Authentication failed.");
         setLoading(false);
         return;
       }
-      
-      if (result?.success && result?.destination) {
-        // Wait 800ms for browser to definitively save the Set-Cookie headers from the POST response
-        setTimeout(() => {
-          window.location.href = result.destination;
-        }, 800);
+
+      // Get user role
+      let targetRole = "traveler";
+      try {
+        const { data: profile } = await supabase
+          .from("users")
+          .select("role")
+          .eq("id", authData.user.id)
+          .single();
+        targetRole = profile?.role || authData.user.user_metadata?.role || "traveler";
+      } catch {
+        targetRole = authData.user.user_metadata?.role || "traveler";
       }
+
+      const params = new URLSearchParams(window.location.search);
+      const redirectTo = params.get("redirect");
+
+      let destination = "/dashboard";
+      if (redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("//")) {
+        destination = redirectTo;
+      } else if (targetRole === "admin" || targetRole === "super_admin") {
+        destination = "/admin";
+      } else if (targetRole === "agency") {
+        destination = "/agency";
+      }
+
+      // Wait 800ms for browser to definitively save the Set-Cookie headers from the client
+      setTimeout(() => {
+        window.location.href = destination;
+      }, 800);
     } catch (err: any) {
       setError("An unexpected error occurred. Please try again.");
       setLoading(false);

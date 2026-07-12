@@ -41,12 +41,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error || !session) {
-          if (mounted) router.push("/login");
+          if (mounted) router.push("/login?err_diag=client_layout_no_session");
         } else {
           if (mounted) setCheckingAuth(false);
         }
       } catch (e) {
-        if (mounted) router.push("/login");
+        if (mounted) router.push("/login?err_diag=client_layout_catch");
       }
     }
     checkSession();
