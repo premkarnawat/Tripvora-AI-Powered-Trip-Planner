@@ -44,21 +44,26 @@ export async function updateSession(request: NextRequest) {
         }
       );
 
+      // Vercel Edge Runtime / @supabase/ssr failsafe:
+      // If the cookie exists, manually inject it into the client to bypass parsing bugs
+      const authCookie = request.cookies.getAll().find(c => c.name.includes('-auth-token') && !c.name.includes('-code-verifier'));
+      if (authCookie) {
+        try {
+          const parsed = JSON.parse(decodeURIComponent(authCookie.value));
+          if (parsed.access_token && parsed.refresh_token) {
+            await supabase.auth.setSession({
+              access_token: parsed.access_token,
+              refresh_token: parsed.refresh_token,
+            });
+          }
+        } catch (e) {
+          // ignore parsing errors here, getUser will catch missing sessions
+        }
+      }
+
       const { data, error } = await supabase.auth.getUser();
       if (error) {
-        const authCookie = request.cookies.getAll().find(c => c.name.includes('-auth-token') && !c.name.includes('-code-verifier'));
-        let parseDiagnostic = "none";
-        let cookieLen = 0;
-        if (authCookie) {
-          cookieLen = authCookie.value.length;
-          try {
-            JSON.parse(decodeURIComponent(authCookie.value));
-            parseDiagnostic = "json_parse_success";
-          } catch (e: any) {
-            parseDiagnostic = "json_parse_error_" + e.message.replace(/\s+/g, '_');
-          }
-        }
-        authErrorMsg = "user_error_" + error.message.replace(/\s+/g, '_') + "_len_" + cookieLen + "_" + parseDiagnostic;
+        authErrorMsg = "user_error_" + error.message.replace(/\s+/g, '_');
       } else if (data?.user) {
         user = data.user;
       } else {
