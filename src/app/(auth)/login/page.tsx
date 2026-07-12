@@ -64,17 +64,28 @@ export default function LoginPage() {
         targetRole = data.user.user_metadata?.role || "traveler";
       }
 
-      // Redirect based on verified role — middleware manages session cookies
-      if (targetRole === "admin" || targetRole === "super_admin") {
-        router.push("/admin");
+      // Check for redirect query param (set by middleware when redirecting to login)
+      const params = new URLSearchParams(window.location.search);
+      const redirectTo = params.get("redirect");
+
+      // Use window.location.href for HARD navigation
+      // router.push() does soft navigation — middleware won't see the new auth cookies
+      // and will redirect back to /login, causing the "nothing happens" bug
+      let destination = "/dashboard";
+      if (redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("//")) {
+        destination = redirectTo;
+      } else if (targetRole === "admin" || targetRole === "super_admin") {
+        destination = "/admin";
       } else if (targetRole === "agency") {
-        router.push("/agency");
-      } else {
-        router.push("/dashboard");
+        destination = "/agency";
       }
+
+      // Hard navigation ensures middleware processes fresh auth cookies
+      window.location.href = destination;
+      // Don't setLoading(false) — page is navigating away
+
     } catch {
       setError("An unexpected error occurred. Please try again.");
-    } finally {
       setLoading(false);
     }
   };
