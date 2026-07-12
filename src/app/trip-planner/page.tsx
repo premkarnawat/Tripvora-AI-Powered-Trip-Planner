@@ -115,7 +115,10 @@ export default function TripPlannerPage() {
       if (resData?.status === "INSUFFICIENT_REAL_DATA") {
         throw new Error(`Trip rejected. Missing verified data: ${resData.missing.join(", ")}.`);
       }
-      if (!response.ok) throw new Error(resData?.error || resData?.reason || "Failed to generate itinerary");
+      if (!response.ok) {
+        const fullMsg = [resData?.error, resData?.message, resData?.reason].filter(Boolean).join(" - ");
+        throw new Error(fullMsg || "Failed to generate itinerary");
+      }
 
       // Clear wizard progress on success
       localStorage.removeItem('tripvora_wizard_progress');
