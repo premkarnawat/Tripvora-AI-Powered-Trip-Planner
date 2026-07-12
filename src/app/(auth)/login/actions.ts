@@ -1,8 +1,9 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 
-export async function loginUser(email: string, password: string) {
+export async function loginUser(email: string, password: string, clientRedirectTo: string | null) {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
@@ -27,5 +28,14 @@ export async function loginUser(email: string, password: string) {
     targetRole = data.user.user_metadata?.role || "traveler";
   }
 
-  return { success: true, role: targetRole };
+  let destination = "/dashboard";
+  if (clientRedirectTo && clientRedirectTo.startsWith("/") && !clientRedirectTo.startsWith("//")) {
+    destination = clientRedirectTo;
+  } else if (targetRole === "admin" || targetRole === "super_admin") {
+    destination = "/admin";
+  } else if (targetRole === "agency") {
+    destination = "/agency";
+  }
+
+  redirect(destination);
 }

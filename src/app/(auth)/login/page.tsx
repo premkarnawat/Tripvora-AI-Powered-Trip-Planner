@@ -30,41 +30,24 @@ export default function LoginPage() {
     }
 
     try {
-      const result = await loginUser(email, password);
-
-      if (result.error) {
-        setError(result.error);
-        setLoading(false);
-        return;
-      }
-
-      let targetRole = result.role;
-
       // Check for redirect query param (set by middleware when redirecting to login)
       const params = new URLSearchParams(window.location.search);
       const redirectTo = params.get("redirect");
 
-      // Use window.location.href for HARD navigation
-      // router.push() does soft navigation — middleware won't see the new auth cookies
-      // and will redirect back to /login, causing the "nothing happens" bug
-      let destination = "/dashboard";
-      if (redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("//")) {
-        destination = redirectTo;
-      } else if (targetRole === "admin" || targetRole === "super_admin") {
-        destination = "/admin";
-      } else if (targetRole === "agency") {
-        destination = "/agency";
+      const result = await loginUser(email, password, redirectTo);
+
+      if (result?.error) {
+        setError(result.error);
+        setLoading(false);
+        return;
       }
-
-      // Hard navigation ensures middleware processes fresh auth cookies
-      // Delay by 800ms to allow browser to flush the cookie from createBrowserClient
-      setTimeout(() => {
-        window.location.href = destination;
-      }, 800);
       
-      // Don't setLoading(false) — page is navigating away
-
-    } catch {
+      // If successful, the Server Action will throw a redirect and this code won't be reached
+    } catch (err: any) {
+      if (err?.message === "NEXT_REDIRECT") {
+        // Re-throw so Next.js can handle the redirect navigation
+        throw err;
+      }
       setError("An unexpected error occurred. Please try again.");
       setLoading(false);
     }
