@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { loginUser } from "./actions";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -29,40 +30,15 @@ export default function LoginPage() {
     }
 
     try {
-      const supabase = createClient();
+      const result = await loginUser(email, password);
 
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (signInError) {
-        // Surface Supabase error without leaking internal details
-        setError(signInError.message || "Invalid email or password.");
+      if (result.error) {
+        setError(result.error);
         setLoading(false);
         return;
       }
 
-      if (!data?.user) {
-        setError("Authentication failed. Please try again.");
-        setLoading(false);
-        return;
-      }
-
-      // Determine role from profile table, then user_metadata fallback
-      let targetRole = "traveler";
-      try {
-        const { data: profile } = await supabase
-          .from("users")
-          .select("role")
-          .eq("id", data.user.id)
-          .single();
-
-        targetRole = profile?.role || data.user.user_metadata?.role || "traveler";
-      } catch {
-        // If profile query fails, fall back to user_metadata
-        targetRole = data.user.user_metadata?.role || "traveler";
-      }
+      let targetRole = result.role;
 
       // Check for redirect query param (set by middleware when redirecting to login)
       const params = new URLSearchParams(window.location.search);
