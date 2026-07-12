@@ -11,7 +11,16 @@ export async function createClient() {
   return createServerClient(url, anon, {
       cookies: {
         getAll() {
-          return cookieStore.getAll()
+          return cookieStore.getAll().map(cookie => {
+            let decodedValue = cookie.value;
+            try {
+              decodedValue = decodeURIComponent(cookie.value);
+            } catch (e) {}
+            return {
+              ...cookie,
+              value: decodedValue
+            };
+          })
         },
         setAll(cookiesToSet: { name: string; value: string; options: any }[]) {
           try {

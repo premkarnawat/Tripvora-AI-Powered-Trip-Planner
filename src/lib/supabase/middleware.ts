@@ -20,7 +20,16 @@ export async function updateSession(request: NextRequest) {
         {
           cookies: {
             getAll() {
-              return request.cookies.getAll()
+              return request.cookies.getAll().map(cookie => {
+                let decodedValue = cookie.value;
+                try {
+                  decodedValue = decodeURIComponent(cookie.value);
+                } catch (e) {}
+                return {
+                  ...cookie,
+                  value: decodedValue
+                };
+              })
             },
             setAll(cookiesToSet: { name: string; value: string; options: any }[]) {
               cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
