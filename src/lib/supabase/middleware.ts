@@ -31,9 +31,9 @@ export async function updateSession(request: NextRequest) {
         }
       );
 
-      const { data, error } = await supabase.auth.getUser();
-      if (!error && data?.user) {
-        user = data.user;
+      const { data, error } = await supabase.auth.getSession();
+      if (!error && data?.session?.user) {
+        user = data.session.user;
       }
     }
   } catch (err) {
