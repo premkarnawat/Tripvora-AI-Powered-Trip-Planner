@@ -36,3 +36,6 @@ next-env.d.ts
 
 deploy_vercel.ps1
 push_db.py
+fix_schema.py
+inspect_db.py
+refactor_apis.py

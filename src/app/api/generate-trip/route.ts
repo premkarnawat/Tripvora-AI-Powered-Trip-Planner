@@ -47,6 +47,17 @@ type TripForm = {
   hotel_preference: string[];
   transport_preference: string[];
   special_requests: string[];
+  // New fields from 12-step wizard
+  budget_mode: "strict" | "balanced" | "flexible";
+  must_visit: Array<{ name: string; preferredDay: string; priority: string }>;
+  has_transport: boolean;
+  transport_details: any;
+  has_hotel: boolean;
+  hotel_details: any;
+  food_preferences: string[];
+  destination_type: string;
+  source_coords: { lat: number; lon: number } | null;
+  destination_coords: { lat: number; lon: number } | null;
 };
 
 function validateInput(body: Record<string, unknown>): { ok: true; data: TripForm } | { ok: false; error: string } {
@@ -77,7 +88,18 @@ function validateInput(body: Record<string, unknown>): { ok: true; data: TripFor
       interests: Array.isArray(body.interests) ? body.interests.map(String) : [],
       hotel_preference: Array.isArray(body.hotel_preference) ? body.hotel_preference.map(String) : [],
       transport_preference: Array.isArray(body.transport_preference) ? body.transport_preference.map(String) : [],
-      special_requests: Array.isArray(body.special_requests) ? body.special_requests.map(String) : []
+      special_requests: Array.isArray(body.special_requests) ? body.special_requests.map(String) : [],
+      // New fields with safe defaults
+      budget_mode: (String(body.budget_mode || "balanced") as any),
+      must_visit: Array.isArray(body.must_visit) ? body.must_visit as any[] : [],
+      has_transport: Boolean(body.has_transport),
+      transport_details: body.transport_details || null,
+      has_hotel: Boolean(body.has_hotel),
+      hotel_details: body.hotel_details || null,
+      food_preferences: Array.isArray(body.food_preferences) ? body.food_preferences.map(String) : [],
+      destination_type: String(body.destination_type || "city"),
+      source_coords: (body.source_coords as any) || null,
+      destination_coords: (body.destination_coords as any) || null,
     }
   };
 }
@@ -467,7 +489,7 @@ export const POST = withSecurity(
       }),
     };
 
-    // ── Step 7: Database Persistence (Phase 3 Strict Real-world mapping) ──
+    // ── Step 7: Database Persistence ──
     try {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
       const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -477,84 +499,33 @@ export const POST = withSecurity(
           cookies: { getAll() { return cookieStore.getAll(); }, setAll() {} },
         });
 
-        // 1. Insert Trip
-        const { data: tripData } = await supabase.from('trips').insert({
-          title: `Trip to ${body.destination}`,
-          source: body.source,
-          destination: body.destination,
-          trip_type: body.trip_type,
-          group_type: body.trip_type, // Fallback as group_type
-          budget: body.budget,
-          currency: 'INR',
-          start_date: body.start_date,
-          end_date: body.end_date,
-          travelers: body.travelers
-        }).select('id').single();
+        // Get authenticated user for RLS compliance
+        const { data: { user } } = await supabase.auth.getUser();
 
-        if (tripData?.id) {
-          const tripId = tripData.id;
-
-          // 2. Parallel Inserts for relational tables
-          await Promise.allSettled([
-            supabase.from('traveler_dna').insert({
-              trip_id: tripId,
-              profile: dna.travelerType,
-              comfort_score: dna.comfortLevel,
-              crowd_tolerance: 50,
-              walking_limit: dna.walkingTolerance,
-              wakeup_time: '08:00',
-              sleep_time: '22:00',
-              activity_capacity: dna.maxActivitiesPerDay,
-              transport_preference: transport.suggestedMode,
-              food_preference: dna.foodPreference
-            }),
-            
-            supabase.from('destinations').insert({
-              trip_id: tripId,
-              name: body.destination,
-              lat: geo.lat,
-              lon: geo.lon,
-              sunrise: tripContext.sunrise,
-              sunset: tripContext.sunset
-            }),
-
-            supabase.from('transport').insert({
-              trip_id: tripId,
-              mode: transport.suggestedMode,
+        if (user) {
+          // Store entire trip as JSONB in the trip_data column
+          // This matches the actual DB schema: trips(id, user_id, destination, trip_data, created_at, updated_at)
+          const { error: insertError } = await supabase.from('trips').insert({
+            user_id: user.id,
+            destination: body.destination,
+            trip_data: {
+              title: `Trip to ${body.destination}`,
               source: body.source,
               destination: body.destination,
-              distance: transport.distanceKm,
-              duration: transport.durationHours,
-              fare: transport.estimatedFare,
-              comfort_score: dna.comfortLevel
-            }),
+              trip_type: body.trip_type,
+              budget: body.budget,
+              currency: 'INR',
+              start_date: body.start_date,
+              end_date: body.end_date,
+              travelers: body.travelers,
+              // Full response stored for retrieval
+              itinerary: response,
+            }
+          });
 
-            response.hotels.length > 0 && supabase.from('hotels').insert(
-              response.hotels.map(h => ({
-                trip_id: tripId,
-                name: h.name,
-                price: h.pricePerNight,
-                rating: h.rating,
-                image: h.imageUrl,
-                affiliate_link: h.affiliateLink
-              }))
-            ),
-
-            response.restaurants.length > 0 && supabase.from('restaurants').insert(
-              response.restaurants.map(r => ({
-                trip_id: tripId,
-                name: r.name,
-                cuisine: r.cuisine,
-                location: r.address
-              }))
-            ),
-
-            supabase.from('poi').insert([
-              ...response.poi.iconic_places.map(p => ({ trip_id: tripId, name: p.name, category: p.category, lat: p.lat, lon: p.lon, rating: p.rating, priority_score: 95 })),
-              ...response.poi.hidden_gems.map(p => ({ trip_id: tripId, name: p.name, category: p.category, lat: p.lat, lon: p.lon, rating: p.rating, priority_score: 100 })),
-              ...response.poi.family_places.map(p => ({ trip_id: tripId, name: p.name, category: p.category, lat: p.lat, lon: p.lon, rating: p.rating, priority_score: 80 }))
-            ])
-          ]);
+          if (insertError) {
+            console.error('Trip insert error:', insertError.message);
+          }
         }
       }
     } catch (e) {
