@@ -37,5 +37,5 @@ export async function loginUser(email: string, password: string, clientRedirectT
     destination = "/agency";
   }
 
-  redirect(destination);
+  return { success: true, destination };
 }

@@ -42,12 +42,13 @@ export default function LoginPage() {
         return;
       }
       
-      // If successful, the Server Action will throw a redirect and this code won't be reached
-    } catch (err: any) {
-      if (err?.message === "NEXT_REDIRECT") {
-        // Re-throw so Next.js can handle the redirect navigation
-        throw err;
+      if (result?.success && result?.destination) {
+        // Wait 800ms for browser to definitively save the Set-Cookie headers from the POST response
+        setTimeout(() => {
+          window.location.href = result.destination;
+        }, 800);
       }
+    } catch (err: any) {
       setError("An unexpected error occurred. Please try again.");
       setLoading(false);
     }

@@ -41,7 +41,8 @@ export async function updateSession(request: NextRequest) {
       } else if (data?.session?.user) {
         user = data.session.user;
       } else {
-        authErrorMsg = "no_user_in_session";
+        const cookieNames = request.cookies.getAll().map(c => c.name).join("-");
+        authErrorMsg = `no_user_in_session_cookies_${cookieNames}`;
       }
     }
   } catch (err: any) {
