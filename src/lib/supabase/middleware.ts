@@ -35,14 +35,14 @@ export async function updateSession(request: NextRequest) {
         }
       );
 
-      const { data, error } = await supabase.auth.getSession();
+      const { data, error } = await supabase.auth.getUser();
       if (error) {
-        authErrorMsg = "session_error_" + error.message.replace(/\s+/g, '_');
-      } else if (data?.session?.user) {
-        user = data.session.user;
+        authErrorMsg = "user_error_" + error.message.replace(/\s+/g, '_');
+      } else if (data?.user) {
+        user = data.user;
       } else {
         const cookieNames = request.cookies.getAll().map(c => c.name).join("-");
-        authErrorMsg = `no_user_in_session_cookies_${cookieNames}`;
+        authErrorMsg = `no_user_cookies_${cookieNames}`;
       }
     }
   } catch (err: any) {
