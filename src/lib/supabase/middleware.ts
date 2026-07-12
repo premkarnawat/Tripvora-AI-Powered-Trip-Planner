@@ -37,7 +37,9 @@ export async function updateSession(request: NextRequest) {
 
       const { data, error } = await supabase.auth.getUser();
       if (error) {
-        authErrorMsg = "user_error_" + error.message.replace(/\s+/g, '_');
+        const authCookie = request.cookies.getAll().find(c => c.name.includes('-auth-token') && !c.name.includes('-code-verifier'));
+        const cookiePreview = authCookie ? authCookie.value.substring(0, 15) : "none";
+        authErrorMsg = "user_error_" + error.message.replace(/\s+/g, '_') + "_val_" + cookiePreview;
       } else if (data?.user) {
         user = data.user;
       } else {
