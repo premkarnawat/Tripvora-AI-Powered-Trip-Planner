@@ -1,5 +1,6 @@
 // ─── Transport Feasibility & Route Engine ───────────────────────────
 // Discovers real transport hubs, calculates routes, determines feasibility
+// V3: Respects booked transport.
 
 export interface TransportRoute {
   distanceKm: number;
@@ -19,6 +20,7 @@ export interface TransportRoute {
     byBus: boolean;
     byCar: boolean;
   };
+  isBooked?: boolean;
 }
 
 interface TransportNode {
@@ -27,7 +29,11 @@ interface TransportNode {
   distanceKm?: number;
 }
 
-// ─── Haversine (self-contained) ─────────────────────────────────────
+export interface BookedTransport {
+  type: string;
+  arrival?: { date: string; time: string; hub?: string };
+  departure?: { date: string; time: string; hub?: string };
+}
 
 function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371;
@@ -39,8 +45,6 @@ function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): nu
     Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
-
-// ─── Geocode origin city ────────────────────────────────────────────
 
 async function geocodeCity(city: string): Promise<{ lat: number; lon: number } | null> {
   try {
@@ -56,18 +60,17 @@ async function geocodeCity(city: string): Promise<{ lat: number; lon: number } |
     const lon = parseFloat(data[0].lon);
     if (isNaN(lat) || isNaN(lon)) return null;
     return { lat, lon };
-  } catch (err: unknown) {
-    throw new Error(`GEOCODE_CITY_FAILED: Failed to geocode origin city "${city}" - ${err instanceof Error ? err.message : String(err)}`);
+  } catch (err) {
+    return null;
   }
 }
-
-// ─── OpenRouteService driving route ────────────────────────────────────────────
 
 async function getOpenRouteServiceRoute(
   oLat: number, oLon: number, dLat: number, dLon: number
 ): Promise<{ distanceKm: number; durationHours: number } | null> {
   try {
     const apiKey = process.env.ORS_API_KEY;
+    if (!apiKey) return null;
     const url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${apiKey}&start=${oLon},${oLat}&end=${dLon},${dLat}`;
     const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
     if (!res.ok) return null;
@@ -78,8 +81,8 @@ async function getOpenRouteServiceRoute(
       distanceKm: Math.round(summary.distance / 1000),
       durationHours: Math.round((summary.duration / 3600) * 10) / 10,
     };
-  } catch (err: unknown) {
-    throw new Error(`OPENROUTESERVICE_FAILED: Failed to fetch OpenRouteService route - ${err instanceof Error ? err.message : String(err)}`);
+  } catch (err) {
+    return null;
   }
 }
 
@@ -88,6 +91,7 @@ export async function getMicroRoute(
 ): Promise<{ distanceKm: number; durationMinutes: number } | null> {
   try {
     const apiKey = process.env.ORS_API_KEY;
+    if (!apiKey) return null;
     const url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${apiKey}&start=${oLon},${oLat}&end=${dLon},${dLat}`;
     const res = await fetch(url, { signal: AbortSignal.timeout(3000) });
     if (!res.ok) return null;
@@ -99,56 +103,40 @@ export async function getMicroRoute(
       durationMinutes: Math.ceil(summary.duration / 60),
     };
   } catch (err) {
-    return null; // Silent fallback for micro routing to avoid crashing the whole pipeline
+    return null;
   }
 }
-
-// ─── Find nearest transport hubs ────────────────────────────────────
 
 function findNearest(nodes: TransportNode[], category: string): { name: string; distanceKm: number } | null {
   const filtered = nodes
     .filter(n => n.category === category && n.name && n.name.length > 2)
     .sort((a, b) => (a.distanceKm ?? 999) - (b.distanceKm ?? 999));
-
   if (filtered.length === 0) return null;
   return { name: filtered[0].name, distanceKm: filtered[0].distanceKm ?? 0 };
 }
 
-// ─── Fare estimation (Indian context) ───────────────────────────────
-
 function estimateFare(mode: string, distanceKm: number): number {
-  // NOTE: These are rough formula-based estimates since real-time APIs for Indian trains/buses are not available.
   switch (mode) {
-    case 'Flight':
-      return Math.max(Math.min(Math.round(distanceKm * 5.5), 15000), 2500);
-    case 'Train (AC)':
-      return Math.max(Math.round(distanceKm * 2.5), 500);
+    case 'Flight': return Math.max(Math.min(Math.round(distanceKm * 5.5), 15000), 2500);
+    case 'Train (AC)': return Math.max(Math.round(distanceKm * 2.5), 500);
     case 'Train':
-    case 'Train (Sleeper)':
-      return Math.max(Math.round(distanceKm * 1.2), 200);
-    case 'Bus (AC)':
-      return Math.max(Math.round(distanceKm * 2.5), 300);
-    case 'Bus':
-      return Math.max(Math.round(distanceKm * 1.5), 100);
-    case 'Cab':
-      return Math.max(Math.round(distanceKm * 12), 500);
-    case 'Auto':
-      return Math.max(Math.round(distanceKm * 15), 50);
-    default:
-      return Math.max(Math.round(distanceKm * 2), 200);
+    case 'Train (Sleeper)': return Math.max(Math.round(distanceKm * 1.2), 200);
+    case 'Bus (AC)': return Math.max(Math.round(distanceKm * 2.5), 300);
+    case 'Bus': return Math.max(Math.round(distanceKm * 1.5), 100);
+    case 'Cab': return Math.max(Math.round(distanceKm * 12), 500);
+    case 'Auto': return Math.max(Math.round(distanceKm * 15), 50);
+    default: return Math.max(Math.round(distanceKm * 2), 200);
   }
 }
-
-// ─── Main Export ────────────────────────────────────────────────────
 
 export async function discoverTransport(
   origin: string,
   destinationLat: number,
   destinationLon: number,
   destinationName: string,
-  transportNodes: TransportNode[]
+  transportNodes: TransportNode[],
+  bookedTransport?: BookedTransport | null
 ): Promise<TransportRoute> {
-  // Defaults
   const defaults: TransportRoute = {
     distanceKm: 0,
     durationHours: 0,
@@ -162,10 +150,10 @@ export async function discoverTransport(
     nearestRailway: null,
     nearestBusStand: null,
     feasibility: { byFlight: false, byTrain: false, byBus: true, byCar: true },
+    isBooked: false
   };
 
   try {
-    // 1. Find nearest transport hubs
     const nearestAirport = findNearest(transportNodes, 'airport');
     const nearestRailway = findNearest(transportNodes, 'station');
     const nearestBusStand = findNearest(transportNodes, 'bus_stand');
@@ -174,34 +162,29 @@ export async function discoverTransport(
     defaults.nearestRailway = nearestRailway;
     defaults.nearestBusStand = nearestBusStand;
 
-    // Build all stations list
     defaults.nearestStations = transportNodes
       .filter(n => n.name && n.name.length > 2)
       .slice(0, 10)
       .map(n => ({ name: n.name, type: n.category, distanceKm: n.distanceKm ?? 0 }));
 
-    // 2. Geocode origin
     const originGeo = await geocodeCity(origin);
     let distanceKm = 0;
     let durationHours = 0;
 
     if (originGeo) {
-      // 3. Get OpenRouteService driving route
       const osrm = await getOpenRouteServiceRoute(originGeo.lat, originGeo.lon, destinationLat, destinationLon);
       if (osrm) {
         distanceKm = osrm.distanceKm;
         durationHours = osrm.durationHours;
       } else {
-        // Fallback to Haversine
         distanceKm = Math.round(haversineKm(originGeo.lat, originGeo.lon, destinationLat, destinationLon));
-        durationHours = Math.round((distanceKm / 45) * 10) / 10; // ~45 km/h average
+        durationHours = Math.round((distanceKm / 45) * 10) / 10;
       }
     }
 
     defaults.distanceKm = distanceKm;
     defaults.durationHours = durationHours;
 
-    // 4. Determine feasibility
     const feasibility = {
       byFlight: nearestAirport !== null && nearestAirport.distanceKm < 150,
       byTrain: nearestRailway !== null && nearestRailway.distanceKm < 100,
@@ -210,12 +193,34 @@ export async function discoverTransport(
     };
     defaults.feasibility = feasibility;
 
-    // 5. Smart mode selection
+    // IF BOOKED TRANSPORT EXISTS, RESPECT IT
+    if (bookedTransport) {
+      defaults.isBooked = true;
+      defaults.suggestedMode = bookedTransport.type;
+      defaults.estimatedFare = estimateFare(bookedTransport.type, distanceKm);
+      let destHub = destinationName;
+      if (bookedTransport.type.includes('Flight') && nearestAirport) destHub = nearestAirport.name;
+      else if (bookedTransport.type.includes('Train') && nearestRailway) destHub = nearestRailway.name;
+      else if (bookedTransport.type.includes('Bus') && nearestBusStand) destHub = nearestBusStand.name;
+      defaults.destinationHub = destHub;
+      
+      defaults.journeyLegs = [
+        origin,
+        `✓ Booked ${bookedTransport.type} to ${destHub}`,
+        destHub,
+        ...(destHub !== destinationName ? [`Local transport to ${destinationName}`] : []),
+        destinationName
+      ];
+      
+      return defaults;
+    }
+
+    // SMART MODE SELECTION
     let suggestedMode = 'Bus';
     if (distanceKm > 800 && feasibility.byFlight) {
       suggestedMode = 'Flight';
     } else if (distanceKm > 600 && feasibility.byFlight) {
-      suggestedMode = 'Flight'; // prefer flight for 600+ if available
+      suggestedMode = 'Flight';
     } else if (distanceKm > 200 && feasibility.byTrain) {
       suggestedMode = 'Train';
     } else if (distanceKm > 200) {
@@ -233,7 +238,6 @@ export async function discoverTransport(
     defaults.suggestedMode = suggestedMode;
     defaults.estimatedFare = estimateFare(suggestedMode, distanceKm);
 
-    // 6. Determine destination hub (real name)
     let destHub = destinationName;
     if (suggestedMode === 'Flight' && nearestAirport) {
       destHub = nearestAirport.name;
@@ -247,11 +251,8 @@ export async function discoverTransport(
       destHub = nearestBusStand.name;
     }
     defaults.destinationHub = destHub;
-    defaults.originHub = origin;
 
-    // 7. Build journey legs with REAL names
     const legs: string[] = [origin];
-
     if (suggestedMode === 'Flight' && nearestAirport) {
       legs.push(`Flight to ${nearestAirport.name} (~${Math.round(distanceKm * 0.7)}km, ${Math.max(1, Math.round(durationHours * 0.3))}h)`);
       legs.push(nearestAirport.name);
@@ -259,14 +260,10 @@ export async function discoverTransport(
         legs.push(`Local transport to ${destinationName} (${nearestAirport.distanceKm.toFixed(0)}km)`);
       }
     } else if (suggestedMode.includes('Train') && nearestRailway) {
-      const trainDuration = Math.round(durationHours * 0.8);
-      legs.push(`${suggestedMode} to ${nearestRailway.name} (~${distanceKm}km, ${trainDuration}h)`);
+      legs.push(`${suggestedMode} to ${nearestRailway.name} (~${distanceKm}km, ${Math.round(durationHours * 0.8)}h)`);
       legs.push(nearestRailway.name);
       if (nearestRailway.distanceKm > 3) {
-        const lastMile = nearestBusStand
-          ? `Local bus to ${nearestBusStand.name} (${nearestRailway.distanceKm.toFixed(0)}km)`
-          : `Auto/cab to ${destinationName} (${nearestRailway.distanceKm.toFixed(0)}km)`;
-        legs.push(lastMile);
+        legs.push(`Auto/cab to ${destinationName} (${nearestRailway.distanceKm.toFixed(0)}km)`);
       }
     } else if (suggestedMode.includes('Bus') && nearestBusStand) {
       legs.push(`${suggestedMode} to ${nearestBusStand.name} (~${distanceKm}km, ${Math.round(durationHours)}h)`);
@@ -276,13 +273,12 @@ export async function discoverTransport(
     } else {
       legs.push(`${suggestedMode} to ${destinationName}`);
     }
-
     legs.push(destinationName);
-    // De-duplicate consecutive identical entries
+    
     defaults.journeyLegs = legs.filter((leg, i) => i === 0 || leg !== legs[i - 1]);
 
     return defaults;
-  } catch (err: unknown) {
-    throw new Error(`TRANSPORT_DISCOVERY_FAILED: ${err instanceof Error ? err.message : String(err)}`);
+  } catch (err) {
+    return defaults;
   }
 }

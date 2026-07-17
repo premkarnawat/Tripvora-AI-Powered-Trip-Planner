@@ -1,43 +1,44 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { TripWizard, WizardData } from "@/components/trip-wizard/TripWizard";
+import { motion, AnimatePresence } from "framer-motion";
+import { Check, Loader2 } from "lucide-react";
+
+const PIPELINE_STAGES = [
+  "Validating destination",
+  "Understanding traveler profile",
+  "Discovering nearby attractions",
+  "Checking weather forecast",
+  "Calculating transport routes",
+  "Selecting hotels & restaurants",
+  "Estimating budget allocation",
+  "Validating must-visit places",
+  "Optimizing travel clusters",
+  "Building trip blueprint"
+];
 
 export default function TripPlannerPage() {
   const router = useRouter();
   const [loadingPhase, setLoadingPhase] = useState(false);
-  const [loadingProgress, setLoadingProgress] = useState(0);
-  const [loadingText, setLoadingText] = useState("");
+  const [activeStage, setActiveStage] = useState(0);
 
   const handleComplete = async (data: WizardData) => {
     setLoadingPhase(true);
-    let progress = 10;
-    setLoadingProgress(progress);
-
-    const loaderTexts = [
-      "Initializing Travel Intelligence Engines...",
-      "Analyzing GIS nodes and Transport hubs...",
-      "Calculating Traveler DNA and Budget matrix...",
-      "Matching accommodations and real-world constraints...",
-      "Optimizing daily routing vectors...",
-      "Building your personalized itinerary..."
-    ];
-    setLoadingText(loaderTexts[0]);
+    setActiveStage(0);
 
     const interval = setInterval(() => {
-      progress += 12;
-      if (progress > 92) progress = 92;
-      setLoadingProgress(progress);
-      const textIdx = Math.min(Math.floor(progress / 16), loaderTexts.length - 1);
-      setLoadingText(loaderTexts[textIdx]);
-    }, 800);
+      setActiveStage((prev) => {
+        if (prev < PIPELINE_STAGES.length - 1) return prev + 1;
+        clearInterval(interval);
+        return prev;
+      });
+    }, 600);
 
     try {
-      // Map new 12-step wizard data → API payload
       const totalMembers = data.members.adults + data.members.children + data.members.seniors;
 
-      // Compute comfort from budget mode + hotel preferences
       const comfortMap: Record<string, string> = {
         'Budget': 'budget',
         '2 Star': 'budget',
@@ -51,11 +52,9 @@ export default function TripPlannerPage() {
       const topHotelPref = data.hotelPreference?.[0] || '';
       const comfort = comfortMap[topHotelPref] || 'comfortable';
 
-      // Map pace
       const paceMap: Record<string, string> = { slow: 'slow', balanced: 'balanced', explorer: 'fast' };
       const pace = paceMap[data.pace] || 'balanced';
 
-      // Build arrival datetime
       let arrivalDatetime = '';
       if (data.hasTransport && data.transport) {
         arrivalDatetime = `${data.transport.arrival.date} ${data.transport.arrival.time}`;
@@ -63,7 +62,6 @@ export default function TripPlannerPage() {
         arrivalDatetime = `${data.tripDates.start} 10:00`;
       }
 
-      // Determine food preference (pick first or default)
       const foodPref = data.foodPreference?.[0]?.toLowerCase().replace(' ', '') || 'veg';
 
       const payload = {
@@ -87,7 +85,6 @@ export default function TripPlannerPage() {
         hotel_preference: data.hotelPreference || [],
         transport_preference: data.hasTransport && data.transport ? [data.transport.type] : [],
         special_requests: [],
-        // NEW FIELDS for enhanced engine
         budget_mode: data.budgetMode || 'balanced',
         must_visit: data.mustVisit || [],
         has_transport: data.hasTransport,
@@ -100,7 +97,7 @@ export default function TripPlannerPage() {
         destination_coords: data.destinationCoords,
       };
 
-      const response = await fetch('/api/generate-trip', {
+      const response = await fetch('/api/trip/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -109,133 +106,70 @@ export default function TripPlannerPage() {
       const resData = await response.json().catch(() => ({}));
 
       clearInterval(interval);
-      setLoadingProgress(100);
-      setLoadingText("Itinerary finalized! Redirecting...");
+      setActiveStage(PIPELINE_STAGES.length);
 
-      if (resData?.status === "INSUFFICIENT_REAL_DATA") {
-        throw new Error(`Trip rejected. Missing verified data: ${resData.missing.join(", ")}.`);
-      }
-      if (!response.ok) {
-        const fullMsg = [resData?.error, resData?.message, resData?.reason].filter(Boolean).join(" - ");
-        throw new Error(fullMsg || "Failed to generate itinerary");
+      if (!response.ok || !resData.success) {
+        const fullMsg = resData?.error || "Failed to generate blueprint";
+        throw new Error(fullMsg);
       }
 
-      // Clear wizard progress on success
       localStorage.removeItem('tripvora_wizard_progress');
-      localStorage.setItem('last_generated_trip', JSON.stringify(resData));
+      localStorage.setItem('tripvora_blueprint', JSON.stringify(resData.blueprint));
 
       setTimeout(() => {
-        router.push('/trips/generated');
-      }, 600);
+        router.push('/trip-planner/blueprint');
+      }, 1000);
 
     } catch (err: any) {
       clearInterval(interval);
       setLoadingPhase(false);
-      setLoadingProgress(0);
       alert(`Error: ${err.message}`);
     }
   };
 
   if (loadingPhase) {
     return (
-      <div style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 100,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'linear-gradient(135deg, #0F172A 0%, #1e293b 100%)',
-      }}>
-        {/* Animated rings */}
-        <div style={{ position: 'relative', width: 128, height: 128, marginBottom: 32 }}>
-          <div style={{
-            position: 'absolute',
-            inset: 0,
-            border: '3px solid rgba(255,255,255,0.08)',
-            borderRadius: '50%',
-          }} />
-          <div style={{
-            position: 'absolute',
-            inset: 0,
-            border: '3px solid #0EA5A4',
-            borderRadius: '50%',
-            borderTopColor: 'transparent',
-            animation: 'spin 3s linear infinite',
-          }} />
-          <div style={{
-            position: 'absolute',
-            inset: 16,
-            border: '3px solid #3b82f6',
-            borderRadius: '50%',
-            borderBottomColor: 'transparent',
-            animation: 'spin 2s linear infinite reverse',
-          }} />
-          <div style={{
-            position: 'absolute',
-            inset: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
-            <span style={{ fontSize: 32 }}>✨</span>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#050816]">
+        <div className="w-full max-w-md p-8">
+          <h2 className="text-2xl font-bold text-white mb-8 text-center">Analyzing Your Trip</h2>
+          <div className="space-y-4">
+            {PIPELINE_STAGES.map((stage, index) => (
+              <motion.div
+                key={stage}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: index <= activeStage ? 1 : 0.3, x: index <= activeStage ? 0 : -20 }}
+                className="flex items-center space-x-3"
+              >
+                {index < activeStage ? (
+                  <div className="w-6 h-6 rounded-full bg-teal-500/20 flex items-center justify-center">
+                    <Check className="w-4 h-4 text-teal-400" />
+                  </div>
+                ) : index === activeStage ? (
+                  <div className="w-6 h-6 flex items-center justify-center">
+                    <Loader2 className="w-4 h-4 text-teal-400 animate-spin" />
+                  </div>
+                ) : (
+                  <div className="w-6 h-6 rounded-full border border-white/10" />
+                )}
+                <span className={`text-sm ${index <= activeStage ? 'text-white' : 'text-slate-500'}`}>
+                  {stage}
+                </span>
+              </motion.div>
+            ))}
           </div>
+          <AnimatePresence>
+            {activeStage >= PIPELINE_STAGES.length && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-8 p-4 bg-teal-500/10 border border-teal-500/20 rounded-xl flex items-center justify-center text-teal-400 font-medium"
+              >
+                <Check className="w-5 h-5 mr-2" />
+                Trip blueprint ready!
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-
-        <h2 style={{
-          fontSize: 28,
-          fontWeight: 700,
-          color: '#fff',
-          marginBottom: 12,
-          letterSpacing: -0.5,
-        }}>
-          Building Your Trip
-        </h2>
-
-        <p style={{
-          color: 'rgba(255,255,255,0.5)',
-          marginBottom: 32,
-          maxWidth: 400,
-          textAlign: 'center',
-          fontSize: 14,
-          minHeight: 20,
-          transition: 'opacity 0.3s',
-        }}>
-          {loadingText}
-        </p>
-
-        {/* Progress bar */}
-        <div style={{
-          width: 256,
-          height: 6,
-          background: 'rgba(255,255,255,0.08)',
-          borderRadius: 6,
-          overflow: 'hidden',
-        }}>
-          <div style={{
-            width: `${loadingProgress}%`,
-            height: '100%',
-            background: 'linear-gradient(90deg, #0EA5A4, #3b82f6)',
-            borderRadius: 6,
-            transition: 'width 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
-          }} />
-        </div>
-        <div style={{
-          marginTop: 12,
-          fontFamily: 'monospace',
-          fontSize: 14,
-          color: '#0EA5A4',
-          fontWeight: 700,
-        }}>
-          {Math.round(loadingProgress)}%
-        </div>
-
-        <style>{`
-          @keyframes spin {
-            to { transform: rotate(360deg); }
-          }
-        `}</style>
       </div>
     );
   }

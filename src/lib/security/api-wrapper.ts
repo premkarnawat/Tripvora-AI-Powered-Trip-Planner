@@ -23,32 +23,7 @@ export function withSecurity(options: WrapperOptions, handler: ApiHandler): ApiH
       if (options.requireAuth || options.requireRoles) {
         authAttempted = true;
         
-        // Manual bulletproof session extraction
-        const { cookies } = await import('next/headers');
-        const cookieStore = await cookies();
-        const allCookies = cookieStore.getAll();
-        const authCookie = allCookies.find(c => c.name.includes('-auth-token') && !c.name.includes('-code-verifier'));
-        let directToken = null;
-        
-        if (authCookie) {
-          try {
-            let parsed;
-            try {
-              parsed = JSON.parse(authCookie.value);
-            } catch {
-              parsed = JSON.parse(decodeURIComponent(authCookie.value));
-            }
-            if (parsed && parsed.access_token) {
-              directToken = parsed.access_token;
-            }
-          } catch (e) {
-            // fallback gracefully
-          }
-        }
-
-        const { data, error } = directToken 
-          ? await supabase.auth.getUser(directToken)
-          : await supabase.auth.getUser();
+        const { data, error } = await supabase.auth.getUser();
         
         if (error || !data?.user) {
           const errMsg = error?.message || "No user found in session";

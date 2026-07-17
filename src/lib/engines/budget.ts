@@ -1,5 +1,6 @@
 // ─── Budget Allocation Engine ───────────────────────────────────────
 // Computes budget breakdown based on comfort level, travelers, and trip type
+// Enforces Budget Mode: strict, balanced, relaxed
 
 export interface BudgetBreakdown {
   transport: { intercity: number; local: number; total: number };
@@ -14,29 +15,7 @@ export interface BudgetBreakdown {
   savingsTips: string[];
 }
 
-// ─── Allocation ratios by comfort level ─────────────────────────────
-
-interface AllocationRatio {
-  transport: number;
-  hotel: number;
-  food: number;
-  activities: number;
-  shopping: number;
-  buffer: number;
-}
-
-const ALLOCATION_RATIOS: Record<string, AllocationRatio> = {
-  budget: { transport: 0.25, hotel: 0.25, food: 0.25, activities: 0.15, shopping: 0.05, buffer: 0.05 },
-  value: { transport: 0.20, hotel: 0.30, food: 0.25, activities: 0.15, shopping: 0.05, buffer: 0.05 },
-  comfortable: { transport: 0.15, hotel: 0.35, food: 0.25, activities: 0.15, shopping: 0.05, buffer: 0.05 },
-  premium: { transport: 0.10, hotel: 0.40, food: 0.25, activities: 0.15, shopping: 0.05, buffer: 0.05 },
-  luxury: { transport: 0.10, hotel: 0.45, food: 0.20, activities: 0.15, shopping: 0.05, buffer: 0.05 },
-};
-
-// ─── Cost multiplier by traveler type ───────────────────────────────
-
 function effectiveTravelerCount(travelers: { adults: number; children: number; seniors: number }): number {
-  // Children cost 50% of adult rate, seniors cost 80%
   return travelers.adults + (travelers.children * 0.5) + (travelers.seniors * 0.8);
 }
 
@@ -44,84 +23,13 @@ function totalHeadcount(travelers: { adults: number; children: number; seniors: 
   return travelers.adults + travelers.children + travelers.seniors;
 }
 
-// ─── Savings tips generator ─────────────────────────────────────────
-
-function generateSavingsTips(comfortLevel: string, travelType: string, duration: number, travelers: { adults: number; children: number; seniors: number }): string[] {
-  const tips: string[] = [];
-
-  // Comfort-level specific tips
-  switch (comfortLevel) {
-    case 'budget':
-      tips.push('Stay in hostels or homestays instead of hotels to save 40-60% on accommodation');
-      tips.push('Eat at local street food stalls and dhabas — authentic taste at a fraction of the price');
-      tips.push('Use public buses and shared autos instead of private cabs');
-      break;
-    case 'value':
-      tips.push('Book accommodation with breakfast included to save on one meal per day');
-      tips.push('Use train travel for intercity journeys — cheaper and scenic compared to flights');
-      tips.push('Visit free attractions like public parks, temples, and markets');
-      break;
-    case 'comfortable':
-      tips.push('Book hotels in advance online for 15-30% early-bird discounts');
-      tips.push('Opt for combo meal deals at restaurants instead of ordering à la carte');
-      tips.push('Purchase city passes or combo tickets for multiple attractions');
-      break;
-    case 'premium':
-      tips.push('Use credit card travel rewards and loyalty points for hotel upgrades');
-      tips.push('Book flights during off-peak hours for lower fares');
-      tips.push('Consider serviced apartments for stays longer than 3 nights — cheaper than premium hotels');
-      break;
-    case 'luxury':
-      tips.push('Leverage hotel loyalty programs for complimentary upgrades and late checkout');
-      tips.push('Book luxury experiences through concierge services for bundled discounts');
-      tips.push('Travel during shoulder season for luxury properties at 20-40% lower rates');
-      break;
-    default:
-      tips.push('Compare prices across multiple booking platforms before reserving');
-      tips.push('Carry a refillable water bottle to avoid buying bottled water at tourist spots');
-      tips.push('Plan a flexible itinerary to take advantage of last-minute deals');
-  }
-
-  // Travel-type specific tips
-  if (travelType === 'family' || travelType === 'senior') {
-    tips.push('Look for family/group discounts at attractions — many offer 20-30% off for groups of 4+');
-  }
-  if (travelType === 'bachelor' || travelType === 'friends') {
-    tips.push('Split accommodation costs by booking shared rooms or apartments with multiple bedrooms');
-  }
-  if (travelType === 'couple' || travelType === 'honeymoon') {
-    tips.push('Ask hotels about honeymoon or couples packages — often includes free meals or spa credits');
-  }
-  if (travelType === 'solo') {
-    tips.push('Consider couchsurfing or shared dorms to dramatically reduce accommodation costs');
-  }
-
-  // Duration tips
-  if (duration >= 5) {
-    tips.push('For longer trips, do laundry mid-trip instead of packing extra clothes — saves luggage fees');
-  }
-
-  // Traveler count tips
-  if (totalHeadcount(travelers) >= 4) {
-    tips.push('Rent a single vehicle for the group instead of individual transport — saves up to 50%');
-  }
-
-  // Return 3-5 tips
-  return tips.slice(0, 5);
-}
-
-// ─── Budget health score ────────────────────────────────────────────
-
 function computeHealthScore(totalBudget: number, remaining: number): number {
   if (totalBudget <= 0) return 0;
   const ratio = remaining / totalBudget;
   if (ratio >= 0.10) return 100;
   if (ratio <= 0) return 0;
-  // Linear scale from 0 to 100 as ratio goes from 0 to 0.10
   return Math.round((ratio / 0.10) * 100);
 }
-
-// ─── Main Export ────────────────────────────────────────────────────
 
 export function calculateBudget(
   totalBudget: number,
@@ -130,7 +38,8 @@ export function calculateBudget(
   comfortLevel: string,
   transportFare: number,
   travelType: string,
-  hotelCostPerNight: number = 3000 // default fallback
+  hotelCostPerNight: number = 3000,
+  budgetMode: string = 'balanced'
 ): BudgetBreakdown {
   const safeDuration = Math.max(1, duration);
   const nights = Math.max(0, safeDuration - 1);
@@ -138,45 +47,84 @@ export function calculateBudget(
   const effectiveCount = effectiveTravelerCount(travelers);
   const heads = totalHeadcount(travelers);
 
-  // STRICT SUBTRACTIVE ALLOCATION
-  const intercityTotal = transportFare * heads;
+  // BASE ALLOCATION
+  let intercityTotal = transportFare * heads;
   
   const roomMultiplier = (travelType === 'couple' || travelType === 'honeymoon')
     ? Math.ceil(heads / 2)
     : (travelType === 'family')
       ? Math.max(1, Math.ceil(heads / 3))
-      : (travelType === 'friends' || travelType === 'bachelor')
-        ? Math.max(1, Math.ceil(heads / 2))
-        : Math.max(1, Math.ceil(heads / 2));
+      : Math.max(1, Math.ceil(heads / 2));
 
-  const accommodationTotal = nights * hotelCostPerNight * roomMultiplier;
+  let accommodationTotal = nights * hotelCostPerNight * roomMultiplier;
 
   // Food costs based on real world estimates per comfort level
   const baseMealCost = comfortKey === 'budget' ? 200 : comfortKey === 'luxury' ? 1200 : 500;
-  const foodPerDay = baseMealCost * 3 * effectiveCount; // 3 meals
-  const foodTotal = foodPerDay * safeDuration;
+  let foodPerDay = baseMealCost * 3 * effectiveCount; 
+  let foodTotal = foodPerDay * safeDuration;
 
   // Activities cost
   const baseActivityCost = comfortKey === 'budget' ? 300 : comfortKey === 'luxury' ? 2500 : 800;
-  const activitiesPerDay = baseActivityCost * effectiveCount;
-  const activitiesTotal = activitiesPerDay * safeDuration;
+  let activitiesPerDay = baseActivityCost * effectiveCount;
+  let activitiesTotal = activitiesPerDay * safeDuration;
 
-  const localTransport = (transportFare * 0.2) * heads * safeDuration; // estimate
+  let localTransport = (transportFare * 0.2) * heads * safeDuration; 
 
-  const shoppingPool = totalBudget * 0.05;
-  const bufferPool = totalBudget * 0.05;
+  let shoppingPool = totalBudget * 0.05;
+  let bufferPool = totalBudget * 0.05;
 
-  const planned = intercityTotal + localTransport + accommodationTotal + foodTotal + activitiesTotal + shoppingPool + bufferPool;
-  const remaining = totalBudget - planned;
+  let planned = intercityTotal + localTransport + accommodationTotal + foodTotal + activitiesTotal + shoppingPool + bufferPool;
+  let remaining = totalBudget - planned;
 
-  // Instead of throwing a hard error and blocking generation, we let it pass with a negative remaining budget.
-  // The frontend can display this as a warning, but the user still gets their itinerary.
-  if (remaining < 0) {
-    console.warn(`STRICT_BUDGET_WARNING: Itinerary requires ₹${planned}, budget is ₹${totalBudget}`);
+  // BUDGET MODE ENFORCEMENT
+  if (remaining < 0 && budgetMode === 'strict') {
+    // If strict, we MUST make it fit. Reduce non-essentials first.
+    const deficit = -remaining;
+    
+    // Reduce shopping to 0 if needed
+    if (deficit > 0) {
+      const reduction = Math.min(shoppingPool, deficit);
+      shoppingPool -= reduction;
+      planned -= reduction;
+    }
+    
+    // Reduce buffer by up to 80% if needed
+    const currentDeficit2 = planned - totalBudget;
+    if (currentDeficit2 > 0) {
+       const reduction = Math.min(bufferPool * 0.8, currentDeficit2);
+       bufferPool -= reduction;
+       planned -= reduction;
+    }
+
+    // Reduce activities by up to 50% if needed
+    const currentDeficit3 = planned - totalBudget;
+    if (currentDeficit3 > 0) {
+       const reduction = Math.min(activitiesTotal * 0.5, currentDeficit3);
+       activitiesTotal -= reduction;
+       activitiesPerDay = activitiesTotal / safeDuration;
+       planned -= reduction;
+    }
+
+    // Reduce food by up to 30% if needed
+    const currentDeficit4 = planned - totalBudget;
+    if (currentDeficit4 > 0) {
+       const reduction = Math.min(foodTotal * 0.3, currentDeficit4);
+       foodTotal -= reduction;
+       foodPerDay = foodTotal / safeDuration;
+       planned -= reduction;
+    }
+
+    // If still deficit, just log warning. We can't reduce fixed costs like transport.
+    remaining = totalBudget - planned;
   }
 
   const healthScore = computeHealthScore(totalBudget, remaining);
-  const savingsTips = generateSavingsTips(comfortKey, travelType.toLowerCase().trim(), safeDuration, travelers);
+
+  const savingsTips = [
+    'Compare prices across multiple booking platforms before reserving',
+    'Carry a refillable water bottle to avoid buying bottled water at tourist spots',
+    'Plan a flexible itinerary to take advantage of last-minute deals'
+  ];
 
   return {
     transport: {
@@ -185,7 +133,7 @@ export function calculateBudget(
       total: Math.round(intercityTotal + localTransport),
     },
     accommodation: {
-      perNight: Math.round(hotelCostPerNight),
+      perNight: Math.round(accommodationTotal / Math.max(nights, 1)),
       total: Math.round(accommodationTotal),
       nights,
     },
