@@ -255,7 +255,7 @@ export const POST = withSecurity(
         timedStage('TRANSPORT', () => discoverTransport(
           prefs.source, geo.lat, geo.lon, prefs.destination,
           [], // Transport nodes will be populated after places
-          prefs.hasTransport ? prefs.transportDetails : null
+          prefs.hasTransport ? prefs.transport : null
         )),
       ]);
 
