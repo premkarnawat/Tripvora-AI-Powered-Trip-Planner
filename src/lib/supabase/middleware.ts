@@ -42,7 +42,8 @@ export async function updateSession(request: NextRequest) {
     
     const isProtected = protectedRoutes.some(route => pathname.startsWith(route)) &&
                         !pathname.startsWith('/admin/login') &&
-                        !pathname.startsWith('/agency/register');
+                        !pathname.startsWith('/agency/register') &&
+                        !pathname.startsWith('/trips/generated');
     
     // If trying to access a protected route without being authenticated
     if (isProtected && !user) {

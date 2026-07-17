@@ -209,7 +209,7 @@ function getTierLabel(priceLevel: number): string {
 export const POST = withSecurity(
   {
     rateLimit: { limit: 10, windowSeconds: 60 },
-    requireAuth: true,
+    requireAuth: false,
   },
   async (request: Request) => {
     try {
