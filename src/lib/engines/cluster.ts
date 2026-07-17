@@ -40,7 +40,7 @@ function nearestNeighborOrder(places: Place[]): string[] {
   if (places.length === 1) return [places[0].name];
 
   const remaining = [...places];
-  const order: Place[] = [];
+  const order: string[] = [];
 
   const centroid = computeCentroid(remaining);
   let closestIdx = 0;
