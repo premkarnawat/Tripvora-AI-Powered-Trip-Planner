@@ -1,12 +1,31 @@
 // ─── Budget Allocation Engine ───────────────────────────────────────
 // Computes budget breakdown based on comfort level, travelers, and trip type
-// Enforces Budget Mode: strict, balanced, relaxed
+// V3: Uses Google price_level signals when available, tracks confidence
+
+// Price level mapping (Google's 0-4 scale to INR estimates)
+const PRICE_LEVEL_MEAL: Record<number, number> = {
+  0: 100,  // Free/very cheap
+  1: 250,  // Budget
+  2: 500,  // Moderate
+  3: 1000, // Expensive
+  4: 2000, // Very expensive
+};
+
+const PRICE_LEVEL_HOTEL: Record<number, number> = {
+  0: 500,
+  1: 1500,
+  2: 3000,
+  3: 6000,
+  4: 12000,
+};
+
+export type BudgetConfidence = 'known' | 'estimated' | 'unknown';
 
 export interface BudgetBreakdown {
-  transport: { intercity: number; local: number; total: number };
-  accommodation: { perNight: number; total: number; nights: number };
-  food: { perDay: number; total: number; breakdown: { breakfast: number; lunch: number; dinner: number; snacks: number } };
-  activities: { perDay: number; total: number };
+  transport: { intercity: number; local: number; total: number; confidence: BudgetConfidence };
+  accommodation: { perNight: number; total: number; nights: number; confidence: BudgetConfidence };
+  food: { perDay: number; total: number; breakdown: { breakfast: number; lunch: number; dinner: number; snacks: number }; confidence: BudgetConfidence };
+  activities: { perDay: number; total: number; confidence: BudgetConfidence };
   shopping: number;
   buffer: number;
   planned: number;
@@ -39,7 +58,9 @@ export function calculateBudget(
   transportFare: number,
   travelType: string,
   hotelCostPerNight: number = 3000,
-  budgetMode: string = 'balanced'
+  budgetMode: string = 'balanced',
+  avgRestaurantPriceLevel?: number | null,
+  avgHotelPriceLevel?: number | null
 ): BudgetBreakdown {
   const safeDuration = Math.max(1, duration);
   const nights = Math.max(0, safeDuration - 1);
@@ -49,26 +70,41 @@ export function calculateBudget(
 
   // BASE ALLOCATION
   let intercityTotal = transportFare * heads;
-  
+  const transportConfidence: BudgetConfidence = transportFare > 0 ? 'estimated' : 'unknown';
+
   const roomMultiplier = (travelType === 'couple' || travelType === 'honeymoon')
     ? Math.ceil(heads / 2)
     : (travelType === 'family')
       ? Math.max(1, Math.ceil(heads / 3))
       : Math.max(1, Math.ceil(heads / 2));
 
-  let accommodationTotal = nights * hotelCostPerNight * roomMultiplier;
+  // Use Google price_level for hotel if available, otherwise fall back to comfort-based estimate
+  let hotelPerNight = hotelCostPerNight;
+  let hotelConfidence: BudgetConfidence = 'unknown';
+  if (avgHotelPriceLevel !== undefined && avgHotelPriceLevel !== null && avgHotelPriceLevel >= 0) {
+    hotelPerNight = PRICE_LEVEL_HOTEL[Math.round(avgHotelPriceLevel)] || hotelCostPerNight;
+    hotelConfidence = 'estimated';
+  }
+  let accommodationTotal = nights * hotelPerNight * roomMultiplier;
 
-  // Food costs based on real world estimates per comfort level
-  const baseMealCost = comfortKey === 'budget' ? 200 : comfortKey === 'luxury' ? 1200 : 500;
-  let foodPerDay = baseMealCost * 3 * effectiveCount; 
+  // Use Google price_level for meals if available
+  let baseMealCost: number;
+  let foodConfidence: BudgetConfidence = 'unknown';
+  if (avgRestaurantPriceLevel !== undefined && avgRestaurantPriceLevel !== null && avgRestaurantPriceLevel >= 0) {
+    baseMealCost = PRICE_LEVEL_MEAL[Math.round(avgRestaurantPriceLevel)] || 500;
+    foodConfidence = 'estimated';
+  } else {
+    baseMealCost = comfortKey === 'budget' ? 200 : comfortKey === 'luxury' ? 1200 : 500;
+  }
+  let foodPerDay = baseMealCost * 3 * effectiveCount;
   let foodTotal = foodPerDay * safeDuration;
 
-  // Activities cost
+  // Activities cost — no API data available, always 'unknown'
   const baseActivityCost = comfortKey === 'budget' ? 300 : comfortKey === 'luxury' ? 2500 : 800;
   let activitiesPerDay = baseActivityCost * effectiveCount;
   let activitiesTotal = activitiesPerDay * safeDuration;
 
-  let localTransport = (transportFare * 0.2) * heads * safeDuration; 
+  let localTransport = (transportFare * 0.2) * heads * safeDuration;
 
   let shoppingPool = totalBudget * 0.05;
   let bufferPool = totalBudget * 0.05;
@@ -78,16 +114,15 @@ export function calculateBudget(
 
   // BUDGET MODE ENFORCEMENT
   if (remaining < 0 && budgetMode === 'strict') {
-    // If strict, we MUST make it fit. Reduce non-essentials first.
     const deficit = -remaining;
-    
+
     // Reduce shopping to 0 if needed
     if (deficit > 0) {
       const reduction = Math.min(shoppingPool, deficit);
       shoppingPool -= reduction;
       planned -= reduction;
     }
-    
+
     // Reduce buffer by up to 80% if needed
     const currentDeficit2 = planned - totalBudget;
     if (currentDeficit2 > 0) {
@@ -114,7 +149,6 @@ export function calculateBudget(
        planned -= reduction;
     }
 
-    // If still deficit, just log warning. We can't reduce fixed costs like transport.
     remaining = totalBudget - planned;
   }
 
@@ -131,11 +165,13 @@ export function calculateBudget(
       intercity: Math.round(intercityTotal),
       local: Math.round(localTransport),
       total: Math.round(intercityTotal + localTransport),
+      confidence: transportConfidence,
     },
     accommodation: {
       perNight: Math.round(accommodationTotal / Math.max(nights, 1)),
       total: Math.round(accommodationTotal),
       nights,
+      confidence: hotelConfidence,
     },
     food: {
       perDay: Math.round(foodPerDay),
@@ -146,10 +182,12 @@ export function calculateBudget(
         dinner: Math.round(foodPerDay * 0.3),
         snacks: Math.round(foodPerDay * 0.1),
       },
+      confidence: foodConfidence,
     },
     activities: {
       perDay: Math.round(activitiesPerDay),
       total: Math.round(activitiesTotal),
+      confidence: 'unknown',
     },
     shopping: Math.round(shoppingPool),
     buffer: Math.round(bufferPool),

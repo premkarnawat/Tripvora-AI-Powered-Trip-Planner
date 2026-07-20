@@ -13,7 +13,7 @@ export function discoverHiddenGems(places: Place[]): HiddenGem[] {
   for (const p of places) {
     // In a real OS connected to Google Places, popularity is derived from rating total count.
     // We simulate this since we are restricted to basic API objects.
-    const popularity_score = (p.rating || 4.0) * 10; 
+    const popularity_score = Math.log10((p.userRatingsTotal || 0) + 2) * 20; 
     
     let uniqueness = 50;
     

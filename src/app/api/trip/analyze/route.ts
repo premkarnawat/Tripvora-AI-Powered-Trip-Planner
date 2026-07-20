@@ -51,6 +51,15 @@ function validateAnalyzeInput(body: Record<string, unknown>): { ok: true; data: 
   const source = String(body.source || '').trim();
   if (!destination || destination.length < 2) return { ok: false, error: 'Invalid destination' };
   if (!source || source.length < 2) return { ok: false, error: 'Invalid source' };
+  
+  if (Number(body.budget) < 0) return { ok: false, error: 'Invalid budget' };
+  
+  const startDateStr = body.start_date || (body.tripDates as any)?.start;
+  if (startDateStr) {
+    const startDate = new Date(String(startDateStr));
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    if (startDate < oneDayAgo) return { ok: false, error: 'Invalid date: cannot be in the past' };
+  }
 
   return {
     ok: true,
@@ -60,7 +69,7 @@ function validateAnalyzeInput(body: Record<string, unknown>): { ok: true; data: 
       destination,
       destinationCoords: (body.destinationCoords as any) || null,
       destinationType: String(body.destinationType || 'city'),
-      tripDates: (body.tripDates as any) || { start: body.start_date || '', end: body.end_date || '' },
+      tripDates: (body.tripDates as any) || { start: String(body.start_date || ''), end: String(body.end_date || '') },
       duration: (body.duration as any) || { days: 0, nights: 0 },
       hasTransport: Boolean(body.hasTransport || body.has_transport),
       transport: (body.transport || body.transport_details || null) as any,
@@ -171,29 +180,26 @@ function toRankedRestaurant(p: Place): RankedRestaurant {
   };
 }
 
+// Visit duration estimates based on category - labeled as estimates, not facts
 function estimateVisitDuration(category: string, types: string[], name: string): number {
-  const cat = category.toLowerCase();
+  // These are reasonable ESTIMATES - actual duration depends on the visitor
+  // Returns minutes
   const nameLower = name.toLowerCase();
-  if (/museum|gallery|aquarium/.test(nameLower)) return 120;
-  if (/temple|church|mosque|shrine|gurudwara/.test(nameLower)) return 60;
+  if (/museum|gallery|aquarium/.test(nameLower)) return 90;
+  if (/temple|church|mosque|shrine|gurudwara/.test(nameLower)) return 45;
   if (/fort|castle|palace|ruins|haveli/.test(nameLower)) return 90;
-  if (/park|garden|nature/.test(nameLower)) return 75;
-  if (/viewpoint|monument|memorial|statue/.test(nameLower)) return 45;
+  if (/park|garden|nature|lake/.test(nameLower)) return 60;
+  if (/viewpoint|monument|memorial|statue/.test(nameLower)) return 30;
   if (/zoo|theme.park|water.park|amusement/.test(nameLower)) return 180;
-  if (/beach/.test(nameLower)) return 120;
-  if (/market|bazaar|shopping/.test(nameLower)) return 90;
-  if (/lake|river|waterfall/.test(nameLower)) return 60;
-  return 60;
+  if (/beach/.test(nameLower)) return 90;
+  if (/market|bazaar|shopping/.test(nameLower)) return 60;
+  return 60; // default
 }
 
+// Entry fees are NOT known from Google Places API
+// Return 0 - actual fees should come from a verified database (future feature)
 function estimateEntryFee(types: string[], name: string): number {
-  const nameLower = name.toLowerCase();
-  if (/museum|gallery|aquarium|zoo|theme.park|water.park/.test(nameLower)) return 300;
-  if (/fort|castle|palace|ruins|unesco/.test(nameLower)) return 200;
-  if (/temple|church|mosque|shrine/.test(nameLower)) return 0;
-  if (/park|garden|nature|beach|lake/.test(nameLower)) return 50;
-  if (/viewpoint|monument|memorial|statue/.test(nameLower)) return 100;
-  return 0;
+  return 0; // We don't fabricate entry fees
 }
 
 function getTierLabel(priceLevel: number): string {
@@ -209,7 +215,7 @@ function getTierLabel(priceLevel: number): string {
 export const POST = withSecurity(
   {
     rateLimit: { limit: 10, windowSeconds: 60 },
-    requireAuth: false,
+    requireAuth: true,
   },
   async (request: Request) => {
     try {
@@ -341,7 +347,21 @@ export const POST = withSecurity(
         isAccepted: false,
       }));
 
-      // ── Step 9: Budget Analysis ──
+      // Calculate average price levels from discovered places
+      const restaurantPriceLevels = places.restaurants
+        .filter((r: any) => r.priceLevel !== undefined && r.priceLevel !== null)
+        .map((r: any) => r.priceLevel as number);
+      const avgRestaurantPriceLevel = restaurantPriceLevels.length > 0
+        ? restaurantPriceLevels.reduce((a: number, b: number) => a + b, 0) / restaurantPriceLevels.length
+        : null;
+
+      const hotelPriceLevels = places.hotels
+        .filter((h: any) => h.priceLevel !== undefined && h.priceLevel !== null)
+        .map((h: any) => h.priceLevel as number);
+      const avgHotelPriceLevel = hotelPriceLevels.length > 0
+        ? hotelPriceLevels.reduce((a: number, b: number) => a + b, 0) / hotelPriceLevels.length
+        : null;
+
       const budgetBreakdown = await timedStage('BUDGET', async () => calculateBudget(
         prefs.budget,
         duration,
@@ -350,7 +370,9 @@ export const POST = withSecurity(
         transport.estimatedFare,
         prefs.travelType,
         rankedHotels.find((h: any) => h.isSelected)?.estimatedPricePerNight || 3000,
-        prefs.budgetMode
+        prefs.budgetMode,
+        avgRestaurantPriceLevel,
+        avgHotelPriceLevel
       ));
 
       // ── Step 10: Generate Warnings ──
@@ -469,25 +491,15 @@ export const POST = withSecurity(
           type: 'primary',
           coordinates: { lat: geo.lat, lon: geo.lon },
           recommendedNights: Math.max(duration - 1, 1),
-          nearbyAttractions: rankedAttractions.slice(0, 5).map(a => a.name),
+          nearbyAttractions: travelClusters.flatMap(c => c.attractions?.map((p: any) => p.name) || []).slice(0, 10),
           distanceFromPrimary: 0,
           travelTimeFromPrimary: 0,
         },
         secondaryHubs: [],
-        excursions: mustVisitResults
-          .filter(mv => mv.feasibility === 'needs_full_day' && mv.coordinates)
-          .map(mv => ({
-            name: mv.name,
-            type: 'excursion' as const,
-            coordinates: mv.coordinates!,
-            recommendedNights: 0,
-            nearbyAttractions: [],
-            distanceFromPrimary: mv.distanceFromHub,
-            travelTimeFromPrimary: mv.travelTimeHours,
-          })),
+        excursions: [],
         clusters: travelClusters,
-        maxComfortableRadiusKm: prefs.pace === 'slow' ? 30 : prefs.pace === 'balanced' ? 100 : 250,
-        suggestedRoute: travelClusters.map(c => c.name),
+        maxComfortableRadiusKm: duration <= 2 ? 20 : duration <= 5 ? 40 : 60,
+        suggestedRoute: [prefs.destination],
       };
 
       // ── Step 14: Build Transport Analysis ──

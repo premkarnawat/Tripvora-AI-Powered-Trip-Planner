@@ -165,9 +165,11 @@ export function matchFillerToPlaces(
   fillers: FillerActivity[],
   availablePlaces: Place[]
 ): Array<FillerActivity & { matchedPlace?: Place }> {
-  return fillers.map(filler => {
+  const result: Array<FillerActivity & { matchedPlace?: Place }> = [];
+
+  for (const filler of fillers) {
     const category = EVENING_CATEGORIES.find(c => c.type === filler.type);
-    if (!category) return filler;
+    if (!category) continue;
 
     // Find a matching place from available places
     const matchedPlace = availablePlaces.find(place => {
@@ -178,6 +180,21 @@ export function matchFillerToPlaces(
       );
     });
 
-    return { ...filler, matchedPlace };
-  });
+    if (matchedPlace) {
+      result.push({ ...filler, matchedPlace });
+    }
+  }
+
+  if (result.length === 0 && fillers.length > 0) {
+    const firstFiller = fillers[0];
+    result.push({
+      title: 'Free time / Explore on your own',
+      type: 'cafe',
+      time: firstFiller.time,
+      duration: firstFiller.duration,
+      description: 'Take some free time to relax or explore the local area on your own.',
+    });
+  }
+
+  return result;
 }

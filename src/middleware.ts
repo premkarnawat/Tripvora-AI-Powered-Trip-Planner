@@ -71,12 +71,20 @@ const RATE_LIMIT_RULES: Array<{
   methodFilter?: string;
 }> = [
   {
-    match: (p) => p.startsWith('/api/generate-trip'),
-    prefix: 'ai',
+    match: (p) => p.startsWith('/api/trip/analyze'),
+    prefix: 'ai_analyze',
     limit: 6,
     windowMs: 60 * 1000,
     retryAfter: '60',
-    message: 'Rate limit exceeded: AI generation quota exhausted. Please try again in 60 seconds.',
+    message: 'Rate limit exceeded: Analysis API quota reached. Please try again in 60 seconds.',
+  },
+  {
+    match: (p) => p.startsWith('/api/trip/generate'),
+    prefix: 'ai_generate',
+    limit: 5,
+    windowMs: 60 * 1000,
+    retryAfter: '60',
+    message: 'Rate limit exceeded: Generation API quota reached. Please try again in 60 seconds.',
   },
   {
     match: (p) => p.startsWith('/api/contact'),

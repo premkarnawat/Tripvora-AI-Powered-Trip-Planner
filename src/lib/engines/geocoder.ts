@@ -10,9 +10,10 @@ interface NominatimResponse {
   display_name: string;
 }
 
-export async function geocode(query: string): Promise<GeoResult | null> {
+export async function geocode(query: string, countryCode?: string): Promise<GeoResult | null> {
   try {
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`;
+    let url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`;
+    if (countryCode) url += `&countrycodes=${countryCode}`;
 
     const res = await fetch(url, {
       headers: { 'User-Agent': 'Tripvora/1.0' },

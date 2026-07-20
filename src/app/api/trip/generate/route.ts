@@ -46,7 +46,7 @@ const PACE_LIMITS: Record<string, { min: number; max: number }> = {
 export const POST = withSecurity(
   {
     rateLimit: { limit: 5, windowSeconds: 60 },
-    requireAuth: false,
+    requireAuth: true,
   },
   async (request: Request) => {
     try {
@@ -148,7 +148,8 @@ export const POST = withSecurity(
         hotelAsPlace,
         prefs.travelType,
         pace,
-        arrivalDatetime
+        arrivalDatetime,
+        { forecast: blueprint.weather }
       ));
 
       // ── Step 4: Build AI context for narrative ──
@@ -318,8 +319,9 @@ export const POST = withSecurity(
             });
           }
         }
-      } catch (e) {
-        console.error('Database Persistence Error:', e);
+      } catch (saveErr) {
+        console.error('Failed to persist trip:', saveErr);
+        // Don't fail the entire request - still return the itinerary
       }
 
       return NextResponse.json({

@@ -15,6 +15,46 @@
 
 import { getWikiContext } from './wiki';
 
+// ─── POI Classification Layer ───
+// Only allow these Google Place types for attractions
+const TOURIST_TYPES = new Set([
+  'tourist_attraction', 'museum', 'hindu_temple', 'church', 'mosque', 'synagogue',
+  'park', 'zoo', 'aquarium', 'art_gallery', 'amusement_park', 'stadium',
+  'campground', 'spa', 'casino', 'bowling_alley', 'movie_theater', 'night_club',
+  'shopping_mall', 'point_of_interest', 'natural_feature', 'establishment',
+  'place_of_worship', 'cemetery', 'library', 'city_hall', 'landmark',
+]);
+
+// Always reject these — never tourist-relevant
+const REJECT_TYPES = new Set([
+  'school', 'university', 'secondary_school', 'primary_school',
+  'hospital', 'doctor', 'dentist', 'physiotherapist', 'pharmacy',
+  'bank', 'atm', 'insurance_agency', 'accounting',
+  'lawyer', 'real_estate_agency', 'finance',
+  'car_dealer', 'car_rental', 'car_repair', 'car_wash', 'gas_station',
+  'post_office', 'local_government_office', 'courthouse',
+  'fire_station', 'funeral_home', 'laundry', 'locksmith',
+  'plumber', 'electrician', 'moving_company', 'storage',
+  'veterinary_care', 'roofing_contractor', 'painter',
+  'transit_station', 'bus_station', 'train_station', 'subway_station', 'taxi_stand',
+]);
+
+function isValidTouristPOI(place: Place): boolean {
+  const types = place.types || [];
+  // Reject if any type is in the blocklist
+  if (types.some(t => REJECT_TYPES.has(t))) return false;
+  // For attractions, require at least one tourist type
+  if (place.category === 'attraction') {
+    return types.some(t => TOURIST_TYPES.has(t));
+  }
+  // For restaurants, reject pure delivery/takeaway with no dine-in
+  if (place.category === 'restaurant') {
+    const isDeliveryOnly = types.includes('meal_delivery') && !types.includes('restaurant');
+    return !isDeliveryOnly;
+  }
+  return true;
+}
+
 export interface Place {
   id: string;
   placeId: string; // Google Place ID for Details API
@@ -250,7 +290,7 @@ export async function discoverPlaces(
   
   for (const radius of radii) {
     const newPlaces = await fetchGooglePlaces(lat, lon, 'tourist_attraction', radius);
-    attractions = deduplicatePOIs([...attractions, ...newPlaces]);
+    attractions = deduplicatePOIs([...attractions, ...newPlaces.filter(isValidTouristPOI)]);
     if (attractions.length >= requiredAttractions) break;
     
     // Try keyword-based queries for variety
@@ -260,7 +300,7 @@ export async function discoverPlaces(
         fetchGooglePlaces(lat, lon, 'tourist_attraction', radius, 'historic'),
         fetchGooglePlaces(lat, lon, 'tourist_attraction', radius, 'temple'),
       ]);
-      attractions = deduplicatePOIs([...attractions, ...nature, ...historic, ...temples]);
+      attractions = deduplicatePOIs([...attractions, ...nature.filter(isValidTouristPOI), ...historic.filter(isValidTouristPOI), ...temples.filter(isValidTouristPOI)]);
       if (attractions.length >= requiredAttractions) break;
     }
   }
@@ -305,7 +345,7 @@ export async function discoverPlaces(
   ]);
 
   // Add cuisine and meal type to restaurants
-  const enrichedRestaurants = restaurants.map(r => ({
+  const enrichedRestaurants = restaurants.filter(isValidTouristPOI).map(r => ({
     ...r,
     cuisine: detectCuisine(r.types || [], r.name),
     mealType: classifyMealType(r.name, r.types || []),

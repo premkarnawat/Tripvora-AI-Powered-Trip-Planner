@@ -15,6 +15,22 @@ import { CachedPlaceDetails, DayOpeningHours, CACHE_TTL } from '@/lib/types/blue
 // ─── In-Memory Cache ────────────────────────────────────────────────
 
 const placeCache = new Map<string, CachedPlaceDetails>();
+const pendingRequests = new Map<string, Promise<CachedPlaceDetails | null>>();
+
+if (typeof globalThis !== 'undefined') {
+  const CLEANUP_INTERVAL = 5 * 60 * 1000; // 5 minutes
+  let cleanupTimer: ReturnType<typeof setInterval> | null = null;
+  if (!cleanupTimer) {
+    cleanupTimer = setInterval(() => {
+      cleanExpiredCache();
+    }, CLEANUP_INTERVAL);
+    // Don't block Node.js from exiting
+    if (cleanupTimer && typeof cleanupTimer === 'object' && 'unref' in cleanupTimer) {
+      (cleanupTimer as any).unref();
+    }
+  }
+}
+
 let cacheHits = 0;
 let cacheMisses = 0;
 
@@ -76,52 +92,63 @@ export async function fetchPlaceDetails(placeId: string): Promise<CachedPlaceDet
   const cached = getCachedPlace(placeId);
   if (cached) return cached;
 
-  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
-  if (!apiKey) return null;
+  // Check if there's already a pending request for this placeId
+  const pending = pendingRequests.get(placeId);
+  if (pending) return pending;
 
-  // Minimal fields to reduce cost (~$17/1000 calls with these fields)
-  const fields = 'name,formatted_address,formatted_phone_number,website,opening_hours,photos,rating,user_ratings_total,price_level,types';
+  // Create the fetch promise and store it
+  const fetchPromise = (async () => {
+    try {
+      const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+      if (!apiKey) return null;
 
-  try {
-    const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=${fields}&key=${apiKey}`;
-    const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
-    if (!res.ok) return null;
+      // Minimal fields to reduce cost (~$17/1000 calls with these fields)
+      const fields = 'name,formatted_address,formatted_phone_number,website,opening_hours,photos,rating,user_ratings_total,price_level,types';
+      const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=${fields}&key=${apiKey}`;
+      const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+      if (!res.ok) return null;
 
-    const data = await res.json();
-    if (data.status !== 'OK' || !data.result) return null;
+      const data = await res.json();
+      if (data.status !== 'OK' || !data.result) return null;
 
-    const r = data.result;
-    const types = r.types || [];
-    const ttlHours = getTTLHours(types);
-    const now = new Date();
+      const r = data.result;
+      const types = r.types || [];
+      const ttlHours = getTTLHours(types);
+      const now = new Date();
 
-    // Extract photo references (don't fetch photos yet — lazy load)
-    const photos = (r.photos || []).slice(0, 5).map((p: any) => p.photo_reference);
+      // Extract photo references (don't fetch photos yet — lazy load)
+      const photos = (r.photos || []).slice(0, 5).map((p: any) => p.photo_reference);
 
-    const details: CachedPlaceDetails = {
-      placeId,
-      name: r.name || '',
-      openingHours: parseOpeningHours(r.opening_hours),
-      phone: r.formatted_phone_number || null,
-      website: r.website || null,
-      photos,
-      rating: r.rating || 0,
-      userRatingsTotal: r.user_ratings_total || 0,
-      formattedAddress: r.formatted_address || null,
-      priceLevel: r.price_level ?? null,
-      types,
-      lastUpdated: now.toISOString(),
-      expiresAt: new Date(now.getTime() + ttlHours * 3600000).toISOString(),
-    };
+      const details: CachedPlaceDetails = {
+        placeId,
+        name: r.name || '',
+        openingHours: parseOpeningHours(r.opening_hours),
+        phone: r.formatted_phone_number || null,
+        website: r.website || null,
+        photos,
+        rating: r.rating || 0,
+        userRatingsTotal: r.user_ratings_total || 0,
+        formattedAddress: r.formatted_address || null,
+        priceLevel: r.price_level ?? null,
+        types,
+        lastUpdated: now.toISOString(),
+        expiresAt: new Date(now.getTime() + ttlHours * 3600000).toISOString(),
+      };
 
-    // Save to cache
-    placeCache.set(placeId, details);
+      // Save to cache
+      placeCache.set(placeId, details);
 
-    return details;
-  } catch (err) {
-    console.error(`Place Details fetch error for ${placeId}:`, err);
-    return null;
-  }
+      return details;
+    } catch (err) {
+      console.error(`Place Details fetch error for ${placeId}:`, err);
+      return null;
+    } finally {
+      pendingRequests.delete(placeId);
+    }
+  })();
+
+  pendingRequests.set(placeId, fetchPromise);
+  return fetchPromise;
 }
 
 /**

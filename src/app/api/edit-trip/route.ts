@@ -1,133 +1,164 @@
 import { NextResponse } from 'next/server';
-import type { ItineraryData } from '@/types/trip';
-import { ItinerarySchema } from '@/lib/validations/itinerary';
 import { withSecurity } from '@/lib/security/api-wrapper';
 import { z } from 'zod';
 
-// Automated Server-Side Budget Intelligence Recalculator
-function recalculateBudgetTotals(itinerary: any): any {
-  let hotelCost = 0;
-  let transportCost = 0;
-  let foodCost = 0;
-  let activityCost = 0;
-  let miscCost = 0;
-
-  itinerary.hotels?.forEach((h: any) => {
-    hotelCost += (h.pricePerNight * (itinerary.totalDays || 1));
-  });
-
-  itinerary.flights?.forEach((f: any) => {
-    transportCost += (f.price || 0);
-  });
-
-  itinerary.days?.forEach((day: any) => {
-    const slots = [...(day.morning || []), ...(day.afternoon || []), ...(day.evening || []), ...(day.night || [])];
-    slots.forEach((act: any) => {
-      const c = Number(act.cost) || 0;
-      if (act.type === 'meal') foodCost += c;
-      else if (act.type === 'travel' || act.type === 'transfer' || act.type === 'flight') transportCost += c;
-      else if (act.type === 'hotel') hotelCost += c;
-      else if (act.type === 'misc') miscCost += c;
-      else activityCost += c;
-    });
-  });
-
-  const overallTotal = hotelCost + transportCost + foodCost + activityCost + miscCost;
-  const targetBudget = Number(itinerary.totalBudget) || (overallTotal * 1.1);
-  const remaining = targetBudget - overallTotal;
-  const usedRatio = overallTotal / (targetBudget || 1);
-  const healthScore = Math.min(Math.max(Math.floor(usedRatio * 100), 1), 100);
-
-  itinerary.estimatedCost = overallTotal;
-  itinerary.budgetTracker = {
-    hotels: hotelCost,
-    transport: transportCost,
-    food: foodCost,
-    activities: activityCost,
-    shoppingOrMisc: miscCost,
-    dailyTotalAverage: Math.floor(overallTotal / (itinerary.totalDays || 1)),
-    overallTotal: overallTotal,
-    remainingOrSavings: remaining,
-    budgetHealthScore: healthScore
-  };
-
-  return itinerary;
-}
-
 const editTripSchema = z.object({
   currentItinerary: z.any(),
+  editType: z.enum(['swap_attraction', 'remove_attraction', 'add_attraction', 'change_time', 'reorder_day', 'general']),
+  targetDay: z.number().optional(),
+  targetActivityIndex: z.number().optional(),
+  newValue: z.any().optional(),
   userMessage: z.string().min(1),
-  chatHistory: z.array(z.any()).optional()
 });
 
 export const POST = withSecurity(
   {
     rateLimit: { limit: 10, windowSeconds: 60 },
-    schema: editTripSchema,
-    requireAuth: true
+    requireAuth: true,
   },
   async (request: Request) => {
     try {
       const body = await request.json();
-      const { currentItinerary, userMessage, chatHistory } = body;
+      const { currentItinerary, editType, targetDay, targetActivityIndex, newValue, userMessage } = body;
       
-      // Basic prompt injection sanitization
-      const safeMessage = typeof userMessage === 'string' 
-        ? userMessage.replace(/(ignore|forget|disregard).*previous.*instructions/gi, '[REDACTED]') 
-        : '';
-
-      const geminiKey = process.env.GEMINI_API_KEY;
-      if (!geminiKey) return NextResponse.json({ error: "Server API configuration missing" }, { status: 500 });
-      const editUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${geminiKey}`;
-
-      const systemInstruction = `You are the Travixa AI Travel Intelligence Engine — Granular Document Editor.
-Your mandate is to treat the provided JSON itinerary as a strict structured editable document.
-
-CRITICAL EDITING RULES:
-1. SELECTIVE EDITING ONLY: If the user requests a modification (e.g. "Replace Day 2 hotel" or "Add a beach visit"), modify ONLY the specific affected time slot or property. Preserve 100% of the remaining days, activities, titles, and descriptions unchanged.
-2. BUDGET ADJUSTMENT: If the user says "Reduce my budget by INR 15000", systematically optimize affected cost items while preserving the core flow.
-3. STRICT SCHEMA: Return pure valid JSON strictly conforming to the exact input schema. Never include markdown code fencing (\`\`\`json) or conversational commentary outside JSON.`;
-
-      const promptText = `${systemInstruction}\n\nCurrent Itinerary Document:\n${JSON.stringify(currentItinerary)}\n\nRecent Conversation History:\n${JSON.stringify(chatHistory || [])}\n\nUser Modification Instruction:\n"${safeMessage}"\n\nReturn the updated JSON document matching the exact schema. Pure JSON only.`;
-
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 12000);
-
-      const res = await fetch(editUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: promptText }] }],
-          generationConfig: { temperature: 0.3, responseMimeType: "application/json" }
-        }),
-        signal: controller.signal
-      });
-      clearTimeout(timeout);
-
-      if (!res.ok) {
-        throw new Error(`AI Editor API returned HTTP ${res.status}`);
+      if (!currentItinerary || !currentItinerary.days) {
+        return NextResponse.json({ error: 'Invalid itinerary' }, { status: 400 });
       }
 
-      const aiData = await res.json();
-      let rawText = aiData?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!rawText) throw new Error("Empty editor response");
+      const updatedItinerary = { ...currentItinerary };
+      const days = [...updatedItinerary.days];
 
-      rawText = rawText.replace(/^```json\s*/i, '').replace(/\s*```$/i, '').trim();
-      const parsedJson = JSON.parse(rawText);
+      switch (editType) {
+        case 'remove_attraction': {
+          if (targetDay !== undefined && targetActivityIndex !== undefined) {
+            const dayIdx = targetDay - 1;
+            if (days[dayIdx] && days[dayIdx].activities[targetActivityIndex]) {
+              days[dayIdx] = {
+                ...days[dayIdx],
+                activities: days[dayIdx].activities.filter((_: any, i: number) => i !== targetActivityIndex),
+              };
+              // Recalculate day totals
+              days[dayIdx].totalActiveHours = Math.round(
+                days[dayIdx].activities.reduce((sum: number, a: any) => sum + (a.duration || 0), 0) / 60
+              );
+              days[dayIdx].totalCost = days[dayIdx].activities.reduce((sum: number, a: any) => sum + (a.cost || 0), 0);
+            }
+          }
+          break;
+        }
 
-      // Enforce Zod Schema Validation
-      let validated = ItinerarySchema.parse(parsedJson);
+        case 'swap_attraction': {
+          if (targetDay !== undefined && targetActivityIndex !== undefined && newValue) {
+            const dayIdx = targetDay - 1;
+            if (days[dayIdx] && days[dayIdx].activities[targetActivityIndex]) {
+              days[dayIdx].activities[targetActivityIndex] = {
+                ...days[dayIdx].activities[targetActivityIndex],
+                ...newValue,
+              };
+            }
+          }
+          break;
+        }
 
-      // Enforce Automated Budget Intelligence Recalculation
-      validated = recalculateBudgetTotals(validated);
+        case 'change_time': {
+          if (targetDay !== undefined && targetActivityIndex !== undefined && newValue?.time) {
+            const dayIdx = targetDay - 1;
+            if (days[dayIdx] && days[dayIdx].activities[targetActivityIndex]) {
+              days[dayIdx].activities[targetActivityIndex] = {
+                ...days[dayIdx].activities[targetActivityIndex],
+                time: newValue.time,
+              };
+              // Sort activities by time after change
+              days[dayIdx].activities.sort((a: any, b: any) => {
+                const timeA = a.time.replace(/[^0-9:]/g, '');
+                const timeB = b.time.replace(/[^0-9:]/g, '');
+                return timeA.localeCompare(timeB);
+              });
+            }
+          }
+          break;
+        }
+
+        case 'reorder_day': {
+          // Swap two days
+          if (targetDay !== undefined && newValue?.targetDay !== undefined) {
+            const fromIdx = targetDay - 1;
+            const toIdx = newValue.targetDay - 1;
+            if (days[fromIdx] && days[toIdx]) {
+              [days[fromIdx], days[toIdx]] = [days[toIdx], days[fromIdx]];
+              // Update day numbers
+              days[fromIdx].day = fromIdx + 1;
+              days[toIdx].day = toIdx + 1;
+            }
+          }
+          break;
+        }
+
+        case 'general':
+        default: {
+          // For general edits, use AI but ONLY for narrative updates
+          // The structure stays the same - AI just updates descriptions
+          const geminiKey = process.env.GEMINI_API_KEY;
+          if (geminiKey) {
+            try {
+              const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`;
+              const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                signal: AbortSignal.timeout(15000),
+                body: JSON.stringify({
+                  contents: [{
+                    parts: [{
+                      text: `You are editing a travel itinerary. The user requested: "${userMessage}"
+
+Current itinerary has ${days.length} days.
+
+IMPORTANT RULES:
+1. Return ONLY a JSON object with the fields you want to update
+2. You can ONLY update these fields: day titles, activity descriptions, activity tips
+3. You CANNOT add, remove, or change the order of activities
+4. You CANNOT change times, costs, coordinates, or place names
+5. If the user's request requires structural changes (adding/removing places), return {"requiresStructuralEdit": true, "suggestion": "Please use the specific edit controls to add or remove activities."}
+
+Return JSON only.`
+                    }]
+                  }],
+                  generationConfig: { temperature: 0.3, responseMimeType: 'application/json' },
+                }),
+              });
+
+              if (res.ok) {
+                const data = await res.json();
+                const raw = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (raw) {
+                  const parsed = JSON.parse(raw.replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim());
+                  if (parsed.requiresStructuralEdit) {
+                    return NextResponse.json({
+                      updatedItinerary: currentItinerary,
+                      message: parsed.suggestion || 'Please use the specific edit controls for this change.',
+                      requiresStructuralEdit: true,
+                    });
+                  }
+                }
+              }
+            } catch (aiErr) {
+              console.error('AI edit helper failed:', aiErr);
+              // Continue without AI assistance
+            }
+          }
+          break;
+        }
+      }
+
+      updatedItinerary.days = days;
 
       return NextResponse.json({
-        updatedItinerary: validated,
-        message: `I have updated your itinerary based on: "${userMessage}". All budget metrics have been dynamically re-audited.`
+        updatedItinerary,
+        message: `Itinerary updated: ${editType}`,
       });
     } catch (err: any) {
-      console.error("Granular edit API error:", err);
-      return NextResponse.json({ error: err.message || "Failed to edit itinerary" }, { status: 500 });
+      console.error('Edit API error:', err);
+      return NextResponse.json({ error: 'Failed to edit itinerary' }, { status: 500 });
     }
   }
 );

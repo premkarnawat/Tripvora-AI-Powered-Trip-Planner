@@ -337,7 +337,7 @@ export interface ItineraryActivity {
   endTime: string;
   title: string;
   name: string;
-  type: 'travel' | 'meal' | 'activity' | 'rest' | 'hotel' | 'checkin' | 'checkout' | 'evening' | 'departure';
+  type: 'travel' | 'meal' | 'activity' | 'rest' | 'hotel' | 'checkin' | 'checkout' | 'evening' | 'departure' | 'breakfast' | 'snack';
   duration: number; // minutes
   description: string;
   category: string;

@@ -89,7 +89,7 @@ export function withSecurity(options: WrapperOptions, handler: ApiHandler): ApiH
       return NextResponse.json({ 
         success: false, 
         error: 'Internal Server Error',
-        message: process.env.NODE_ENV === 'development' ? error.message : 'An unexpected error occurred'
+        message: 'An unexpected error occurred'
       }, { status: 500 });
     }
   };

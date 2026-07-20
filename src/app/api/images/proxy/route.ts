@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 
+const imageCache = new Map<string, ArrayBuffer>();
+const MAX_CACHE_SIZE = 100;
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const ref = searchParams.get('ref');
@@ -16,20 +19,32 @@ export async function GET(request: Request) {
   const targetUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${ref}&key=${apiKey}`;
 
   try {
-    const res = await fetch(targetUrl);
-    if (!res.ok) throw new Error('Upstream API error');
-
-    // Return the raw image buffer proxied from Google
-    const buffer = await res.arrayBuffer();
+    let buffer: ArrayBuffer;
+    let contentType = 'image/jpeg';
     
-    // Default to jpeg but in a real app you might sniff the content type
-    const headers = new Headers();
-    headers.set('Content-Type', res.headers.get('content-type') || 'image/jpeg');
-    headers.set('Cache-Control', 'public, max-age=31536000, immutable'); // Cache for 1 year
-
-    return new NextResponse(buffer, {
+    if (imageCache.has(ref)) {
+      buffer = imageCache.get(ref)!;
+    } else {
+      const res = await fetch(targetUrl);
+      if (!res.ok) throw new Error('Upstream API error');
+      
+      buffer = await res.arrayBuffer();
+      contentType = res.headers.get('content-type') || 'image/jpeg';
+      
+      if (imageCache.size >= MAX_CACHE_SIZE) {
+        const firstKey = imageCache.keys().next().value;
+        if (firstKey) imageCache.delete(firstKey);
+      }
+      imageCache.set(ref, buffer);
+    }
+    
+    return new Response(buffer, {
       status: 200,
-      headers
+      headers: {
+        'Content-Type': contentType,
+        'Cache-Control': 'public, max-age=2592000, immutable', // 30 days
+        'CDN-Cache-Control': 'public, max-age=2592000',
+      },
     });
   } catch (error) {
     console.error('Image proxy failed:', error);

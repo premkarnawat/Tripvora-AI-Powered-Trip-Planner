@@ -35,74 +35,51 @@ export type PipelineStage =
   | 'COMFORT_ENGINE'
   | 'FINAL_JSON';
 
-export interface StageLog {
-  timestamp: string;
-  stage: PipelineStage;
-  status: 'OK' | 'FAILED' | 'SKIPPED';
+export interface PipelineLog {
+  stage: string;
   durationMs: number;
-  dataCount?: number;
-  message?: string;
+  success: boolean;
   error?: string;
+  timestamp: string;
 }
 
-const pipelineLogs: StageLog[] = [];
-
-/**
- * Log a pipeline stage execution result.
- */
-export function logStage(
-  stage: PipelineStage,
-  status: 'OK' | 'FAILED' | 'SKIPPED',
-  durationMs: number,
-  opts?: { dataCount?: number; message?: string; error?: string }
-): void {
-  const entry: StageLog = {
-    timestamp: new Date().toISOString(),
-    stage,
-    status,
-    durationMs,
-    ...opts,
-  };
-  pipelineLogs.push(entry);
-  const icon = status === 'OK' ? '✅' : status === 'FAILED' ? '❌' : '⏭️';
-  console.log(
-    `[TRIPVORA] ${icon} ${stage} — ${status} — ${durationMs}ms${opts?.dataCount !== undefined ? ` — ${opts.dataCount} items` : ''}${opts?.error ? ` — ${opts.error}` : ''}`
-  );
-}
-
-/**
- * Convenience: time an async operation and log it.
- */
-export async function timedStage<T>(
-  stage: PipelineStage,
-  fn: () => Promise<T>,
-  opts?: { countFn?: (result: T) => number }
-): Promise<T> {
-  const start = Date.now();
-  try {
-    const result = await fn();
-    const durationMs = Date.now() - start;
-    const dataCount = opts?.countFn ? opts.countFn(result) : undefined;
-    logStage(stage, 'OK', durationMs, { dataCount });
-    return result;
-  } catch (err: unknown) {
-    const durationMs = Date.now() - start;
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    logStage(stage, 'FAILED', durationMs, { error: message });
-    throw err;
+export function createPipelineLogger() {
+  const logs: PipelineLog[] = [];
+  
+  async function timedStage<T>(stageName: string, fn: () => Promise<T>): Promise<T> {
+    const start = Date.now();
+    try {
+      const result = await fn();
+      logs.push({
+        stage: stageName,
+        durationMs: Date.now() - start,
+        success: true,
+        timestamp: new Date().toISOString(),
+      });
+      return result;
+    } catch (err: any) {
+      logs.push({
+        stage: stageName,
+        durationMs: Date.now() - start,
+        success: false,
+        error: err.message,
+        timestamp: new Date().toISOString(),
+      });
+      throw err;
+    }
   }
+  
+  function getLogs() { return [...logs]; }
+  function clear() { logs.length = 0; }
+  
+  return { timedStage, getLogs, clear };
 }
 
-/**
- * Get all accumulated pipeline logs for inclusion in the final JSON response.
- */
-export function getPipelineLogs(): StageLog[] {
-  return [...pipelineLogs];
-}
+// Keep backward compatibility with the old API
+// These use a default global instance (will be replaced per-request in routes)
+const defaultLogger = createPipelineLogger();
+export const timedStage = defaultLogger.timedStage;
+export const getPipelineLogs = defaultLogger.getLogs;
+export const clearPipelineLogs = defaultLogger.clear;
 
-/**
- * Clear logs for a new request.
- */
-export function clearPipelineLogs(): void {
-  pipelineLogs.length = 0;
-}
+export type PipelineLogger = ReturnType<typeof createPipelineLogger>;

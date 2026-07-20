@@ -8,6 +8,20 @@ import { NextResponse } from 'next/server';
  * Uses Nominatim (OpenStreetMap) for geocoding.
  */
 
+const searchCache = new Map<string, { data: any; expires: number }>();
+const SEARCH_CACHE_TTL = 60 * 60 * 1000; // 1 hour
+
+function classifyDestination(types: string[]): string {
+  if (types.includes('country')) return 'country';
+  if (types.includes('administrative_area_level_1')) return 'state';
+  if (types.includes('locality') || types.includes('sublocality')) return 'city';
+  if (types.includes('natural_feature')) return 'nature';
+  if (types.includes('point_of_interest')) return 'attraction';
+  if (types.includes('airport')) return 'airport';
+  if (types.includes('train_station')) return 'station';
+  return 'place';
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -15,6 +29,14 @@ export async function GET(request: Request) {
 
     if (!query || query.length < 2) {
       return NextResponse.json({ results: [] });
+    }
+    
+    const cacheKey = query.toLowerCase();
+    const cached = searchCache.get(cacheKey);
+    if (cached && cached.expires > Date.now()) {
+      return NextResponse.json({ results: cached.data }, {
+        headers: { 'Cache-Control': 'public, max-age=300, stale-while-revalidate=600' },
+      });
     }
 
     // Nominatim geocoding search
@@ -102,6 +124,7 @@ export async function GET(request: Request) {
       return {
         name: name.trim(),
         type,
+        destinationType: classifyDestination([item.class, item.type].filter(Boolean) as string[]),
         icon: typeIcons[type] || '📍',
         parentRegion,
         lat: parseFloat(item.lat),
@@ -119,6 +142,9 @@ export async function GET(request: Request) {
       seen.add(key);
       return true;
     });
+
+    // Update cache
+    searchCache.set(cacheKey, { data: unique, expires: Date.now() + SEARCH_CACHE_TTL });
 
     return NextResponse.json({ results: unique }, {
       headers: { 'Cache-Control': 'public, max-age=300, stale-while-revalidate=600' },
