@@ -7,20 +7,10 @@ export async function createClient() {
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !anon) throw new Error("Missing Supabase env vars");
 
-
   return createServerClient(url, anon, {
       cookies: {
         getAll() {
-          return cookieStore.getAll().map(cookie => {
-            let decodedValue = cookie.value;
-            try {
-              decodedValue = decodeURIComponent(cookie.value);
-            } catch (e) {}
-            return {
-              ...cookie,
-              value: decodedValue
-            };
-          })
+          return cookieStore.getAll()
         },
         setAll(cookiesToSet: { name: string; value: string; options: any }[]) {
           try {

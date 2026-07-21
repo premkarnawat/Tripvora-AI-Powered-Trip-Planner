@@ -13,13 +13,7 @@ export async function updateSession(request: NextRequest) {
       {
         cookies: {
           getAll() {
-            return request.cookies.getAll().map(cookie => {
-              let decodedValue = cookie.value;
-              try {
-                decodedValue = decodeURIComponent(cookie.value);
-              } catch (e) {}
-              return { ...cookie, value: decodedValue };
-            });
+            return request.cookies.getAll()
           },
           setAll(cookiesToSet: { name: string; value: string; options: any }[]) {
             cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
@@ -50,6 +44,13 @@ export async function updateSession(request: NextRequest) {
       const url = request.nextUrl.clone()
       url.pathname = '/login'
       url.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(url)
+    }
+
+    // If user is authenticated and trying to access login/signup, redirect to dashboard
+    if (user && (pathname === '/login' || pathname === '/signup')) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/dashboard'
       return NextResponse.redirect(url)
     }
 

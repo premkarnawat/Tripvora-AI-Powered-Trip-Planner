@@ -55,7 +55,8 @@ export default function LoginPage() {
       }
 
       const params = new URLSearchParams(window.location.search);
-      const redirectTo = params.get("redirect");
+      const rawRedirect = params.get("redirect");
+      const redirectTo = rawRedirect ? decodeURIComponent(rawRedirect) : null;
 
       let destination = "/dashboard";
       if (redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("//")) {
@@ -66,10 +67,12 @@ export default function LoginPage() {
         destination = "/agency";
       }
 
-      // Wait 800ms for browser to definitively save the Set-Cookie headers from the client
+      // Use router.refresh() to update Next.js server component cache,
+      // then do a full page navigation to ensure middleware sees fresh cookies
+      router.refresh();
       setTimeout(() => {
         window.location.href = destination;
-      }, 800);
+      }, 1000);
     } catch (err: any) {
       setError("An unexpected error occurred. Please try again.");
       setLoading(false);
