@@ -38,7 +38,7 @@ export async function updateSession(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
 
     const pathname = request.nextUrl.pathname;
-    const protectedRoutes = ['/dashboard', '/agency', '/admin', '/saved-trips', '/settings', '/trips', '/profile', '/plan'];
+    const protectedRoutes = ['/dashboard', '/agency', '/admin', '/saved-trips', '/settings', '/trips', '/profile', '/plan', '/trip-planner'];
     
     const isProtected = protectedRoutes.some(route => pathname.startsWith(route)) &&
                         !pathname.startsWith('/admin/login') &&

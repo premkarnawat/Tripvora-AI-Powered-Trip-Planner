@@ -54,6 +54,12 @@ export default function GeneratingPage() {
         clearInterval(interval);
         setActiveStage(PIPELINE_STAGES.length);
 
+        // Handle 401 — redirect to login
+        if (response.status === 401) {
+          router.push('/login?redirect=/trip-planner/generating');
+          return;
+        }
+
         if (!response.ok || !resData.success) {
           const fullMsg = resData?.error || "Failed to generate itinerary";
           throw new Error(fullMsg);

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 import { TripWizard, WizardData } from "@/components/trip-wizard/TripWizard";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, Loader2 } from "lucide-react";
@@ -23,6 +24,30 @@ export default function TripPlannerPage() {
   const router = useRouter();
   const [loadingPhase, setLoadingPhase] = useState(false);
   const [activeStage, setActiveStage] = useState(0);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // ── Auth Gate: Redirect to login if not authenticated ──
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          // Save current URL so we can redirect back after login
+          const returnUrl = encodeURIComponent(window.location.pathname);
+          router.replace(`/login?redirect=${returnUrl}`);
+          return;
+        }
+        setIsAuthenticated(true);
+      } catch (err) {
+        router.replace('/login');
+        return;
+      }
+      setAuthChecked(true);
+    };
+    checkAuth();
+  }, [router]);
 
   const handleComplete = async (data: WizardData) => {
     setLoadingPhase(true);
@@ -108,6 +133,12 @@ export default function TripPlannerPage() {
       clearInterval(interval);
       setActiveStage(PIPELINE_STAGES.length);
 
+      // Handle 401 — redirect to login
+      if (response.status === 401) {
+        router.push('/login?redirect=/trip-planner');
+        return;
+      }
+
       if (!response.ok || !resData.success) {
         const fullMsg = resData?.error || "Failed to generate blueprint";
         throw new Error(fullMsg);
@@ -126,6 +157,15 @@ export default function TripPlannerPage() {
       alert(`Error: ${err.message}`);
     }
   };
+
+  // Show loading while checking auth
+  if (!authChecked) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#050816]">
+        <Loader2 className="w-8 h-8 text-teal-400 animate-spin" />
+      </div>
+    );
+  }
 
   if (loadingPhase) {
     return (
