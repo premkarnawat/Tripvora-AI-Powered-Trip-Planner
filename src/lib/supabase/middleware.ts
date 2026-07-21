@@ -6,17 +6,25 @@ export async function updateSession(request: NextRequest) {
     request,
   })
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  // If env vars are missing, just pass through — don't block navigation
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return supabaseResponse
+  }
+
   try {
     const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      supabaseUrl,
+      supabaseAnonKey,
       {
         cookies: {
           getAll() {
             return request.cookies.getAll()
           },
           setAll(cookiesToSet: { name: string; value: string; options: any }[]) {
-            cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
+            cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
             supabaseResponse = NextResponse.next({
               request,
             })
@@ -28,9 +36,16 @@ export async function updateSession(request: NextRequest) {
       }
     )
 
-    // IMPORTANT: calling getUser() refreshes the auth token if it's expired
-    const { data: { user } } = await supabase.auth.getUser()
+    // Use getSession() for middleware route protection — it reads directly from
+    // cookies without making an API roundtrip to Supabase. getUser() was causing
+    // failures on Vercel Edge (API timeout/failures → redirect loop).
+    //
+    // NOTE: getSession() reads unverified JWT from cookies. This is fine for
+    // middleware (we're only deciding whether to redirect, not making auth
+    // decisions). API routes still use getUser() for proper verification.
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
 
+    const user = session?.user ?? null
     const pathname = request.nextUrl.pathname;
     const protectedRoutes = ['/dashboard', '/agency', '/admin', '/saved-trips', '/settings', '/trips', '/profile', '/plan', '/trip-planner'];
     
@@ -56,7 +71,8 @@ export async function updateSession(request: NextRequest) {
 
     return supabaseResponse;
   } catch (err: any) {
-    console.error("Middleware error:", err);
+    // On any error, DON'T block navigation — just pass through
+    console.error("Middleware auth error:", err?.message);
     return supabaseResponse;
   }
 }
