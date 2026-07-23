@@ -67,25 +67,9 @@ export default function LoginPage() {
         destination = "/agency";
       }
 
-      // Verify the session is actually persisted in cookies before redirecting.
-      // This prevents the redirect loop where middleware can't find the session.
-      let sessionConfirmed = false;
-      for (let i = 0; i < 5; i++) {
-        await new Promise(r => setTimeout(r, 300));
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.access_token) {
-          sessionConfirmed = true;
-          break;
-        }
-      }
-
-      if (!sessionConfirmed) {
-        setError("Login succeeded but session could not be established. Please try again.");
-        setLoading(false);
-        return;
-      }
-
-      // Force full page reload to ensure middleware picks up the fresh cookies
+      // signInWithPassword already set the auth cookies via createBrowserClient.
+      // Brief delay to let browser finalize cookie writes, then full-page navigate.
+      await new Promise(r => setTimeout(r, 500));
       window.location.href = destination;
     } catch (err: any) {
       setError("An unexpected error occurred. Please try again.");

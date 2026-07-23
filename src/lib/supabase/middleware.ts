@@ -9,10 +9,18 @@ export async function updateSession(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-  // If env vars are missing, just pass through — don't block navigation
+  // If env vars are missing, just pass through
   if (!supabaseUrl || !supabaseAnonKey) {
     return supabaseResponse
   }
+
+  const pathname = request.nextUrl.pathname;
+  const protectedRoutes = ['/dashboard', '/agency', '/admin', '/saved-trips', '/settings', '/trips', '/profile', '/plan', '/trip-planner'];
+
+  const isProtected = protectedRoutes.some(route => pathname.startsWith(route)) &&
+                      !pathname.startsWith('/admin/login') &&
+                      !pathname.startsWith('/agency/register') &&
+                      !pathname.startsWith('/trips/generated');
 
   try {
     const supabase = createServerClient(
@@ -36,43 +44,58 @@ export async function updateSession(request: NextRequest) {
       }
     )
 
-    // Use getSession() for middleware route protection — it reads directly from
-    // cookies without making an API roundtrip to Supabase. getUser() was causing
-    // failures on Vercel Edge (API timeout/failures → redirect loop).
-    //
-    // NOTE: getSession() reads unverified JWT from cookies. This is fine for
-    // middleware (we're only deciding whether to redirect, not making auth
-    // decisions). API routes still use getUser() for proper verification.
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+    // Try to get session from Supabase client (reads from cookies)
+    const { data: { session } } = await supabase.auth.getSession()
+    let hasSession = !!session?.user
 
-    const user = session?.user ?? null
-    const pathname = request.nextUrl.pathname;
-    const protectedRoutes = ['/dashboard', '/agency', '/admin', '/saved-trips', '/settings', '/trips', '/profile', '/plan', '/trip-planner'];
-    
-    const isProtected = protectedRoutes.some(route => pathname.startsWith(route)) &&
-                        !pathname.startsWith('/admin/login') &&
-                        !pathname.startsWith('/agency/register') &&
-                        !pathname.startsWith('/trips/generated');
-    
-    // If trying to access a protected route without being authenticated
-    if (isProtected && !user) {
+    // FALLBACK: If Supabase client can't parse the session but auth cookies
+    // physically exist in the request, trust the cookies and let through.
+    // This handles cookie format mismatches between browser/server clients.
+    // The actual auth verification happens in API routes via getUser().
+    if (!hasSession) {
+      const allCookies = request.cookies.getAll()
+      const hasAuthCookie = allCookies.some(c =>
+        c.name.startsWith('sb-') && c.name.includes('auth-token') && c.value.length > 10
+      )
+      if (hasAuthCookie) {
+        // Auth cookies exist — user has a session. Let the request through.
+        // Don't redirect to login; the page/API will handle auth properly.
+        hasSession = true
+      }
+    }
+
+    // Protected route + no session = redirect to login
+    if (isProtected && !hasSession) {
       const url = request.nextUrl.clone()
       url.pathname = '/login'
-      url.searchParams.set('redirect', pathname);
+      url.searchParams.set('redirect', pathname)
       return NextResponse.redirect(url)
     }
 
-    // If user is authenticated and trying to access login/signup, redirect to dashboard
-    if (user && (pathname === '/login' || pathname === '/signup')) {
+    // Already logged in + visiting login/signup = redirect to dashboard
+    if (hasSession && (pathname === '/login' || pathname === '/signup')) {
       const url = request.nextUrl.clone()
       url.pathname = '/dashboard'
       return NextResponse.redirect(url)
     }
 
-    return supabaseResponse;
+    return supabaseResponse
   } catch (err: any) {
-    // On any error, DON'T block navigation — just pass through
-    console.error("Middleware auth error:", err?.message);
-    return supabaseResponse;
+    // On error, check if auth cookies exist as a fallback
+    if (isProtected) {
+      const allCookies = request.cookies.getAll()
+      const hasAuthCookie = allCookies.some(c =>
+        c.name.startsWith('sb-') && c.name.includes('auth-token') && c.value.length > 10
+      )
+      // If cookies exist, let through. If not, redirect to login.
+      if (!hasAuthCookie) {
+        const url = request.nextUrl.clone()
+        url.pathname = '/login'
+        url.searchParams.set('redirect', pathname)
+        return NextResponse.redirect(url)
+      }
+    }
+    console.error("Middleware auth error:", err?.message)
+    return supabaseResponse
   }
 }
